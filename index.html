@@ -73,21 +73,77 @@
         </h1>
         <p class="text-slate-500 text-sm mt-1">Tu centro de mando digital con IA de metadatos.</p>
     </div>
-    <div class="flex gap-3 text-white items-center">
-        <span id="cloud-status" class="text-[10px] mr-2 text-slate-500 font-bold uppercase tracking-widest">Iniciando...</span>
+    <div class="flex flex-wrap gap-2 md:gap-3 text-white items-center justify-center md:justify-end">
+        <span id="cloud-status" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest order-first w-full md:w-auto text-center md:text-left md:mr-2">Iniciando...</span>
+        <div id="user-info" class="flex items-center gap-2">
+            <span id="user-email" class="text-xs text-slate-400 hidden max-w-[120px] md:max-w-[180px] truncate"></span>
+        </div>
         <button onclick="save()" title="Forzar Sincronización" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition">☁️</button>
-        <button id="manageBtn" onclick="toggleManageCategories()" class="px-4 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 transition text-sm font-medium">Gestionar</button>
-        <button onclick="openCategoryModal()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-lg transition text-sm font-medium">+ Categoría</button>
+        <button id="manageBtn" onclick="toggleManageCategories()" class="px-3 md:px-4 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 transition text-sm font-medium">Gestionar</button>
+        <button onclick="openCategoryModal()" class="px-3 md:px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-lg transition text-sm font-medium">+ Categoría</button>
+        <button id="auth-btn" onclick="handleAuth()" class="px-3 md:px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg transition text-sm font-medium">Login</button>
     </div>
 </header>
 
 <div id="sections-container" class="space-y-6"></div>
+
+<!-- Pantalla de bienvenida para usuarios no logueados -->
+<div id="welcome-screen" class="hidden fixed inset-0 bg-slate-950/95 backdrop-blur-md z-40 items-center justify-center p-4 overflow-y-auto">
+    <div class="glass modal-content p-8 md:p-12 rounded-3xl max-w-lg text-center shadow-2xl my-8">
+        <div class="text-6xl mb-6">📑</div>
+        <h2 class="text-3xl font-bold text-white mb-4">Tab Organizer</h2>
+        <p class="text-slate-400 mb-8">Organiza todos tus links en un solo lugar.</p>
+
+        <!-- Google OAuth -->
+        <button onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-white hover:bg-gray-100 text-slate-800 font-bold shadow-lg transition text-lg">
+            <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Continuar con Google
+        </button>
+
+        <!-- Separador -->
+        <div class="flex items-center gap-4 my-6">
+            <div class="flex-1 h-px bg-slate-700"></div>
+            <span class="text-slate-500 text-sm">o</span>
+            <div class="flex-1 h-px bg-slate-700"></div>
+        </div>
+
+        <!-- Email/Password Form -->
+        <div class="space-y-3">
+            <input id="auth-email" type="email" placeholder="Email" class="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl text-white outline-none focus:border-blue-500 transition" />
+            <input id="auth-password" type="password" placeholder="Contraseña" class="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl text-white outline-none focus:border-blue-500 transition" />
+            <p id="auth-error" class="text-red-400 text-xs hidden"></p>
+            <div class="flex gap-3">
+                <button onclick="signUpWithEmail()" class="flex-1 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg transition">
+                    Crear cuenta
+                </button>
+                <button onclick="signInWithEmail()" class="flex-1 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg transition">
+                    Iniciar sesión
+                </button>
+            </div>
+        </div>
+
+        <!-- Separador -->
+        <div class="flex items-center gap-4 my-6">
+            <div class="flex-1 h-px bg-slate-700"></div>
+            <span class="text-slate-500 text-sm">o</span>
+            <div class="flex-1 h-px bg-slate-700"></div>
+        </div>
+
+        <!-- Guest Mode -->
+        <button onclick="enterGuestMode()" class="w-full flex flex-col items-center justify-center gap-1 px-6 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold shadow-lg transition">
+            <span class="text-lg">👤 Probar como invitado</span>
+            <span class="text-[10px] text-slate-500 font-normal">(Sin sincronización en nube)</span>
+        </button>
+
+        <p class="text-slate-600 text-xs mt-6">Con Google o Email tus datos se sincronizan en la nube</p>
+    </div>
+</div>
 </div>
 
 <div id="link-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 items-center justify-center p-4">
     <div class="glass modal-content p-8 rounded-3xl w-full max-w-md shadow-2xl">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-bold text-white">Nuevo Link</h3>
+            <h3 id="link-modal-title" class="text-xl font-bold text-white">Nuevo Link</h3>
             <span id="auto-status" class="text-[10px] text-blue-400 font-bold uppercase"></span>
         </div>
         <div class="space-y-4">
@@ -134,8 +190,173 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let SECTIONS = {};
 let openSections = new Set();
 let activeCategory = null, activeIndex = null, focusCategory = null, manageCategories = false, editingCategoryKey = null;
+let editingLinkIndex = null; // Para editar links
+let currentUser = null; // Usuario autenticado
+let isGuest = false; // Modo invitado (solo localStorage)
 const ICONS = ['📁','📚','🎬','🧠','⭐','🎯','🛠️','🧾','💡','📌','🗂️','🧩','🧪','🔖'];
 const COLORS = ['#4a9eff','#a78bfa','#fbbf24','#4ade80','#ef4444','#22d3ee','#f472b6'];
+
+// ================= AUTENTICACIÓN =================
+async function initAuth() {
+    // Escuchar cambios de autenticación
+    _supabase.auth.onAuthStateChange((event, session) => {
+        if (session?.user) {
+            currentUser = session.user;
+            updateAuthUI(true);
+            load();
+        } else {
+            currentUser = null;
+            updateAuthUI(false);
+        }
+    });
+
+    // Verificar sesión existente
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (session?.user) {
+        currentUser = session.user;
+        updateAuthUI(true);
+        load();
+    } else {
+        updateAuthUI(false);
+        // Cargar datos locales aunque no esté logueado
+        const s = localStorage.getItem('tabOrganizer');
+        if (s) { try { SECTIONS = JSON.parse(s); render(); } catch(e) {} }
+    }
+}
+
+function updateAuthUI(isLoggedIn) {
+    const authBtn = document.getElementById('auth-btn');
+    const userEmail = document.getElementById('user-email');
+    const welcomeScreen = document.getElementById('welcome-screen');
+
+    if (isLoggedIn && (currentUser || isGuest)) {
+        authBtn.textContent = 'Logout';
+        authBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
+        authBtn.classList.add('bg-red-600', 'hover:bg-red-500');
+
+        if (isGuest) {
+            userEmail.textContent = '👤 Invitado';
+        } else {
+            userEmail.textContent = currentUser.email;
+        }
+        userEmail.classList.remove('hidden');
+        welcomeScreen.classList.remove('modal-active');
+        welcomeScreen.classList.add('hidden');
+    } else {
+        authBtn.textContent = 'Login';
+        authBtn.classList.remove('bg-red-600', 'hover:bg-red-500');
+        authBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+        userEmail.classList.add('hidden');
+        welcomeScreen.classList.add('modal-active');
+        welcomeScreen.classList.remove('hidden');
+    }
+}
+
+async function loginWithGoogle() {
+    const { error } = await _supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: window.location.origin + window.location.pathname
+        }
+    });
+    if (error) {
+        console.error('Error de login:', error);
+        alert('Error al iniciar sesión: ' + error.message);
+    }
+}
+
+// Email/Password Authentication
+function showAuthError(msg) {
+    const el = document.getElementById('auth-error');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 5000);
+}
+
+async function signUpWithEmail() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+
+    if (!email || !password) {
+        showAuthError('Por favor ingresa email y contraseña');
+        return;
+    }
+    if (password.length < 6) {
+        showAuthError('La contraseña debe tener al menos 6 caracteres');
+        return;
+    }
+
+    const { data, error } = await _supabase.auth.signUp({
+        email,
+        password
+    });
+
+    if (error) {
+        console.error('Error signUp:', error);
+        showAuthError(error.message);
+    } else if (data.user && !data.session) {
+        showAuthError('Revisa tu email para confirmar tu cuenta');
+    }
+}
+
+async function signInWithEmail() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+
+    if (!email || !password) {
+        showAuthError('Por favor ingresa email y contraseña');
+        return;
+    }
+
+    const { data, error } = await _supabase.auth.signInWithPassword({
+        email,
+        password
+    });
+
+    if (error) {
+        console.error('Error signIn:', error);
+        showAuthError(error.message);
+    }
+}
+
+// Guest Mode - Solo localStorage
+function enterGuestMode() {
+    isGuest = true;
+    currentUser = null;
+    updateAuthUI(true);
+
+    // Cargar datos locales
+    const s = localStorage.getItem('tabOrganizer');
+    if (s) { try { SECTIONS = JSON.parse(s); } catch(e) {} }
+
+    render();
+    document.getElementById('cloud-status').innerText = "👤 Modo Invitado";
+    document.getElementById('cloud-status').style.color = "#fbbf24";
+}
+
+async function logout() {
+    if (!isGuest) {
+        const { error } = await _supabase.auth.signOut();
+        if (error) {
+            console.error('Error de logout:', error);
+        }
+    }
+    isGuest = false;
+    currentUser = null;
+    SECTIONS = {};
+    render();
+    updateAuthUI(false);
+}
+
+async function handleAuth() {
+    if (currentUser || isGuest) {
+        logout();
+    } else {
+        // Mostrar welcome screen
+        document.getElementById('welcome-screen').classList.add('modal-active');
+        document.getElementById('welcome-screen').classList.remove('hidden');
+    }
+}
 
 // ================= AUTO-METADATA =================
 let fetchTimeout;
@@ -168,32 +389,71 @@ async function fetchMetadata(url) {
 }
 
 // ================= PERSISTENCIA =================
-async function save(){ 
-    localStorage.setItem('tabOrganizer', JSON.stringify(SECTIONS)); 
+async function save(){
+    // Siempre guardar en localStorage como backup
+    localStorage.setItem('tabOrganizer', JSON.stringify(SECTIONS));
+
     const status = document.getElementById('cloud-status');
+
+    // Solo localStorage para modo invitado
+    if (isGuest) {
+        status.innerText = "👤 Modo Invitado";
+        status.style.color = "#fbbf24";
+        return;
+    }
+
+    // Solo sincronizar con la nube si hay usuario autenticado
+    if (!currentUser) {
+        status.innerText = "💾 Local";
+        status.style.color = "#fbbf24";
+        return;
+    }
+
     status.innerText = "☁️ Guardando...";
     status.style.color = "#60a5fa";
-    
-    const { error } = await _supabase.from('tab_organizer').upsert([{ 
-        id: 1, 
-        url: 'backup', 
-        title: 'FullData', 
-        category: JSON.stringify(SECTIONS) 
-    }]);
+
+    const { error } = await _supabase.from('tab_organizer').upsert([{
+        user_id: currentUser.id,
+        url: 'backup',
+        title: 'FullData',
+        category: JSON.stringify(SECTIONS)
+    }], { onConflict: 'user_id' });
 
     status.innerText = error ? "❌ Error Nube" : "✅ Sincronizado";
     status.style.color = error ? "#ef4444" : "#4ade80";
 }
 
 async function load(){
+    // Cargar desde localStorage primero
     const s = localStorage.getItem('tabOrganizer');
     if (s) { try { SECTIONS = JSON.parse(s); render(); } catch(e) {} }
 
-    const { data } = await _supabase.from('tab_organizer').select('category').eq('id', 1).maybeSingle();
+    // Solo localStorage para modo invitado
+    if (isGuest) {
+        document.getElementById('cloud-status').innerText = "👤 Modo Invitado";
+        document.getElementById('cloud-status').style.color = "#fbbf24";
+        return;
+    }
+
+    // Solo cargar de la nube si hay usuario autenticado
+    if (!currentUser) {
+        document.getElementById('cloud-status').innerText = "💾 Modo Local";
+        return;
+    }
+
+    const { data, error } = await _supabase
+        .from('tab_organizer')
+        .select('category')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+
     if (data?.category) {
         SECTIONS = JSON.parse(data.category);
+        localStorage.setItem('tabOrganizer', JSON.stringify(SECTIONS)); // Actualizar backup local
         render();
         document.getElementById('cloud-status').innerText = "✅ Datos Nube";
+    } else if (!error) {
+        document.getElementById('cloud-status').innerText = "🆕 Usuario Nuevo";
     }
 }
 
@@ -288,7 +548,8 @@ function renderLinks(k){
                         <input type="checkbox" ${isWatching ? 'checked' : ''} onchange="toggleWatching('${k}', ${i})">
                         <span class="slider"></span>
                     </label>
-                    <button class="text-red-500/40 hover:text-red-500 transition" onclick="deleteLink('${k}', ${i})">🗑️</button>
+                    <button class="text-blue-400/60 hover:text-blue-400 transition" onclick="editLink('${k}', ${i})" title="Editar">✏️</button>
+                    <button class="text-red-500/40 hover:text-red-500 transition" onclick="deleteLink('${k}', ${i})" title="Eliminar">🗑️</button>
                 </div>
             </div>
             ${embed ? `<button class="w-full py-1 rounded-lg bg-white/5 text-[9px] font-bold text-slate-500 uppercase hover:bg-white/10 transition" onclick="togglePreview('${pid}', '${embed.type}', '${embed.src}')">Ver Preview</button><div id="preview-${pid}"></div>` : ''}
@@ -355,10 +616,25 @@ function closeCategoryModal(){ document.getElementById('category-modal').classLi
 
 function addLink(k){
     activeCategory = k;
-    document.getElementById('link-url').value = ""; 
+    editingLinkIndex = null; // Modo agregar
+    document.getElementById('link-modal-title').textContent = 'Nuevo Link';
+    document.getElementById('link-url').value = "";
     document.getElementById('link-title').value = '';
     document.getElementById('link-desc').value = '';
     document.getElementById('link-icon-preview').src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+    document.getElementById('auto-status').innerText = "";
+    document.getElementById('link-modal').classList.add('modal-active');
+}
+
+function editLink(k, i){
+    activeCategory = k;
+    editingLinkIndex = i; // Modo editar
+    const link = SECTIONS[k].links[i];
+    document.getElementById('link-modal-title').textContent = 'Editar Link';
+    document.getElementById('link-url').value = link.url || '';
+    document.getElementById('link-title').value = link.title || '';
+    document.getElementById('link-desc').value = link.description || '';
+    document.getElementById('link-icon-preview').src = link.icon || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
     document.getElementById('auto-status').innerText = "";
     document.getElementById('link-modal').classList.add('modal-active');
 }
@@ -369,10 +645,18 @@ function saveLink(){
         title: document.getElementById('link-title').value || 'Sin Título',
         description: document.getElementById('link-desc').value,
         icon: document.getElementById('link-icon-preview').src,
-        isWatching: false
+        isWatching: editingLinkIndex !== null ? SECTIONS[activeCategory].links[editingLinkIndex].isWatching : false
     };
     if(!l.url) return;
-    SECTIONS[activeCategory].links.push(l);
+
+    if (editingLinkIndex !== null) {
+        // Modo editar: actualizar link existente
+        SECTIONS[activeCategory].links[editingLinkIndex] = l;
+    } else {
+        // Modo agregar: nuevo link
+        SECTIONS[activeCategory].links.push(l);
+    }
+
     save(); closeLinkModal(); render();
 }
 
@@ -401,7 +685,7 @@ function togglePreview(id, type, src){
 }
 
 // INICIO
-load();
+initAuth();
 render();
 </script>
 </body>
