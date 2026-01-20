@@ -79,6 +79,8 @@
             <span id="user-email" class="text-xs text-slate-400 hidden max-w-[120px] md:max-w-[180px] truncate"></span>
         </div>
         <button onclick="save()" title="Forzar Sincronización" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition">☁️</button>
+        <button onclick="openExportModal()" title="Exportar datos" class="px-3 md:px-4 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 transition text-sm font-medium">📤 Export</button>
+        <button onclick="openImportModal()" title="Importar datos" class="px-3 md:px-4 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 transition text-sm font-medium">📥 Import</button>
         <button id="manageBtn" onclick="toggleManageCategories()" class="px-3 md:px-4 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 transition text-sm font-medium">Gestionar</button>
         <button onclick="openCategoryModal()" class="px-3 md:px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-lg transition text-sm font-medium">+ Categoría</button>
         <button id="auth-btn" onclick="handleAuth()" class="px-3 md:px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg transition text-sm font-medium">Login</button>
@@ -179,6 +181,91 @@
             <button class="px-6 py-3 rounded-xl bg-slate-800 font-bold" onclick="closeCategoryModal()">Cancelar</button>
         </div>
     </div>
+</div>
+
+<!-- Modal Export -->
+<div id="export-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="glass modal-content p-8 rounded-3xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold text-white mb-2">📤 Exportar Datos</h3>
+        <p class="text-slate-500 text-sm mb-6">Selecciona las categorías que deseas exportar</p>
+
+        <div id="export-categories-list" class="space-y-2 mb-6 max-h-[300px] overflow-y-auto">
+            <!-- Se llena dinámicamente -->
+        </div>
+
+        <div class="flex gap-3 mb-4">
+            <button onclick="selectAllExport(true)" class="flex-1 px-3 py-2 rounded-xl text-xs font-bold text-blue-400 bg-blue-400/10 hover:bg-blue-400/20 transition">Seleccionar Todo</button>
+            <button onclick="selectAllExport(false)" class="flex-1 px-3 py-2 rounded-xl text-xs font-bold text-slate-400 bg-slate-700/50 hover:bg-slate-700 transition">Deseleccionar</button>
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="executeExport()" class="flex-1 bg-emerald-600 py-3 rounded-xl font-bold text-white hover:bg-emerald-500 transition">Exportar Seleccionadas</button>
+            <button onclick="closeExportModal()" class="px-6 py-3 rounded-xl bg-slate-800 font-bold hover:bg-slate-700 transition">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Import (File Picker) -->
+<div id="import-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="glass modal-content p-8 rounded-3xl w-full max-w-md shadow-2xl">
+        <h3 class="text-xl font-bold text-white mb-2">📥 Importar Datos</h3>
+        <p class="text-slate-500 text-sm mb-6">Selecciona un archivo .json exportado previamente</p>
+
+        <label class="block w-full p-8 border-2 border-dashed border-slate-600 rounded-2xl text-center cursor-pointer hover:border-blue-500 hover:bg-blue-500/5 transition mb-6">
+            <input type="file" id="import-file-input" accept=".json" class="hidden" onchange="handleImportFile(this.files[0])" />
+            <div class="text-4xl mb-2">📁</div>
+            <p class="text-slate-400 font-medium">Click para seleccionar archivo</p>
+            <p class="text-slate-600 text-xs mt-1">Solo archivos .json</p>
+        </label>
+
+        <p id="import-error" class="text-red-400 text-sm mb-4 hidden"></p>
+
+        <button onclick="closeImportModal()" class="w-full px-6 py-3 rounded-xl bg-slate-800 font-bold hover:bg-slate-700 transition">Cancelar</button>
+    </div>
+</div>
+
+<!-- Modal Import Preview -->
+<div id="import-preview-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="glass modal-content p-8 rounded-3xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold text-white mb-2">📋 Preview de Importación</h3>
+        <p class="text-slate-500 text-sm mb-6">Revisa los datos antes de importar</p>
+
+        <!-- Resumen -->
+        <div id="import-summary" class="bg-slate-800/50 rounded-xl p-4 mb-6 text-sm">
+            <!-- Se llena dinámicamente -->
+        </div>
+
+        <!-- Categorías nuevas -->
+        <div id="import-new-section" class="mb-6 hidden">
+            <h4 class="text-sm font-bold text-emerald-400 mb-3 flex items-center gap-2">
+                <span class="w-2 h-2 bg-emerald-400 rounded-full"></span> Categorías Nuevas
+            </h4>
+            <div id="import-new-list" class="space-y-2">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Conflictos -->
+        <div id="import-conflicts-section" class="mb-6 hidden">
+            <h4 class="text-sm font-bold text-amber-400 mb-3 flex items-center gap-2">
+                <span class="w-2 h-2 bg-amber-400 rounded-full"></span> Conflictos (ya existen)
+            </h4>
+            <div id="import-conflicts-list" class="space-y-3">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="executeImport()" class="flex-1 bg-emerald-600 py-3 rounded-xl font-bold text-white hover:bg-emerald-500 transition">Confirmar Import</button>
+            <button onclick="closeImportPreviewModal()" class="px-6 py-3 rounded-xl bg-slate-800 font-bold hover:bg-slate-700 transition">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Notificación Toast -->
+<div id="toast-notification" class="fixed bottom-6 right-6 bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
+    <span id="toast-icon">✅</span>
+    <span id="toast-message">Operación exitosa</span>
 </div>
 
 <script>
@@ -726,6 +813,368 @@ function togglePreview(id, type, src){
     const el = document.getElementById(`preview-${id}`);
     if (el.innerHTML) { el.innerHTML = ''; return; }
     el.innerHTML = `<div class="aspect-video bg-black rounded-xl overflow-hidden mt-3 border border-white/10">${type === 'file' ? `<video controls class="w-full h-full" src="${src}"></video>` : `<iframe class="w-full h-full" src="${src}" allowfullscreen></iframe>`}</div>`;
+}
+
+// ================= EXPORT/IMPORT =================
+let importData = null; // Datos parseados del archivo importado
+let importConflicts = {}; // Resolución de conflictos: { key: 'rename'|'overwrite'|'skip' }
+
+// Toast Notification
+function showToast(message, isError = false) {
+    const toast = document.getElementById('toast-notification');
+    const icon = document.getElementById('toast-icon');
+    const msg = document.getElementById('toast-message');
+
+    icon.textContent = isError ? '❌' : '✅';
+    msg.textContent = message;
+    toast.classList.remove('bg-emerald-600', 'bg-red-600');
+    toast.classList.add(isError ? 'bg-red-600' : 'bg-emerald-600');
+
+    toast.classList.remove('translate-y-20', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+
+    setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+    }, 3000);
+}
+
+// ===== EXPORT =====
+function openExportModal() {
+    const list = document.getElementById('export-categories-list');
+    list.innerHTML = '';
+
+    const keys = Object.keys(SECTIONS);
+    if (keys.length === 0) {
+        list.innerHTML = '<p class="text-slate-500 text-center py-4">No hay categorías para exportar</p>';
+    } else {
+        keys.forEach(key => {
+            const cat = SECTIONS[key];
+            const linksCount = cat.links?.length || 0;
+            list.innerHTML += `
+                <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 cursor-pointer transition">
+                    <input type="checkbox" class="export-checkbox w-5 h-5 rounded accent-blue-500" data-key="${key}" checked />
+                    <span class="text-xl">${cat.icon}</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-white font-medium truncate">${cat.name}</p>
+                        <p class="text-slate-500 text-xs">${linksCount} link${linksCount !== 1 ? 's' : ''}</p>
+                    </div>
+                </label>
+            `;
+        });
+    }
+
+    document.getElementById('export-modal').classList.add('modal-active');
+}
+
+function closeExportModal() {
+    document.getElementById('export-modal').classList.remove('modal-active');
+}
+
+function selectAllExport(select) {
+    document.querySelectorAll('.export-checkbox').forEach(cb => cb.checked = select);
+}
+
+function executeExport() {
+    const selectedKeys = [];
+    document.querySelectorAll('.export-checkbox:checked').forEach(cb => {
+        selectedKeys.push(cb.dataset.key);
+    });
+
+    if (selectedKeys.length === 0) {
+        showToast('Selecciona al menos una categoría', true);
+        return;
+    }
+
+    const exportCategories = {};
+    selectedKeys.forEach(key => {
+        exportCategories[key] = SECTIONS[key];
+    });
+
+    const exportData = {
+        version: "1.0",
+        exportDate: new Date().toISOString(),
+        totalCategories: selectedKeys.length,
+        categories: exportCategories
+    };
+
+    // Generar nombre de archivo
+    const date = new Date();
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const filename = `tab-organizer-export-${dateStr}.json`;
+
+    // Descargar archivo
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    closeExportModal();
+    showToast(`Exportadas ${selectedKeys.length} categorías`);
+}
+
+// ===== IMPORT =====
+function openImportModal() {
+    document.getElementById('import-file-input').value = '';
+    document.getElementById('import-error').classList.add('hidden');
+    document.getElementById('import-modal').classList.add('modal-active');
+}
+
+function closeImportModal() {
+    document.getElementById('import-modal').classList.remove('modal-active');
+}
+
+function showImportError(message) {
+    const el = document.getElementById('import-error');
+    el.textContent = message;
+    el.classList.remove('hidden');
+}
+
+function validateUrl(url) {
+    try {
+        new URL(url);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function handleImportFile(file) {
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+
+            // Validar estructura básica
+            if (!data.categories || typeof data.categories !== 'object') {
+                showImportError('Archivo inválido: falta el campo "categories"');
+                return;
+            }
+
+            if (!data.version) {
+                showImportError('Archivo inválido: falta el campo "version"');
+                return;
+            }
+
+            // Validar cada categoría y sus URLs
+            const keys = Object.keys(data.categories);
+            if (keys.length === 0) {
+                showImportError('El archivo no contiene categorías');
+                return;
+            }
+
+            let invalidUrls = [];
+            keys.forEach(key => {
+                const cat = data.categories[key];
+                if (!cat.name) {
+                    showImportError(`Categoría "${key}" no tiene nombre`);
+                    return;
+                }
+                if (cat.links && Array.isArray(cat.links)) {
+                    cat.links.forEach((link, i) => {
+                        if (link.url && !validateUrl(link.url)) {
+                            invalidUrls.push(`${cat.name}: ${link.url}`);
+                        }
+                    });
+                }
+            });
+
+            if (invalidUrls.length > 0) {
+                showImportError(`URLs inválidas encontradas:\n${invalidUrls.slice(0, 3).join('\n')}${invalidUrls.length > 3 ? `\n...y ${invalidUrls.length - 3} más` : ''}`);
+                return;
+            }
+
+            // Todo válido, guardar datos y mostrar preview
+            importData = data;
+            closeImportModal();
+            showImportPreview();
+
+        } catch (err) {
+            showImportError('Error al parsear JSON: ' + err.message);
+        }
+    };
+
+    reader.onerror = function() {
+        showImportError('Error al leer el archivo');
+    };
+
+    reader.readAsText(file);
+}
+
+function showImportPreview() {
+    if (!importData) return;
+
+    importConflicts = {};
+
+    const newCategories = [];
+    const conflicts = [];
+
+    // Detectar nuevas y conflictos por NOMBRE
+    const existingNames = {};
+    Object.keys(SECTIONS).forEach(key => {
+        existingNames[SECTIONS[key].name.toLowerCase()] = key;
+    });
+
+    Object.keys(importData.categories).forEach(importKey => {
+        const cat = importData.categories[importKey];
+        const nameLower = cat.name.toLowerCase();
+
+        if (existingNames[nameLower]) {
+            conflicts.push({
+                importKey,
+                existingKey: existingNames[nameLower],
+                name: cat.name,
+                linksCount: cat.links?.length || 0
+            });
+            importConflicts[importKey] = 'rename'; // Default: renombrar
+        } else {
+            newCategories.push({
+                importKey,
+                name: cat.name,
+                icon: cat.icon,
+                linksCount: cat.links?.length || 0
+            });
+        }
+    });
+
+    // Actualizar resumen
+    const summary = document.getElementById('import-summary');
+    summary.innerHTML = `
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-slate-400">Versión:</span>
+            <span class="text-white font-medium">${importData.version}</span>
+        </div>
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-slate-400">Fecha exportación:</span>
+            <span class="text-white font-medium">${new Date(importData.exportDate).toLocaleDateString()}</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-slate-400">Total categorías:</span>
+            <span class="text-white font-medium">${importData.totalCategories}</span>
+        </div>
+    `;
+
+    // Mostrar categorías nuevas
+    const newSection = document.getElementById('import-new-section');
+    const newList = document.getElementById('import-new-list');
+    if (newCategories.length > 0) {
+        newSection.classList.remove('hidden');
+        newList.innerHTML = newCategories.map(cat => `
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <span class="text-xl">${cat.icon || '📁'}</span>
+                <div class="flex-1 min-w-0">
+                    <p class="text-white font-medium truncate">${cat.name}</p>
+                    <p class="text-emerald-400 text-xs">${cat.linksCount} link${cat.linksCount !== 1 ? 's' : ''}</p>
+                </div>
+                <span class="text-emerald-400 text-xs font-bold">NUEVA</span>
+            </div>
+        `).join('');
+    } else {
+        newSection.classList.add('hidden');
+    }
+
+    // Mostrar conflictos
+    const conflictsSection = document.getElementById('import-conflicts-section');
+    const conflictsList = document.getElementById('import-conflicts-list');
+    if (conflicts.length > 0) {
+        conflictsSection.classList.remove('hidden');
+        conflictsList.innerHTML = conflicts.map(conf => `
+            <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="text-xl">${importData.categories[conf.importKey].icon || '📁'}</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-white font-medium truncate">${conf.name}</p>
+                        <p class="text-amber-400 text-xs">${conf.linksCount} link${conf.linksCount !== 1 ? 's' : ''}</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <label class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 cursor-pointer hover:bg-slate-700 transition text-xs">
+                        <input type="radio" name="conflict-${conf.importKey}" value="rename" checked onchange="importConflicts['${conf.importKey}']='rename'" class="accent-blue-500" />
+                        <span class="text-slate-300">Renombrar</span>
+                    </label>
+                    <label class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 cursor-pointer hover:bg-slate-700 transition text-xs">
+                        <input type="radio" name="conflict-${conf.importKey}" value="overwrite" onchange="importConflicts['${conf.importKey}']='overwrite'" class="accent-amber-500" />
+                        <span class="text-slate-300">Sobrescribir</span>
+                    </label>
+                    <label class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 cursor-pointer hover:bg-slate-700 transition text-xs">
+                        <input type="radio" name="conflict-${conf.importKey}" value="skip" onchange="importConflicts['${conf.importKey}']='skip'" class="accent-red-500" />
+                        <span class="text-slate-300">Saltar</span>
+                    </label>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        conflictsSection.classList.add('hidden');
+    }
+
+    document.getElementById('import-preview-modal').classList.add('modal-active');
+}
+
+function closeImportPreviewModal() {
+    document.getElementById('import-preview-modal').classList.remove('modal-active');
+    importData = null;
+    importConflicts = {};
+}
+
+async function executeImport() {
+    if (!importData) return;
+
+    // Mapear nombres existentes a keys
+    const existingNames = {};
+    Object.keys(SECTIONS).forEach(key => {
+        existingNames[SECTIONS[key].name.toLowerCase()] = key;
+    });
+
+    let imported = 0;
+    let skipped = 0;
+
+    Object.keys(importData.categories).forEach(importKey => {
+        const cat = importData.categories[importKey];
+        const nameLower = cat.name.toLowerCase();
+        const existingKey = existingNames[nameLower];
+
+        if (existingKey) {
+            // Es un conflicto
+            const resolution = importConflicts[importKey] || 'rename';
+
+            if (resolution === 'skip') {
+                skipped++;
+                return;
+            }
+
+            if (resolution === 'overwrite') {
+                SECTIONS[existingKey] = { ...cat };
+                imported++;
+                return;
+            }
+
+            if (resolution === 'rename') {
+                // Agregar como nueva con nombre modificado
+                const newCat = { ...cat, name: cat.name + ' (importado)' };
+                SECTIONS[Date.now() + '_' + importKey] = newCat;
+                imported++;
+                return;
+            }
+        } else {
+            // Es nueva, agregar directamente
+            SECTIONS[Date.now() + '_' + importKey] = { ...cat };
+            imported++;
+        }
+    });
+
+    // Guardar y sincronizar
+    await save();
+    render();
+
+    closeImportPreviewModal();
+    showToast(`Importación completada: ${imported} categorías${skipped > 0 ? `, ${skipped} saltadas` : ''}`);
 }
 
 // INICIO
