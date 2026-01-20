@@ -412,15 +412,57 @@ async function save(){
     status.innerText = "☁️ Guardando...";
     status.style.color = "#60a5fa";
 
-    const { error } = await _supabase.from('tab_organizer').upsert([{
-        user_id: currentUser.id,
-        url: 'backup',
-        title: 'FullData',
-        category: JSON.stringify(SECTIONS)
-    }], { onConflict: 'user_id' });
+    try {
+        // Verificar si ya existe un registro para este usuario
+        const { data: existing, error: selectError } = await _supabase
+            .from('tab_organizer')
+            .select('id')
+            .eq('user_id', currentUser.id)
+            .limit(1)
+            .maybeSingle();
 
-    status.innerText = error ? "❌ Error Nube" : "✅ Sincronizado";
-    status.style.color = error ? "#ef4444" : "#4ade80";
+        if (selectError) {
+            console.error('Error checking existing data:', selectError);
+            status.innerText = "❌ Error Nube";
+            status.style.color = "#ef4444";
+            return;
+        }
+
+        let saveError;
+
+        if (existing) {
+            // UPDATE: Ya existe un registro, actualizarlo
+            const { error } = await _supabase
+                .from('tab_organizer')
+                .update({
+                    url: 'backup',
+                    title: 'FullData',
+                    category: JSON.stringify(SECTIONS),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', existing.id);
+            saveError = error;
+        } else {
+            // INSERT: No existe registro, crear uno nuevo
+            const { error } = await _supabase
+                .from('tab_organizer')
+                .insert({
+                    user_id: currentUser.id,
+                    url: 'backup',
+                    title: 'FullData',
+                    category: JSON.stringify(SECTIONS)
+                });
+            saveError = error;
+        }
+
+        status.innerText = saveError ? "❌ Error Nube" : "✅ Sincronizado";
+        status.style.color = saveError ? "#ef4444" : "#4ade80";
+        if (saveError) console.error('Error saving:', saveError);
+    } catch (e) {
+        console.error('Save exception:', e);
+        status.innerText = "❌ Error Nube";
+        status.style.color = "#ef4444";
+    }
 }
 
 async function load(){
@@ -445,6 +487,8 @@ async function load(){
         .from('tab_organizer')
         .select('category')
         .eq('user_id', currentUser.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
     if (data?.category) {
