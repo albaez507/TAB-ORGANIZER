@@ -21,6 +21,11 @@
         backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.08);
     }
+    .glass-sidebar {
+        background: rgba(30, 41, 59, 0.85);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
     .glass-card {
         background: rgba(255, 255, 255, 0.03);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -37,7 +42,7 @@
         to { opacity: 1; transform: scale(1) translateY(0); }
     }
     .modal-content { animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    
+
     .smart-highlight {
         background: rgba(59, 130, 246, 0.12) !important;
         border-color: rgba(59, 130, 246, 0.5) !important;
@@ -49,7 +54,7 @@
         box-shadow: 0 0 25px rgba(34, 197, 94, 0.25);
     }
     .modal-active { display: flex !important; }
-    
+
     .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 34px; }
@@ -62,13 +67,81 @@
 
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+
+    /* Library sidebar styles */
+    .library-item {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .library-item:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+    .library-item.active {
+        background: rgba(59, 130, 246, 0.2);
+        border-color: rgba(59, 130, 246, 0.5);
+    }
+
+    /* Video Focus Mode */
+    .focus-modal {
+        background: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(20px);
+    }
+
+    /* Checkbox styles for status */
+    .status-checkbox {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+    }
+    .status-checkbox:checked {
+        background: #22c55e;
+        border-color: #22c55e;
+    }
+    .status-checkbox:checked::after {
+        content: '✓';
+        position: absolute;
+        color: white;
+        font-size: 10px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .status-checkbox.watched:checked { background: #3b82f6; border-color: #3b82f6; }
+    .status-checkbox.applied:checked { background: #22c55e; border-color: #22c55e; }
+
+    /* Save indicator */
+    @keyframes saveFlash {
+        0% { opacity: 0; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1); }
+        100% { opacity: 0; transform: scale(0.8); }
+    }
+    .save-indicator {
+        animation: saveFlash 1.5s ease-out;
+    }
+
+    /* Quick note input */
+    .quick-note-input {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.2s;
+    }
+    .quick-note-input:focus {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(59, 130, 246, 0.5);
+        outline: none;
+    }
 </style>
 </head>
-<body class="p-4 md:p-10">
-<div class="max-w-5xl mx-auto">
-<header class="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
+<body class="p-4 md:p-6">
+<div class="max-w-7xl mx-auto">
+<header class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
     <div>
-        <h1 class="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+        <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
             <span class="bg-blue-600/20 p-2 rounded-xl border border-blue-500/20">📑</span> Tab Organizer
         </h1>
         <p class="text-slate-500 text-sm mt-1">Tu centro de mando digital con IA de metadatos.</p>
@@ -87,7 +160,38 @@
     </div>
 </header>
 
-<div id="sections-container" class="space-y-6"></div>
+<!-- Mobile Library Selector -->
+<div id="mobile-library-selector" class="md:hidden mb-4">
+    <select id="mobile-library-dropdown" onchange="selectLibrary(this.value)" class="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl text-white outline-none focus:border-blue-500 transition">
+    </select>
+</div>
+
+<!-- Main Layout with Sidebar -->
+<div class="flex gap-6">
+    <!-- Library Sidebar (Desktop) -->
+    <aside id="library-sidebar" class="hidden md:block w-[180px] flex-shrink-0">
+        <div class="glass-sidebar rounded-2xl p-4 sticky top-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Librerías</h3>
+                <button onclick="openLibraryModal()" class="text-blue-400 hover:text-blue-300 transition text-lg" title="Nueva Librería">+</button>
+            </div>
+            <div id="library-list" class="space-y-1">
+                <!-- Libraries rendered here -->
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/5">
+                <label class="flex items-center gap-2 text-xs text-slate-500 cursor-pointer hover:text-slate-400 transition">
+                    <input type="checkbox" id="search-all-libraries" class="accent-blue-500" onchange="render()">
+                    <span>Buscar en todas</span>
+                </label>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 min-w-0">
+        <div id="sections-container" class="space-y-6"></div>
+    </main>
+</div>
 
 <!-- Pantalla de bienvenida para usuarios no logueados -->
 <div id="welcome-screen" class="hidden fixed inset-0 bg-slate-950/95 backdrop-blur-md z-40 items-center justify-center p-4 overflow-y-auto">
@@ -142,6 +246,7 @@
 </div>
 </div>
 
+<!-- Link Modal -->
 <div id="link-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 items-center justify-center p-4">
     <div class="glass modal-content p-8 rounded-3xl w-full max-w-md shadow-2xl">
         <div class="flex justify-between items-center mb-6">
@@ -150,14 +255,14 @@
         </div>
         <div class="space-y-4">
             <input id="link-url" oninput="fetchMetadata(this.value)" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl text-white outline-none focus:border-blue-500 transition" />
-            
+
             <div class="flex gap-3 items-center bg-slate-900/50 p-2 rounded-xl border border-slate-800">
                 <img id="link-icon-preview" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" class="w-10 h-10 rounded-lg bg-slate-700 object-contain">
                 <input id="link-title" placeholder="Título (Automático)" class="flex-1 bg-transparent text-white outline-none font-medium text-sm" />
             </div>
 
             <textarea id="link-desc" placeholder="Descripción (Automática)" rows="3" class="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl text-white outline-none focus:border-blue-500 transition text-sm"></textarea>
-            
+
             <div class="flex gap-3 pt-2">
                 <button class="flex-1 bg-blue-600 py-3 rounded-xl font-bold text-white hover:bg-blue-500 transition" onclick="saveLink()">Guardar Link</button>
                 <button class="px-6 py-3 rounded-xl bg-slate-800 font-bold hover:bg-slate-700 transition" onclick="closeLinkModal()">Cancelar</button>
@@ -166,6 +271,7 @@
     </div>
 </div>
 
+<!-- Category Modal -->
 <div id="category-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 items-center justify-center p-4">
     <div class="glass modal-content p-8 rounded-3xl w-full max-w-md shadow-2xl">
         <h3 id="category-modal-title" class="text-xl font-bold text-white mb-6">Ajustes de Categoría</h3>
@@ -183,11 +289,79 @@
     </div>
 </div>
 
+<!-- Library Modal -->
+<div id="library-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="glass modal-content p-8 rounded-3xl w-full max-w-md shadow-2xl">
+        <h3 id="library-modal-title" class="text-xl font-bold text-white mb-6">Nueva Librería</h3>
+        <div class="space-y-4 mb-6">
+            <input id="lib-name" placeholder="Nombre de la librería" class="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl text-white outline-none focus:border-blue-500" />
+        </div>
+        <p class="text-xs text-slate-500 mb-3">Selecciona un icono:</p>
+        <div class="flex flex-wrap gap-2 mb-6" id="lib-icon-grid"></div>
+        <div class="flex gap-3">
+            <button class="flex-1 bg-blue-600 py-3 rounded-xl font-bold text-white" onclick="saveLibrary()">Guardar</button>
+            <button class="px-6 py-3 rounded-xl bg-slate-800 font-bold" onclick="closeLibraryModal()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Video Focus Mode Modal -->
+<div id="video-focus-modal" class="hidden fixed inset-0 focus-modal z-50 items-center justify-center p-4">
+    <div class="w-full h-full max-w-7xl mx-auto flex flex-col md:flex-row gap-4 md:gap-6 py-4">
+        <!-- Close button -->
+        <button onclick="closeVideoFocusModal()" class="absolute top-4 left-4 md:top-6 md:left-6 z-10 p-2 rounded-lg bg-white/10 hover:bg-white/20 transition text-white text-xl" title="Cerrar (ESC)">✕</button>
+
+        <!-- Video Player Area -->
+        <div class="flex-1 flex items-center justify-center min-h-0">
+            <div id="video-focus-player" class="w-full aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                <!-- Video iframe/player inserted here -->
+            </div>
+        </div>
+
+        <!-- Side Panel -->
+        <div class="md:w-[300px] flex-shrink-0 glass rounded-2xl p-6 overflow-y-auto max-h-[40vh] md:max-h-full">
+            <h3 id="video-focus-title" class="text-lg font-bold text-white mb-4 line-clamp-2">Video Title</h3>
+
+            <div class="space-y-4">
+                <!-- Status Checkboxes -->
+                <div class="space-y-3">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Estado</p>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" id="focus-watched" class="status-checkbox watched" onchange="updateFocusStatus()">
+                        <span class="text-white group-hover:text-blue-400 transition">Visto</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" id="focus-applied" class="status-checkbox applied" onchange="updateFocusStatus()">
+                        <span class="text-white group-hover:text-emerald-400 transition">Aplicado</span>
+                    </label>
+                </div>
+
+                <!-- Quick Note -->
+                <div class="space-y-2">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Nota rápida</p>
+                    <textarea id="focus-note" placeholder="Escribe una nota... (max 100 chars)" maxlength="100" rows="3" class="w-full quick-note-input p-3 rounded-xl text-white text-sm resize-none" oninput="debounceSaveNote()"></textarea>
+                    <p class="text-[10px] text-slate-600 text-right"><span id="note-char-count">0</span>/100</p>
+                </div>
+
+                <!-- Save Indicator -->
+                <div id="focus-save-indicator" class="hidden text-center py-2">
+                    <span class="text-emerald-400 text-sm font-medium save-indicator">💾 Guardado</span>
+                </div>
+
+                <!-- Link -->
+                <div class="pt-4 border-t border-white/10">
+                    <a id="focus-link-url" href="#" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm truncate block">Abrir en nueva pestaña →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Export -->
 <div id="export-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 items-center justify-center p-4">
     <div class="glass modal-content p-8 rounded-3xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
         <h3 class="text-xl font-bold text-white mb-2">📤 Exportar Datos</h3>
-        <p class="text-slate-500 text-sm mb-6">Selecciona las categorías que deseas exportar</p>
+        <p class="text-slate-500 text-sm mb-6">Selecciona las librerías/categorías que deseas exportar</p>
 
         <div id="export-categories-list" class="space-y-2 mb-6 max-h-[300px] overflow-y-auto">
             <!-- Se llena dinámicamente -->
@@ -274,18 +448,105 @@ const SUPABASE_URL = 'https://rdipxnnqljdgcfmdemzi.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkaXB4bm5xbGpkZ2NmbWRlbXppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMzIyMzQsImV4cCI6MjA4MzkwODIzNH0.TSJFCV2DTzZchL_cLKPsMSB40bjbNuMW0ysVwf-Z7YA';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let SECTIONS = {};
+// NEW DATA STRUCTURE
+let DATA = {
+    libraries: {},
+    currentLibrary: null
+};
+
 let openSections = new Set();
 let activeCategory = null, activeIndex = null, focusCategory = null, manageCategories = false, editingCategoryKey = null;
-let editingLinkIndex = null; // Para editar links
-let currentUser = null; // Usuario autenticado
-let isGuest = false; // Modo invitado (solo localStorage)
+let editingLinkIndex = null;
+let editingLibraryKey = null;
+let currentUser = null;
+let isGuest = false;
+
+// Video focus mode state
+let focusLibrary = null;
+let focusCategory2 = null;
+let focusLinkIndex = null;
+let noteDebounceTimer = null;
+
 const ICONS = ['📁','📚','🎬','🧠','⭐','🎯','🛠️','🧾','💡','📌','🗂️','🧩','🧪','🔖'];
+const LIB_ICONS = ['📁','📚','💼','🏠','🎮','🎵','📖','💻','🎨','📷','✈️','🍳','💪','🎓','💰','❤️'];
 const COLORS = ['#4a9eff','#a78bfa','#fbbf24','#4ade80','#ef4444','#22d3ee','#f472b6'];
+
+// ================= MIGRATION =================
+function migrateOldData(oldData) {
+    // Check if already in new format
+    if (oldData.libraries) {
+        return oldData;
+    }
+
+    // Old format: { "categoryKey": { name, icon, color, links, ... } }
+    // New format: { libraries: { "libKey": { name, icon, categories: { ... } } }, currentLibrary: "libKey" }
+
+    const defaultLibKey = 'lib_general_' + Date.now();
+    const newData = {
+        libraries: {
+            [defaultLibKey]: {
+                name: 'General',
+                icon: '📁',
+                categories: {}
+            }
+        },
+        currentLibrary: defaultLibKey
+    };
+
+    // Migrate all categories to the "General" library
+    Object.keys(oldData).forEach(catKey => {
+        const cat = oldData[catKey];
+        if (cat && typeof cat === 'object' && cat.name) {
+            // Migrate links to new format with status
+            const migratedLinks = (cat.links || []).map(link => ({
+                url: link.url,
+                title: link.title,
+                description: link.description || '',
+                icon: link.icon,
+                status: {
+                    watched: link.isWatching || false,
+                    applied: false
+                },
+                quickNote: ''
+            }));
+
+            newData.libraries[defaultLibKey].categories[catKey] = {
+                name: cat.name,
+                icon: cat.icon || '📁',
+                color: cat.color || '#4a9eff',
+                progress: cat.progress || '',
+                description: cat.description || '',
+                task: cat.task || '',
+                links: migratedLinks
+            };
+        }
+    });
+
+    return newData;
+}
+
+function ensureDataStructure() {
+    if (!DATA.libraries) {
+        DATA = { libraries: {}, currentLibrary: null };
+    }
+
+    // Ensure at least one library exists
+    const libKeys = Object.keys(DATA.libraries);
+    if (libKeys.length === 0) {
+        const defaultKey = 'lib_default_' + Date.now();
+        DATA.libraries[defaultKey] = {
+            name: 'General',
+            icon: '📁',
+            categories: {}
+        };
+        DATA.currentLibrary = defaultKey;
+    } else if (!DATA.currentLibrary || !DATA.libraries[DATA.currentLibrary]) {
+        DATA.currentLibrary = libKeys[0];
+    }
+}
 
 // ================= AUTENTICACIÓN =================
 async function initAuth() {
-    // Escuchar cambios de autenticación
     _supabase.auth.onAuthStateChange((event, session) => {
         if (session?.user) {
             currentUser = session.user;
@@ -297,7 +558,6 @@ async function initAuth() {
         }
     });
 
-    // Verificar sesión existente
     const { data: { session } } = await _supabase.auth.getSession();
     if (session?.user) {
         currentUser = session.user;
@@ -305,9 +565,27 @@ async function initAuth() {
         load();
     } else {
         updateAuthUI(false);
-        // Cargar datos locales aunque no esté logueado
-        const s = localStorage.getItem('tabOrganizer');
-        if (s) { try { SECTIONS = JSON.parse(s); render(); } catch(e) {} }
+        loadFromLocalStorage();
+    }
+}
+
+function loadFromLocalStorage() {
+    const s = localStorage.getItem('tabOrganizer');
+    if (s) {
+        try {
+            const parsed = JSON.parse(s);
+            DATA = migrateOldData(parsed);
+            ensureDataStructure();
+
+            // Show migration notification if data was migrated
+            if (!parsed.libraries && Object.keys(parsed).length > 0) {
+                setTimeout(() => showToast('Categorías migradas a librería "General"'), 500);
+            }
+
+            render();
+        } catch(e) {
+            console.error('Error loading local data:', e);
+        }
     }
 }
 
@@ -352,7 +630,6 @@ async function loginWithGoogle() {
     }
 }
 
-// Email/Password Authentication
 function showAuthError(msg) {
     const el = document.getElementById('auth-error');
     el.textContent = msg;
@@ -373,10 +650,7 @@ async function signUpWithEmail() {
         return;
     }
 
-    const { data, error } = await _supabase.auth.signUp({
-        email,
-        password
-    });
+    const { data, error } = await _supabase.auth.signUp({ email, password });
 
     if (error) {
         console.error('Error signUp:', error);
@@ -395,10 +669,7 @@ async function signInWithEmail() {
         return;
     }
 
-    const { data, error } = await _supabase.auth.signInWithPassword({
-        email,
-        password
-    });
+    const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
         console.error('Error signIn:', error);
@@ -406,17 +677,11 @@ async function signInWithEmail() {
     }
 }
 
-// Guest Mode - Solo localStorage
 function enterGuestMode() {
     isGuest = true;
     currentUser = null;
     updateAuthUI(true);
-
-    // Cargar datos locales
-    const s = localStorage.getItem('tabOrganizer');
-    if (s) { try { SECTIONS = JSON.parse(s); } catch(e) {} }
-
-    render();
+    loadFromLocalStorage();
     document.getElementById('cloud-status').innerText = "👤 Modo Invitado";
     document.getElementById('cloud-status').style.color = "#fbbf24";
 }
@@ -424,13 +689,11 @@ function enterGuestMode() {
 async function logout() {
     if (!isGuest) {
         const { error } = await _supabase.auth.signOut();
-        if (error) {
-            console.error('Error de logout:', error);
-        }
+        if (error) console.error('Error de logout:', error);
     }
     isGuest = false;
     currentUser = null;
-    SECTIONS = {};
+    DATA = { libraries: {}, currentLibrary: null };
     render();
     updateAuthUI(false);
 }
@@ -439,7 +702,6 @@ async function handleAuth() {
     if (currentUser || isGuest) {
         logout();
     } else {
-        // Mostrar welcome screen
         document.getElementById('welcome-screen').classList.add('modal-active');
         document.getElementById('welcome-screen').classList.remove('hidden');
     }
@@ -449,7 +711,7 @@ async function handleAuth() {
 let fetchTimeout;
 async function fetchMetadata(url) {
     if (!url.startsWith('http')) return;
-    
+
     clearTimeout(fetchTimeout);
     fetchTimeout = setTimeout(async () => {
         const status = document.getElementById('auto-status');
@@ -477,19 +739,17 @@ async function fetchMetadata(url) {
 
 // ================= PERSISTENCIA =================
 async function save(){
-    // Siempre guardar en localStorage como backup
-    localStorage.setItem('tabOrganizer', JSON.stringify(SECTIONS));
+    ensureDataStructure();
+    localStorage.setItem('tabOrganizer', JSON.stringify(DATA));
 
     const status = document.getElementById('cloud-status');
 
-    // Solo localStorage para modo invitado
     if (isGuest) {
         status.innerText = "👤 Modo Invitado";
         status.style.color = "#fbbf24";
         return;
     }
 
-    // Solo sincronizar con la nube si hay usuario autenticado
     if (!currentUser) {
         status.innerText = "💾 Local";
         status.style.color = "#fbbf24";
@@ -500,7 +760,6 @@ async function save(){
     status.style.color = "#60a5fa";
 
     try {
-        // Verificar si ya existe un registro para este usuario
         const { data: existing, error: selectError } = await _supabase
             .from('tab_organizer')
             .select('id')
@@ -518,26 +777,24 @@ async function save(){
         let saveError;
 
         if (existing) {
-            // UPDATE: Ya existe un registro, actualizarlo
             const { error } = await _supabase
                 .from('tab_organizer')
                 .update({
                     url: 'backup',
                     title: 'FullData',
-                    category: JSON.stringify(SECTIONS),
+                    category: JSON.stringify(DATA),
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', existing.id);
             saveError = error;
         } else {
-            // INSERT: No existe registro, crear uno nuevo
             const { error } = await _supabase
                 .from('tab_organizer')
                 .insert({
                     user_id: currentUser.id,
                     url: 'backup',
                     title: 'FullData',
-                    category: JSON.stringify(SECTIONS)
+                    category: JSON.stringify(DATA)
                 });
             saveError = error;
         }
@@ -553,18 +810,14 @@ async function save(){
 }
 
 async function load(){
-    // Cargar desde localStorage primero
-    const s = localStorage.getItem('tabOrganizer');
-    if (s) { try { SECTIONS = JSON.parse(s); render(); } catch(e) {} }
+    loadFromLocalStorage();
 
-    // Solo localStorage para modo invitado
     if (isGuest) {
         document.getElementById('cloud-status').innerText = "👤 Modo Invitado";
         document.getElementById('cloud-status').style.color = "#fbbf24";
         return;
     }
 
-    // Solo cargar de la nube si hay usuario autenticado
     if (!currentUser) {
         document.getElementById('cloud-status').innerText = "💾 Modo Local";
         return;
@@ -579,8 +832,10 @@ async function load(){
         .maybeSingle();
 
     if (data?.category) {
-        SECTIONS = JSON.parse(data.category);
-        localStorage.setItem('tabOrganizer', JSON.stringify(SECTIONS)); // Actualizar backup local
+        const parsed = JSON.parse(data.category);
+        DATA = migrateOldData(parsed);
+        ensureDataStructure();
+        localStorage.setItem('tabOrganizer', JSON.stringify(DATA));
         render();
         document.getElementById('cloud-status').innerText = "✅ Datos Nube";
     } else if (!error) {
@@ -588,35 +843,218 @@ async function load(){
     }
 }
 
+// ================= LIBRARY FUNCTIONS =================
+function selectLibrary(libKey) {
+    if (DATA.libraries[libKey]) {
+        DATA.currentLibrary = libKey;
+        focusCategory = null;
+        save();
+        render();
+    }
+}
+
+function getCurrentLibrary() {
+    ensureDataStructure();
+    return DATA.libraries[DATA.currentLibrary];
+}
+
+function openLibraryModal(key = null) {
+    editingLibraryKey = key;
+    document.getElementById('library-modal-title').textContent = key ? 'Editar Librería' : 'Nueva Librería';
+    document.getElementById('lib-name').value = key ? DATA.libraries[key].name : '';
+
+    const selIcon = key ? DATA.libraries[key].icon : '📁';
+    renderLibIconPicker(selIcon);
+
+    document.getElementById('library-modal').classList.add('modal-active');
+}
+
+function closeLibraryModal() {
+    document.getElementById('library-modal').classList.remove('modal-active');
+    editingLibraryKey = null;
+}
+
+function renderLibIconPicker(selected) {
+    const grid = document.getElementById('lib-icon-grid');
+    grid.innerHTML = '';
+    LIB_ICONS.forEach(icon => {
+        const d = document.createElement('div');
+        d.className = `cursor-pointer p-2 rounded-xl text-xl bg-white/5 hover:bg-white/10 transition ${icon === selected ? 'ring-2 ring-blue-500' : ''}`;
+        d.textContent = icon;
+        d.onclick = () => renderLibIconPicker(icon);
+        if (icon === selected) d.id = 'selected-lib-icon';
+        grid.appendChild(d);
+    });
+}
+
+function saveLibrary() {
+    const name = document.getElementById('lib-name').value.trim();
+    if (!name) return;
+
+    const icon = document.getElementById('selected-lib-icon')?.textContent || '📁';
+
+    if (editingLibraryKey) {
+        DATA.libraries[editingLibraryKey].name = name;
+        DATA.libraries[editingLibraryKey].icon = icon;
+    } else {
+        const newKey = 'lib_' + Date.now();
+        DATA.libraries[newKey] = {
+            name,
+            icon,
+            categories: {}
+        };
+        DATA.currentLibrary = newKey;
+    }
+
+    save();
+    closeLibraryModal();
+    render();
+}
+
+function deleteLibrary(libKey) {
+    const libKeys = Object.keys(DATA.libraries);
+    if (libKeys.length <= 1) {
+        showToast('No puedes eliminar la única librería', true);
+        return;
+    }
+
+    const lib = DATA.libraries[libKey];
+    const catCount = Object.keys(lib.categories || {}).length;
+
+    if (!confirm(`¿Eliminar librería "${lib.name}"${catCount > 0 ? ` con ${catCount} categoría(s)` : ''}?`)) return;
+
+    delete DATA.libraries[libKey];
+
+    if (DATA.currentLibrary === libKey) {
+        DATA.currentLibrary = Object.keys(DATA.libraries)[0];
+    }
+
+    save();
+    render();
+}
+
 // ================= UI RENDER =================
-function render(){
+function render() {
+    ensureDataStructure();
+    renderLibrarySidebar();
+    renderMobileLibraryDropdown();
+    renderCategories();
+    document.getElementById('manageBtn').innerText = manageCategories ? 'Hecho' : 'Gestionar';
+}
+
+function renderLibrarySidebar() {
+    const list = document.getElementById('library-list');
+    list.innerHTML = '';
+
+    Object.keys(DATA.libraries).forEach(libKey => {
+        const lib = DATA.libraries[libKey];
+        const isActive = libKey === DATA.currentLibrary;
+        const catCount = Object.keys(lib.categories || {}).length;
+
+        const div = document.createElement('div');
+        div.className = `library-item p-3 rounded-xl border border-transparent ${isActive ? 'active' : ''}`;
+        div.innerHTML = `
+            <div class="flex items-center gap-2" onclick="selectLibrary('${libKey}')">
+                <span class="text-lg">${lib.icon}</span>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-white truncate">${lib.name}</p>
+                    <p class="text-[10px] text-slate-500">${catCount} cat.</p>
+                </div>
+            </div>
+            ${manageCategories ? `
+                <div class="flex gap-1 mt-2 pt-2 border-t border-white/5">
+                    <button onclick="event.stopPropagation(); openLibraryModal('${libKey}')" class="flex-1 text-[10px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 transition">Edit</button>
+                    <button onclick="event.stopPropagation(); deleteLibrary('${libKey}')" class="flex-1 text-[10px] px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition">Del</button>
+                </div>
+            ` : ''}
+        `;
+        list.appendChild(div);
+    });
+}
+
+function renderMobileLibraryDropdown() {
+    const dropdown = document.getElementById('mobile-library-dropdown');
+    dropdown.innerHTML = '';
+
+    Object.keys(DATA.libraries).forEach(libKey => {
+        const lib = DATA.libraries[libKey];
+        const option = document.createElement('option');
+        option.value = libKey;
+        option.textContent = `${lib.icon} ${lib.name}`;
+        option.selected = libKey === DATA.currentLibrary;
+        dropdown.appendChild(option);
+    });
+}
+
+function renderCategories() {
     const container = document.getElementById('sections-container');
     container.innerHTML = '';
 
-    Object.keys(SECTIONS).forEach(k => {
-        if (focusCategory && focusCategory !== k) return;
-        const s = SECTIONS[k];
-        const isOpen = openSections.has(k);
+    const currentLib = getCurrentLibrary();
+    if (!currentLib || !currentLib.categories) return;
+
+    const searchAll = document.getElementById('search-all-libraries')?.checked;
+
+    // Determine which categories to show
+    let categoriesToRender = [];
+
+    if (searchAll) {
+        // Show categories from all libraries
+        Object.keys(DATA.libraries).forEach(libKey => {
+            const lib = DATA.libraries[libKey];
+            Object.keys(lib.categories || {}).forEach(catKey => {
+                categoriesToRender.push({ libKey, catKey, category: lib.categories[catKey] });
+            });
+        });
+    } else {
+        // Show only current library's categories
+        Object.keys(currentLib.categories).forEach(catKey => {
+            categoriesToRender.push({
+                libKey: DATA.currentLibrary,
+                catKey,
+                category: currentLib.categories[catKey]
+            });
+        });
+    }
+
+    // Apply focus filter
+    if (focusCategory) {
+        categoriesToRender = categoriesToRender.filter(item => item.catKey === focusCategory);
+    }
+
+    if (categoriesToRender.length === 0) {
+        container.innerHTML = `
+            <div class="glass rounded-3xl p-12 text-center">
+                <p class="text-slate-500">No hay categorías en esta librería.</p>
+                <button onclick="openCategoryModal()" class="mt-4 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium transition">+ Crear Categoría</button>
+            </div>
+        `;
+        return;
+    }
+
+    categoriesToRender.forEach(({ libKey, catKey, category: s }) => {
+        const isOpen = openSections.has(catKey);
         const div = document.createElement('div');
         div.className = `glass rounded-3xl overflow-hidden border-l-[6px] shadow-lg mb-6 transition-all`;
         div.style.borderColor = s.color;
 
         div.innerHTML = `
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center p-6 cursor-pointer hover:bg-white/[0.02] transition" onclick="toggleSectionDisplay('${k}')">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center p-6 cursor-pointer hover:bg-white/[0.02] transition" onclick="toggleSectionDisplay('${catKey}')">
                 <div class="flex flex-col gap-1">
                     <div class="flex items-center gap-4">
                         <span class="text-3xl">${s.icon}</span>
                         <h2 class="text-xl font-bold text-white uppercase tracking-tight">${s.name}</h2>
                         ${s.progress ? `<span class="text-[10px] bg-blue-500/20 px-2 py-0.5 rounded text-blue-400 font-bold border border-blue-500/30 uppercase">${s.progress}</span>` : ''}
+                        ${searchAll ? `<span class="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-400">${DATA.libraries[libKey].icon} ${DATA.libraries[libKey].name}</span>` : ''}
                     </div>
                     ${s.description ? `<p class="text-xs text-slate-500 ml-12 mt-1 line-clamp-1">${s.description}</p>` : ''}
                 </div>
                 <div class="flex items-center gap-3 mt-4 md:mt-0" onclick="event.stopPropagation()">
-                    <button class="px-4 py-2 rounded-xl text-xs font-bold text-blue-400 bg-blue-400/10 hover:bg-blue-400/20 transition" onclick="addLink('${k}')">+ LINK</button>
-                    <button class="px-3 py-2 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-700 transition" onclick="toggleFocus('${k}')">${focusCategory===k?'EXIT':'FOCUS'}</button>
+                    <button class="px-4 py-2 rounded-xl text-xs font-bold text-blue-400 bg-blue-400/10 hover:bg-blue-400/20 transition" onclick="addLink('${libKey}', '${catKey}')">+ LINK</button>
+                    <button class="px-3 py-2 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-700 transition" onclick="toggleFocus('${catKey}')">${focusCategory===catKey?'EXIT':'FOCUS'}</button>
                     ${manageCategories ? `
-                        <button class="px-3 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 transition" onclick="openCategoryModal('${k}')">EDIT</button>
-                        <button class="px-3 py-2 rounded-xl text-xs font-bold bg-red-500/20 text-red-500 hover:bg-red-500/30 transition" onclick="deleteCategory('${k}')">DEL</button>
+                        <button class="px-3 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 transition" onclick="openCategoryModal('${libKey}', '${catKey}')">EDIT</button>
+                        <button class="px-3 py-2 rounded-xl text-xs font-bold bg-red-500/20 text-red-500 hover:bg-red-500/30 transition" onclick="deleteCategory('${libKey}', '${catKey}')">DEL</button>
                     ` : ''}
                 </div>
             </div>
@@ -628,24 +1066,26 @@ function render(){
                         <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Buscador inteligente</p>
                         <input class="w-full bg-transparent text-sm font-medium text-white outline-none focus:text-blue-400 transition"
                                value="${s.task || ''}" placeholder="Filtra links por palabra clave..."
-                               onkeydown="if(event.key==='Enter') { saveTask('${k}', this.value); this.blur(); }"
-                               onblur="saveTask('${k}', this.value)">
+                               onkeydown="if(event.key==='Enter') { saveTask('${libKey}', '${catKey}', this.value); this.blur(); }"
+                               onblur="saveTask('${libKey}', '${catKey}', this.value)">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    ${renderLinks(k)}
+                    ${renderLinks(libKey, catKey)}
                 </div>
             </div>
         `;
         container.appendChild(div);
     });
-    document.getElementById('manageBtn').innerText = manageCategories ? 'Hecho' : 'Gestionar';
 }
 
-function renderLinks(k){
-    const links = SECTIONS[k].links || [];
-    const taskText = (SECTIONS[k].task || '').toLowerCase().trim();
+function renderLinks(libKey, catKey) {
+    const category = DATA.libraries[libKey]?.categories[catKey];
+    if (!category) return '';
+
+    const links = category.links || [];
+    const taskText = (category.task || '').toLowerCase().trim();
     const taskWords = taskText.split(/\s+/).filter(w => w.length > 2);
 
     if (!links.length) return `<div class="col-span-full py-6 text-center text-slate-600 italic">Lista vacía.</div>`;
@@ -654,100 +1094,286 @@ function renderLinks(k){
         const titleMatch = taskWords.some(word => l.title.toLowerCase().includes(word));
         const descMatch = taskWords.some(word => (l.description || '').toLowerCase().includes(word));
         const isSmart = taskWords.length > 0 && (titleMatch || descMatch);
-        const isWatching = l.isWatching || false;
+        const isWatched = l.status?.watched || false;
+        const isApplied = l.status?.applied || false;
         const embed = getEmbedInfo(l.url);
-        const pid = `${k}-${i}`;
+        const pid = `${libKey}-${catKey}-${i}`;
 
         let cardClass = "glass-card p-4 rounded-2xl border flex flex-col gap-4 group ";
-        if (isWatching) cardClass += "watching-now";
-        else if (isSmart) cardClass += "smart-highlight";
+        if (isSmart) cardClass += "smart-highlight";
 
         return `
         <div class="${cardClass}" onclick="event.stopPropagation()">
-            <div class="flex justify-between items-center gap-3">
-                <div class="flex items-center gap-3 flex-1 min-w-0">
-                    <img src="${l.icon || 'https://www.google.com/s2/favicons?sz=64&domain=' + l.url}" class="w-10 h-10 rounded-lg bg-slate-800 object-contain p-1 border border-white/5 shadow-inner">
-                    <div class="truncate">
-                        <a href="${l.url}" target="_blank" class="text-sm font-bold ${isWatching ? 'text-green-400' : 'text-blue-400'} hover:underline block truncate">
-                            ${isWatching ? '🟢 ' : ''}${l.title}
+            <div class="flex justify-between items-start gap-3">
+                <div class="flex items-start gap-3 flex-1 min-w-0">
+                    <img src="${l.icon || 'https://www.google.com/s2/favicons?sz=64&domain=' + l.url}" class="w-10 h-10 rounded-lg bg-slate-800 object-contain p-1 border border-white/5 shadow-inner flex-shrink-0">
+                    <div class="min-w-0 flex-1">
+                        <a href="${l.url}" target="_blank" class="text-sm font-bold text-blue-400 hover:underline block truncate">
+                            ${l.title}
                         </a>
                         <p class="text-[10px] text-slate-500 truncate mt-0.5">${l.description || 'Sin detalles'}</p>
+
+                        <!-- Inline Status -->
+                        <div class="flex items-center gap-4 mt-2">
+                            <label class="flex items-center gap-1.5 cursor-pointer text-[10px]">
+                                <input type="checkbox" class="status-checkbox watched" ${isWatched ? 'checked' : ''} onchange="toggleLinkStatus('${libKey}', '${catKey}', ${i}, 'watched', this.checked)">
+                                <span class="${isWatched ? 'text-blue-400' : 'text-slate-500'}">Visto</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 cursor-pointer text-[10px]">
+                                <input type="checkbox" class="status-checkbox applied" ${isApplied ? 'checked' : ''} onchange="toggleLinkStatus('${libKey}', '${catKey}', ${i}, 'applied', this.checked)">
+                                <span class="${isApplied ? 'text-emerald-400' : 'text-slate-500'}">Aplicado</span>
+                            </label>
+                        </div>
+
+                        <!-- Quick Note Input -->
+                        <input type="text"
+                               value="${(l.quickNote || '').replace(/"/g, '&quot;')}"
+                               placeholder="Nota rápida..."
+                               maxlength="100"
+                               class="mt-2 w-full text-[10px] px-2 py-1 rounded quick-note-input text-slate-300"
+                               onchange="saveLinkNote('${libKey}', '${catKey}', ${i}, this.value)">
                     </div>
                 </div>
-                <div class="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all">
-                    <label class="switch" title="Actualmente viendo">
-                        <input type="checkbox" ${isWatching ? 'checked' : ''} onchange="toggleWatching('${k}', ${i})">
-                        <span class="slider"></span>
-                    </label>
-                    <button class="text-blue-400/60 hover:text-blue-400 transition" onclick="editLink('${k}', ${i})" title="Editar">✏️</button>
-                    <button class="text-red-500/40 hover:text-red-500 transition" onclick="deleteLink('${k}', ${i})" title="Eliminar">🗑️</button>
+                <div class="flex flex-col items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                    <button class="text-blue-400/60 hover:text-blue-400 transition" onclick="editLink('${libKey}', '${catKey}', ${i})" title="Editar">✏️</button>
+                    <button class="text-red-500/40 hover:text-red-500 transition" onclick="deleteLink('${libKey}', '${catKey}', ${i})" title="Eliminar">🗑️</button>
                 </div>
             </div>
-            ${embed ? `<button class="w-full py-1 rounded-lg bg-white/5 text-[9px] font-bold text-slate-500 uppercase hover:bg-white/10 transition" onclick="togglePreview('${pid}', '${embed.type}', '${embed.src}')">Ver Preview</button><div id="preview-${pid}"></div>` : ''}
+            ${embed ? `
+                <div class="flex gap-2">
+                    <button class="flex-1 py-1.5 rounded-lg bg-white/5 text-[9px] font-bold text-slate-500 uppercase hover:bg-white/10 transition" onclick="togglePreview('${pid}', '${embed.type}', '${embed.src}')">Ver Preview</button>
+                    <button class="px-3 py-1.5 rounded-lg bg-purple-500/20 text-[9px] font-bold text-purple-400 uppercase hover:bg-purple-500/30 transition" onclick="openVideoFocusModal('${libKey}', '${catKey}', ${i}, '${embed.type}', '${embed.src}')">🎬 Focus</button>
+                </div>
+                <div id="preview-${pid}"></div>
+            ` : ''}
         </div>`;
     }).join('');
 }
 
-// ================= LOGICA =================
-function toggleSectionDisplay(k) { if (openSections.has(k)) openSections.delete(k); else openSections.add(k); render(); }
-function saveTask(k, val) { SECTIONS[k].task = val; save(); render(); }
-function toggleWatching(k, i) {
-    SECTIONS[k].links.forEach((link, idx) => { if(idx !== i) link.isWatching = false; });
-    SECTIONS[k].links[i].isWatching = !SECTIONS[k].links[i].isWatching;
-    save(); render();
-}
-function toggleFocus(k){ focusCategory = (focusCategory === k) ? null : k; render(); }
-function toggleManageCategories(){ manageCategories = !manageCategories; render(); }
-function deleteCategory(k) { if(confirm(`¿Borrar categoría completa?`)) { delete SECTIONS[k]; save(); render(); } }
+// ================= LINK STATUS FUNCTIONS =================
+function toggleLinkStatus(libKey, catKey, linkIndex, field, value) {
+    const link = DATA.libraries[libKey]?.categories[catKey]?.links[linkIndex];
+    if (!link) return;
 
-function openCategoryModal(key=null){
-    editingCategoryKey = key;
-    document.getElementById('cat-name').value = key ? SECTIONS[key].name : '';
-    document.getElementById('cat-progress').value = key ? SECTIONS[key].progress : '';
-    document.getElementById('cat-desc').value = key ? SECTIONS[key].description : '';
-    renderPickers(key ? SECTIONS[key].icon : '📁', key ? SECTIONS[key].color : '#4a9eff');
+    if (!link.status) link.status = { watched: false, applied: false };
+    link.status[field] = value;
+
+    save();
+    showSaveIndicator();
+}
+
+function saveLinkNote(libKey, catKey, linkIndex, note) {
+    const link = DATA.libraries[libKey]?.categories[catKey]?.links[linkIndex];
+    if (!link) return;
+
+    link.quickNote = note.substring(0, 100);
+    save();
+    showSaveIndicator();
+}
+
+function showSaveIndicator() {
+    showToast('💾 Guardado', false);
+}
+
+// ================= VIDEO FOCUS MODE =================
+function openVideoFocusModal(libKey, catKey, linkIndex, type, src) {
+    focusLibrary = libKey;
+    focusCategory2 = catKey;
+    focusLinkIndex = linkIndex;
+
+    const link = DATA.libraries[libKey]?.categories[catKey]?.links[linkIndex];
+    if (!link) return;
+
+    // Set title
+    document.getElementById('video-focus-title').textContent = link.title || 'Video';
+
+    // Set status checkboxes
+    document.getElementById('focus-watched').checked = link.status?.watched || false;
+    document.getElementById('focus-applied').checked = link.status?.applied || false;
+
+    // Set note
+    const noteEl = document.getElementById('focus-note');
+    noteEl.value = link.quickNote || '';
+    document.getElementById('note-char-count').textContent = (link.quickNote || '').length;
+
+    // Set link URL
+    document.getElementById('focus-link-url').href = link.url;
+
+    // Set video player
+    const playerContainer = document.getElementById('video-focus-player');
+    if (type === 'youtube') {
+        playerContainer.innerHTML = `<iframe class="w-full h-full" src="${src}?autoplay=1" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
+    } else {
+        playerContainer.innerHTML = `<video controls autoplay class="w-full h-full" src="${src}"></video>`;
+    }
+
+    // Show modal
+    document.getElementById('video-focus-modal').classList.add('modal-active');
+
+    // Add ESC listener
+    document.addEventListener('keydown', handleFocusEsc);
+}
+
+function closeVideoFocusModal() {
+    document.getElementById('video-focus-modal').classList.remove('modal-active');
+    document.getElementById('video-focus-player').innerHTML = '';
+    document.removeEventListener('keydown', handleFocusEsc);
+    focusLibrary = null;
+    focusCategory2 = null;
+    focusLinkIndex = null;
+}
+
+function handleFocusEsc(e) {
+    if (e.key === 'Escape') closeVideoFocusModal();
+}
+
+function updateFocusStatus() {
+    if (focusLibrary === null) return;
+
+    const link = DATA.libraries[focusLibrary]?.categories[focusCategory2]?.links[focusLinkIndex];
+    if (!link) return;
+
+    if (!link.status) link.status = { watched: false, applied: false };
+    link.status.watched = document.getElementById('focus-watched').checked;
+    link.status.applied = document.getElementById('focus-applied').checked;
+
+    save();
+    showFocusSaveIndicator();
+    render();
+}
+
+function debounceSaveNote() {
+    const noteEl = document.getElementById('focus-note');
+    document.getElementById('note-char-count').textContent = noteEl.value.length;
+
+    clearTimeout(noteDebounceTimer);
+    noteDebounceTimer = setTimeout(() => {
+        if (focusLibrary === null) return;
+
+        const link = DATA.libraries[focusLibrary]?.categories[focusCategory2]?.links[focusLinkIndex];
+        if (!link) return;
+
+        link.quickNote = noteEl.value.substring(0, 100);
+        save();
+        showFocusSaveIndicator();
+        render();
+    }, 2000);
+}
+
+function showFocusSaveIndicator() {
+    const indicator = document.getElementById('focus-save-indicator');
+    indicator.classList.remove('hidden');
+    setTimeout(() => indicator.classList.add('hidden'), 1500);
+}
+
+// ================= LOGICA =================
+function toggleSectionDisplay(k) {
+    if (openSections.has(k)) openSections.delete(k);
+    else openSections.add(k);
+    render();
+}
+
+function saveTask(libKey, catKey, val) {
+    if (DATA.libraries[libKey]?.categories[catKey]) {
+        DATA.libraries[libKey].categories[catKey].task = val;
+        save();
+        render();
+    }
+}
+
+function toggleFocus(k) {
+    focusCategory = (focusCategory === k) ? null : k;
+    render();
+}
+
+function toggleManageCategories() {
+    manageCategories = !manageCategories;
+    render();
+}
+
+function deleteCategory(libKey, catKey) {
+    if (confirm(`¿Borrar categoría completa?`)) {
+        delete DATA.libraries[libKey].categories[catKey];
+        save();
+        render();
+    }
+}
+
+let editingLibKey = null;
+
+function openCategoryModal(libKey = null, catKey = null) {
+    editingLibKey = libKey || DATA.currentLibrary;
+    editingCategoryKey = catKey;
+
+    const category = catKey ? DATA.libraries[editingLibKey]?.categories[catKey] : null;
+
+    document.getElementById('category-modal-title').textContent = catKey ? 'Editar Categoría' : 'Nueva Categoría';
+    document.getElementById('cat-name').value = category ? category.name : '';
+    document.getElementById('cat-progress').value = category ? category.progress : '';
+    document.getElementById('cat-desc').value = category ? category.description : '';
+
+    renderPickers(category ? category.icon : '📁', category ? category.color : '#4a9eff');
     document.getElementById('category-modal').classList.add('modal-active');
 }
 
-function renderPickers(selI, selC){
-    const ig = document.getElementById('icon-grid'); ig.innerHTML = '';
+function renderPickers(selI, selC) {
+    const ig = document.getElementById('icon-grid');
+    ig.innerHTML = '';
     ICONS.forEach(i => {
         const d = document.createElement('div');
         d.className = `cursor-pointer p-2 rounded-xl text-xl bg-white/5 hover:bg-white/10 ${i===selI ? 'ring-2 ring-blue-500' : ''}`;
-        d.textContent = i; d.onclick = () => renderPickers(i, selC);
-        ig.appendChild(d); if(i===selI) d.id = "selected-icon";
+        d.textContent = i;
+        d.onclick = () => renderPickers(i, selC);
+        ig.appendChild(d);
+        if (i===selI) d.id = "selected-icon";
     });
-    const cg = document.getElementById('color-grid'); cg.innerHTML = '';
+    const cg = document.getElementById('color-grid');
+    cg.innerHTML = '';
     COLORS.forEach(c => {
         const d = document.createElement('div');
         d.className = `w-8 h-8 rounded-full cursor-pointer border-2 transition hover:scale-110 ${c===selC ? 'border-white' : 'border-transparent'}`;
-        d.style.background = c; d.onclick = () => renderPickers(selI, c);
-        cg.appendChild(d); if(c===selC) d.id = "selected-color";
+        d.style.background = c;
+        d.onclick = () => renderPickers(selI, c);
+        cg.appendChild(d);
+        if (c===selC) d.id = "selected-color";
     });
 }
 
-function saveCategory(){
+function saveCategory() {
     const name = document.getElementById('cat-name').value.trim();
     if (!name) return;
+
     const data = {
         name,
         icon: document.getElementById('selected-icon').textContent,
         color: document.getElementById('selected-color').style.backgroundColor,
         progress: document.getElementById('cat-progress').value,
         description: document.getElementById('cat-desc').value,
-        links: editingCategoryKey ? SECTIONS[editingCategoryKey].links : [],
-        task: editingCategoryKey ? SECTIONS[editingCategoryKey].task : ''
+        links: editingCategoryKey ? DATA.libraries[editingLibKey].categories[editingCategoryKey].links : [],
+        task: editingCategoryKey ? DATA.libraries[editingLibKey].categories[editingCategoryKey].task : ''
     };
-    if (editingCategoryKey) SECTIONS[editingCategoryKey] = data;
-    else SECTIONS[Date.now()] = data;
-    save(); closeCategoryModal(); render();
+
+    if (editingCategoryKey) {
+        DATA.libraries[editingLibKey].categories[editingCategoryKey] = data;
+    } else {
+        DATA.libraries[editingLibKey].categories['cat_' + Date.now()] = data;
+    }
+
+    save();
+    closeCategoryModal();
+    render();
 }
 
-function closeCategoryModal(){ document.getElementById('category-modal').classList.remove('modal-active'); }
+function closeCategoryModal() {
+    document.getElementById('category-modal').classList.remove('modal-active');
+}
 
-function addLink(k){
-    activeCategory = k;
-    editingLinkIndex = null; // Modo agregar
+let activeLinkLibKey = null;
+
+function addLink(libKey, catKey) {
+    activeLinkLibKey = libKey;
+    activeCategory = catKey;
+    editingLinkIndex = null;
     document.getElementById('link-modal-title').textContent = 'Nuevo Link';
     document.getElementById('link-url').value = "";
     document.getElementById('link-title').value = '';
@@ -757,10 +1383,11 @@ function addLink(k){
     document.getElementById('link-modal').classList.add('modal-active');
 }
 
-function editLink(k, i){
-    activeCategory = k;
-    editingLinkIndex = i; // Modo editar
-    const link = SECTIONS[k].links[i];
+function editLink(libKey, catKey, i) {
+    activeLinkLibKey = libKey;
+    activeCategory = catKey;
+    editingLinkIndex = i;
+    const link = DATA.libraries[libKey].categories[catKey].links[i];
     document.getElementById('link-modal-title').textContent = 'Editar Link';
     document.getElementById('link-url').value = link.url || '';
     document.getElementById('link-title').value = link.title || '';
@@ -770,56 +1397,71 @@ function editLink(k, i){
     document.getElementById('link-modal').classList.add('modal-active');
 }
 
-function saveLink(){
+function saveLink() {
+    const existingLink = editingLinkIndex !== null
+        ? DATA.libraries[activeLinkLibKey].categories[activeCategory].links[editingLinkIndex]
+        : null;
+
     const l = {
         url: document.getElementById('link-url').value,
         title: document.getElementById('link-title').value || 'Sin Título',
         description: document.getElementById('link-desc').value,
         icon: document.getElementById('link-icon-preview').src,
-        isWatching: editingLinkIndex !== null ? SECTIONS[activeCategory].links[editingLinkIndex].isWatching : false
+        status: existingLink?.status || { watched: false, applied: false },
+        quickNote: existingLink?.quickNote || ''
     };
-    if(!l.url) return;
+
+    if (!l.url) return;
 
     if (editingLinkIndex !== null) {
-        // Modo editar: actualizar link existente
-        SECTIONS[activeCategory].links[editingLinkIndex] = l;
+        DATA.libraries[activeLinkLibKey].categories[activeCategory].links[editingLinkIndex] = l;
     } else {
-        // Modo agregar: nuevo link
-        SECTIONS[activeCategory].links.push(l);
+        DATA.libraries[activeLinkLibKey].categories[activeCategory].links.push(l);
     }
 
-    save(); closeLinkModal(); render();
+    save();
+    closeLinkModal();
+    render();
 }
 
-function closeLinkModal(){ document.getElementById('link-modal').classList.remove('modal-active'); }
-function deleteLink(k, i){ if(confirm('¿Borrar link?')) { SECTIONS[k].links.splice(i, 1); save(); render(); } }
+function closeLinkModal() {
+    document.getElementById('link-modal').classList.remove('modal-active');
+}
 
-function getYouTubeVideoId(url){
-    try{
+function deleteLink(libKey, catKey, i) {
+    if (confirm('¿Borrar link?')) {
+        DATA.libraries[libKey].categories[catKey].links.splice(i, 1);
+        save();
+        render();
+    }
+}
+
+function getYouTubeVideoId(url) {
+    try {
         const u = new URL(url);
         if (u.hostname.includes('youtu.be')) return u.pathname.replace('/','');
         if (u.hostname.includes('youtube.com')) return u.searchParams.get('v');
-    } catch(e){} return null;
+    } catch(e) {}
+    return null;
 }
 
-function getEmbedInfo(url){
+function getEmbedInfo(url) {
     const ytId = getYouTubeVideoId(url);
     if (ytId) return { type:'youtube', src:`https://www.youtube-nocookie.com/embed/${ytId}` };
     if (url.match(/\.(mp4|webm)$/i)) return { type:'file', src:url };
     return null;
 }
 
-function togglePreview(id, type, src){
+function togglePreview(id, type, src) {
     const el = document.getElementById(`preview-${id}`);
     if (el.innerHTML) { el.innerHTML = ''; return; }
     el.innerHTML = `<div class="aspect-video bg-black rounded-xl overflow-hidden mt-3 border border-white/10">${type === 'file' ? `<video controls class="w-full h-full" src="${src}"></video>` : `<iframe class="w-full h-full" src="${src}" allowfullscreen></iframe>`}</div>`;
 }
 
 // ================= EXPORT/IMPORT =================
-let importData = null; // Datos parseados del archivo importado
-let importConflicts = {}; // Resolución de conflictos: { key: 'rename'|'overwrite'|'skip' }
+let importData = null;
+let importConflicts = {};
 
-// Toast Notification
 function showToast(message, isError = false) {
     const toast = document.getElementById('toast-notification');
     const icon = document.getElementById('toast-icon');
@@ -844,27 +1486,50 @@ function openExportModal() {
     const list = document.getElementById('export-categories-list');
     list.innerHTML = '';
 
-    const keys = Object.keys(SECTIONS);
-    if (keys.length === 0) {
-        list.innerHTML = '<p class="text-slate-500 text-center py-4">No hay categorías para exportar</p>';
-    } else {
-        keys.forEach(key => {
-            const cat = SECTIONS[key];
-            const linksCount = cat.links?.length || 0;
-            list.innerHTML += `
-                <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 cursor-pointer transition">
-                    <input type="checkbox" class="export-checkbox w-5 h-5 rounded accent-blue-500" data-key="${key}" checked />
-                    <span class="text-xl">${cat.icon}</span>
+    Object.keys(DATA.libraries).forEach(libKey => {
+        const lib = DATA.libraries[libKey];
+        const catKeys = Object.keys(lib.categories || {});
+
+        // Library header
+        list.innerHTML += `
+            <div class="p-3 rounded-xl bg-slate-700/30 border border-slate-600/50 mb-2">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" class="export-lib-checkbox w-5 h-5 rounded accent-blue-500" data-lib-key="${libKey}" checked onchange="toggleLibraryExport('${libKey}', this.checked)" />
+                    <span class="text-xl">${lib.icon}</span>
                     <div class="flex-1 min-w-0">
-                        <p class="text-white font-medium truncate">${cat.name}</p>
-                        <p class="text-slate-500 text-xs">${linksCount} link${linksCount !== 1 ? 's' : ''}</p>
+                        <p class="text-white font-medium">${lib.name}</p>
+                        <p class="text-slate-500 text-xs">${catKeys.length} categoría(s)</p>
                     </div>
                 </label>
-            `;
-        });
+                <div class="ml-8 mt-2 space-y-1" id="export-lib-${libKey}">
+                    ${catKeys.map(catKey => {
+                        const cat = lib.categories[catKey];
+                        const linksCount = cat.links?.length || 0;
+                        return `
+                            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer transition text-sm">
+                                <input type="checkbox" class="export-cat-checkbox w-4 h-4 rounded accent-blue-500" data-lib-key="${libKey}" data-cat-key="${catKey}" checked />
+                                <span>${cat.icon}</span>
+                                <span class="text-slate-300 truncate flex-1">${cat.name}</span>
+                                <span class="text-slate-500 text-xs">${linksCount} links</span>
+                            </label>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    });
+
+    if (Object.keys(DATA.libraries).length === 0) {
+        list.innerHTML = '<p class="text-slate-500 text-center py-4">No hay datos para exportar</p>';
     }
 
     document.getElementById('export-modal').classList.add('modal-active');
+}
+
+function toggleLibraryExport(libKey, checked) {
+    document.querySelectorAll(`#export-lib-${libKey} .export-cat-checkbox`).forEach(cb => {
+        cb.checked = checked;
+    });
 }
 
 function closeExportModal() {
@@ -872,38 +1537,53 @@ function closeExportModal() {
 }
 
 function selectAllExport(select) {
-    document.querySelectorAll('.export-checkbox').forEach(cb => cb.checked = select);
+    document.querySelectorAll('.export-lib-checkbox, .export-cat-checkbox').forEach(cb => cb.checked = select);
 }
 
 function executeExport() {
-    const selectedKeys = [];
-    document.querySelectorAll('.export-checkbox:checked').forEach(cb => {
-        selectedKeys.push(cb.dataset.key);
+    const exportData = {
+        version: "2.0",
+        exportDate: new Date().toISOString(),
+        libraries: {}
+    };
+
+    // Collect selected libraries and categories
+    document.querySelectorAll('.export-lib-checkbox:checked').forEach(libCb => {
+        const libKey = libCb.dataset.libKey;
+        const lib = DATA.libraries[libKey];
+
+        exportData.libraries[libKey] = {
+            name: lib.name,
+            icon: lib.icon,
+            categories: {}
+        };
+
+        document.querySelectorAll(`.export-cat-checkbox[data-lib-key="${libKey}"]:checked`).forEach(catCb => {
+            const catKey = catCb.dataset.catKey;
+            exportData.libraries[libKey].categories[catKey] = lib.categories[catKey];
+        });
     });
 
-    if (selectedKeys.length === 0) {
-        showToast('Selecciona al menos una categoría', true);
+    const totalLibs = Object.keys(exportData.libraries).length;
+    let totalCats = 0;
+    Object.values(exportData.libraries).forEach(lib => {
+        totalCats += Object.keys(lib.categories).length;
+    });
+
+    if (totalLibs === 0) {
+        showToast('Selecciona al menos una librería', true);
         return;
     }
 
-    const exportCategories = {};
-    selectedKeys.forEach(key => {
-        exportCategories[key] = SECTIONS[key];
-    });
+    exportData.totalLibraries = totalLibs;
+    exportData.totalCategories = totalCats;
 
-    const exportData = {
-        version: "1.0",
-        exportDate: new Date().toISOString(),
-        totalCategories: selectedKeys.length,
-        categories: exportCategories
-    };
-
-    // Generar nombre de archivo
+    // Generate filename
     const date = new Date();
     const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const filename = `tab-organizer-export-${dateStr}.json`;
 
-    // Descargar archivo
+    // Download file
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -915,7 +1595,7 @@ function executeExport() {
     URL.revokeObjectURL(url);
 
     closeExportModal();
-    showToast(`Exportadas ${selectedKeys.length} categorías`);
+    showToast(`Exportadas ${totalLibs} librería(s) con ${totalCats} categoría(s)`);
 }
 
 // ===== IMPORT =====
@@ -952,46 +1632,48 @@ function handleImportFile(file) {
         try {
             const data = JSON.parse(e.target.result);
 
-            // Validar estructura básica
-            if (!data.categories || typeof data.categories !== 'object') {
-                showImportError('Archivo inválido: falta el campo "categories"');
+            // Check if it's old format (v1) or new format (v2)
+            if (data.categories && !data.libraries) {
+                // Old format - convert to new format for import
+                data.libraries = {
+                    ['imported_' + Date.now()]: {
+                        name: 'Importado',
+                        icon: '📥',
+                        categories: {}
+                    }
+                };
+
+                Object.keys(data.categories).forEach(catKey => {
+                    const cat = data.categories[catKey];
+                    // Migrate links to new format
+                    const migratedLinks = (cat.links || []).map(link => ({
+                        url: link.url,
+                        title: link.title,
+                        description: link.description || '',
+                        icon: link.icon,
+                        status: {
+                            watched: link.isWatching || false,
+                            applied: false
+                        },
+                        quickNote: ''
+                    }));
+
+                    data.libraries[Object.keys(data.libraries)[0]].categories[catKey] = {
+                        ...cat,
+                        links: migratedLinks
+                    };
+                });
+
+                delete data.categories;
+                data.version = "2.0";
+            }
+
+            // Validate new format structure
+            if (!data.libraries || typeof data.libraries !== 'object') {
+                showImportError('Archivo inválido: estructura no reconocida');
                 return;
             }
 
-            if (!data.version) {
-                showImportError('Archivo inválido: falta el campo "version"');
-                return;
-            }
-
-            // Validar cada categoría y sus URLs
-            const keys = Object.keys(data.categories);
-            if (keys.length === 0) {
-                showImportError('El archivo no contiene categorías');
-                return;
-            }
-
-            let invalidUrls = [];
-            keys.forEach(key => {
-                const cat = data.categories[key];
-                if (!cat.name) {
-                    showImportError(`Categoría "${key}" no tiene nombre`);
-                    return;
-                }
-                if (cat.links && Array.isArray(cat.links)) {
-                    cat.links.forEach((link, i) => {
-                        if (link.url && !validateUrl(link.url)) {
-                            invalidUrls.push(`${cat.name}: ${link.url}`);
-                        }
-                    });
-                }
-            });
-
-            if (invalidUrls.length > 0) {
-                showImportError(`URLs inválidas encontradas:\n${invalidUrls.slice(0, 3).join('\n')}${invalidUrls.length > 3 ? `\n...y ${invalidUrls.length - 3} más` : ''}`);
-                return;
-            }
-
-            // Todo válido, guardar datos y mostrar preview
             importData = data;
             closeImportModal();
             showImportPreview();
@@ -1013,65 +1695,85 @@ function showImportPreview() {
 
     importConflicts = {};
 
-    const newCategories = [];
-    const conflicts = [];
+    let totalLibs = Object.keys(importData.libraries).length;
+    let totalCats = 0;
+    let totalLinks = 0;
 
-    // Detectar nuevas y conflictos por NOMBRE
-    const existingNames = {};
-    Object.keys(SECTIONS).forEach(key => {
-        existingNames[SECTIONS[key].name.toLowerCase()] = key;
+    Object.values(importData.libraries).forEach(lib => {
+        const cats = Object.keys(lib.categories || {}).length;
+        totalCats += cats;
+        Object.values(lib.categories || {}).forEach(cat => {
+            totalLinks += (cat.links || []).length;
+        });
     });
 
-    Object.keys(importData.categories).forEach(importKey => {
-        const cat = importData.categories[importKey];
-        const nameLower = cat.name.toLowerCase();
-
-        if (existingNames[nameLower]) {
-            conflicts.push({
-                importKey,
-                existingKey: existingNames[nameLower],
-                name: cat.name,
-                linksCount: cat.links?.length || 0
-            });
-            importConflicts[importKey] = 'rename'; // Default: renombrar
-        } else {
-            newCategories.push({
-                importKey,
-                name: cat.name,
-                icon: cat.icon,
-                linksCount: cat.links?.length || 0
-            });
-        }
-    });
-
-    // Actualizar resumen
+    // Update summary
     const summary = document.getElementById('import-summary');
     summary.innerHTML = `
         <div class="flex justify-between items-center mb-2">
             <span class="text-slate-400">Versión:</span>
-            <span class="text-white font-medium">${importData.version}</span>
+            <span class="text-white font-medium">${importData.version || '1.0'}</span>
         </div>
         <div class="flex justify-between items-center mb-2">
             <span class="text-slate-400">Fecha exportación:</span>
-            <span class="text-white font-medium">${new Date(importData.exportDate).toLocaleDateString()}</span>
+            <span class="text-white font-medium">${importData.exportDate ? new Date(importData.exportDate).toLocaleDateString() : 'N/A'}</span>
+        </div>
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-slate-400">Librerías:</span>
+            <span class="text-white font-medium">${totalLibs}</span>
+        </div>
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-slate-400">Categorías:</span>
+            <span class="text-white font-medium">${totalCats}</span>
         </div>
         <div class="flex justify-between items-center">
-            <span class="text-slate-400">Total categorías:</span>
-            <span class="text-white font-medium">${importData.totalCategories}</span>
+            <span class="text-slate-400">Links totales:</span>
+            <span class="text-white font-medium">${totalLinks}</span>
         </div>
     `;
 
-    // Mostrar categorías nuevas
+    // Check for conflicts (libraries with same name)
+    const existingLibNames = {};
+    Object.keys(DATA.libraries).forEach(key => {
+        existingLibNames[DATA.libraries[key].name.toLowerCase()] = key;
+    });
+
+    const newLibraries = [];
+    const conflicts = [];
+
+    Object.keys(importData.libraries).forEach(importKey => {
+        const lib = importData.libraries[importKey];
+        const nameLower = lib.name.toLowerCase();
+
+        if (existingLibNames[nameLower]) {
+            conflicts.push({
+                importKey,
+                existingKey: existingLibNames[nameLower],
+                name: lib.name,
+                catCount: Object.keys(lib.categories || {}).length
+            });
+            importConflicts[importKey] = 'merge';
+        } else {
+            newLibraries.push({
+                importKey,
+                name: lib.name,
+                icon: lib.icon,
+                catCount: Object.keys(lib.categories || {}).length
+            });
+        }
+    });
+
+    // Show new libraries
     const newSection = document.getElementById('import-new-section');
     const newList = document.getElementById('import-new-list');
-    if (newCategories.length > 0) {
+    if (newLibraries.length > 0) {
         newSection.classList.remove('hidden');
-        newList.innerHTML = newCategories.map(cat => `
+        newList.innerHTML = newLibraries.map(lib => `
             <div class="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                <span class="text-xl">${cat.icon || '📁'}</span>
+                <span class="text-xl">${lib.icon || '📁'}</span>
                 <div class="flex-1 min-w-0">
-                    <p class="text-white font-medium truncate">${cat.name}</p>
-                    <p class="text-emerald-400 text-xs">${cat.linksCount} link${cat.linksCount !== 1 ? 's' : ''}</p>
+                    <p class="text-white font-medium truncate">${lib.name}</p>
+                    <p class="text-emerald-400 text-xs">${lib.catCount} categoría(s)</p>
                 </div>
                 <span class="text-emerald-400 text-xs font-bold">NUEVA</span>
             </div>
@@ -1080,7 +1782,7 @@ function showImportPreview() {
         newSection.classList.add('hidden');
     }
 
-    // Mostrar conflictos
+    // Show conflicts
     const conflictsSection = document.getElementById('import-conflicts-section');
     const conflictsList = document.getElementById('import-conflicts-list');
     if (conflicts.length > 0) {
@@ -1088,20 +1790,20 @@ function showImportPreview() {
         conflictsList.innerHTML = conflicts.map(conf => `
             <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
                 <div class="flex items-center gap-3 mb-3">
-                    <span class="text-xl">${importData.categories[conf.importKey].icon || '📁'}</span>
+                    <span class="text-xl">${importData.libraries[conf.importKey].icon || '📁'}</span>
                     <div class="flex-1 min-w-0">
                         <p class="text-white font-medium truncate">${conf.name}</p>
-                        <p class="text-amber-400 text-xs">${conf.linksCount} link${conf.linksCount !== 1 ? 's' : ''}</p>
+                        <p class="text-amber-400 text-xs">${conf.catCount} categoría(s)</p>
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <label class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 cursor-pointer hover:bg-slate-700 transition text-xs">
-                        <input type="radio" name="conflict-${conf.importKey}" value="rename" checked onchange="importConflicts['${conf.importKey}']='rename'" class="accent-blue-500" />
-                        <span class="text-slate-300">Renombrar</span>
+                        <input type="radio" name="conflict-${conf.importKey}" value="merge" checked onchange="importConflicts['${conf.importKey}']='merge'" class="accent-blue-500" />
+                        <span class="text-slate-300">Fusionar categorías</span>
                     </label>
                     <label class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 cursor-pointer hover:bg-slate-700 transition text-xs">
-                        <input type="radio" name="conflict-${conf.importKey}" value="overwrite" onchange="importConflicts['${conf.importKey}']='overwrite'" class="accent-amber-500" />
-                        <span class="text-slate-300">Sobrescribir</span>
+                        <input type="radio" name="conflict-${conf.importKey}" value="rename" onchange="importConflicts['${conf.importKey}']='rename'" class="accent-amber-500" />
+                        <span class="text-slate-300">Crear como nueva</span>
                     </label>
                     <label class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 cursor-pointer hover:bg-slate-700 transition text-xs">
                         <input type="radio" name="conflict-${conf.importKey}" value="skip" onchange="importConflicts['${conf.importKey}']='skip'" class="accent-red-500" />
@@ -1126,61 +1828,67 @@ function closeImportPreviewModal() {
 async function executeImport() {
     if (!importData) return;
 
-    // Mapear nombres existentes a keys
-    const existingNames = {};
-    Object.keys(SECTIONS).forEach(key => {
-        existingNames[SECTIONS[key].name.toLowerCase()] = key;
+    // Map existing library names to keys
+    const existingLibNames = {};
+    Object.keys(DATA.libraries).forEach(key => {
+        existingLibNames[DATA.libraries[key].name.toLowerCase()] = key;
     });
 
     let imported = 0;
     let skipped = 0;
 
-    Object.keys(importData.categories).forEach(importKey => {
-        const cat = importData.categories[importKey];
-        const nameLower = cat.name.toLowerCase();
-        const existingKey = existingNames[nameLower];
+    Object.keys(importData.libraries).forEach(importKey => {
+        const lib = importData.libraries[importKey];
+        const nameLower = lib.name.toLowerCase();
+        const existingKey = existingLibNames[nameLower];
 
         if (existingKey) {
-            // Es un conflicto
-            const resolution = importConflicts[importKey] || 'rename';
+            const resolution = importConflicts[importKey] || 'merge';
 
             if (resolution === 'skip') {
                 skipped++;
                 return;
             }
 
-            if (resolution === 'overwrite') {
-                SECTIONS[existingKey] = { ...cat };
+            if (resolution === 'merge') {
+                // Merge categories into existing library
+                Object.keys(lib.categories || {}).forEach(catKey => {
+                    const newCatKey = 'cat_imported_' + Date.now() + '_' + catKey;
+                    DATA.libraries[existingKey].categories[newCatKey] = lib.categories[catKey];
+                });
                 imported++;
                 return;
             }
 
             if (resolution === 'rename') {
-                // Agregar como nueva con nombre modificado
-                const newCat = { ...cat, name: cat.name + ' (importado)' };
-                SECTIONS[Date.now() + '_' + importKey] = newCat;
+                // Create as new library with modified name
+                const newKey = 'lib_imported_' + Date.now();
+                DATA.libraries[newKey] = {
+                    ...lib,
+                    name: lib.name + ' (importado)'
+                };
                 imported++;
                 return;
             }
         } else {
-            // Es nueva, agregar directamente
-            SECTIONS[Date.now() + '_' + importKey] = { ...cat };
+            // New library, add directly
+            const newKey = 'lib_imported_' + Date.now() + '_' + importKey;
+            DATA.libraries[newKey] = { ...lib };
             imported++;
         }
     });
 
-    // Guardar y sincronizar
     await save();
     render();
 
     closeImportPreviewModal();
-    showToast(`Importación completada: ${imported} categorías${skipped > 0 ? `, ${skipped} saltadas` : ''}`);
+    showToast(`Importación completada: ${imported} librería(s)${skipped > 0 ? `, ${skipped} saltada(s)` : ''}`);
 }
 
 // INICIO
+ensureDataStructure();
 initAuth();
 render();
 </script>
 </body>
-</html> 
-
+</html>
