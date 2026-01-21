@@ -48,11 +48,6 @@
         border-color: rgba(59, 130, 246, 0.5) !important;
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
     }
-    .watching-now {
-        background: rgba(34, 197, 94, 0.15) !important;
-        border-color: rgba(34, 197, 94, 0.6) !important;
-        box-shadow: 0 0 25px rgba(34, 197, 94, 0.25);
-    }
     .modal-active { display: flex !important; }
 
     .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
@@ -87,7 +82,7 @@
         backdrop-filter: blur(20px);
     }
 
-    /* Checkbox styles for status */
+    /* Checkbox styles for status - 4 states */
     .status-checkbox {
         appearance: none;
         width: 16px;
@@ -97,6 +92,7 @@
         cursor: pointer;
         transition: all 0.2s;
         position: relative;
+        flex-shrink: 0;
     }
     .status-checkbox:checked {
         background: #22c55e;
@@ -111,8 +107,25 @@
         left: 50%;
         transform: translate(-50%, -50%);
     }
+    .status-checkbox.watching:checked { background: #fbbf24; border-color: #fbbf24; }
     .status-checkbox.watched:checked { background: #3b82f6; border-color: #3b82f6; }
-    .status-checkbox.applied:checked { background: #22c55e; border-color: #22c55e; }
+    .status-checkbox.understood:checked { background: #22c55e; border-color: #22c55e; }
+    .status-checkbox.applied:checked { background: #f59e0b; border-color: #f59e0b; }
+
+    /* Status badges */
+    .status-badge {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .badge-watching { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+    .badge-watched { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-understood { background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+    .badge-applied { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
 
     /* Save indicator */
     @keyframes saveFlash {
@@ -135,6 +148,23 @@
         border-color: rgba(59, 130, 246, 0.5);
         outline: none;
     }
+
+    /* Next video thumbnails */
+    .next-video-item {
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .next-video-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .next-video-item.current {
+        background: rgba(59, 130, 246, 0.2);
+        border-color: rgba(59, 130, 246, 0.5);
+    }
+
+    /* Focus mode scrollbar */
+    .focus-sidebar::-webkit-scrollbar { width: 4px; }
+    .focus-sidebar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
 </style>
 </head>
 <body class="p-4 md:p-6">
@@ -305,52 +335,84 @@
     </div>
 </div>
 
-<!-- Video Focus Mode Modal -->
-<div id="video-focus-modal" class="hidden fixed inset-0 focus-modal z-50 items-center justify-center p-4">
-    <div class="w-full h-full max-w-7xl mx-auto flex flex-col md:flex-row gap-4 md:gap-6 py-4">
+<!-- Video Focus Mode Modal - REDESIGNED -->
+<div id="video-focus-modal" class="hidden fixed inset-0 focus-modal z-50 overflow-y-auto">
+    <div class="min-h-full w-full max-w-7xl mx-auto flex flex-col p-4 md:p-6">
         <!-- Close button -->
-        <button onclick="closeVideoFocusModal()" class="absolute top-4 left-4 md:top-6 md:left-6 z-10 p-2 rounded-lg bg-white/10 hover:bg-white/20 transition text-white text-xl" title="Cerrar (ESC)">✕</button>
+        <button onclick="closeVideoFocusModal()" class="fixed top-4 left-4 md:top-6 md:left-6 z-20 p-2 rounded-lg bg-white/10 hover:bg-white/20 transition text-white text-xl" title="Cerrar (ESC)">✕</button>
 
-        <!-- Video Player Area -->
-        <div class="flex-1 flex items-center justify-center min-h-0">
-            <div id="video-focus-player" class="w-full aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                <!-- Video iframe/player inserted here -->
+        <!-- Main Content Area -->
+        <div class="flex flex-col md:flex-row gap-4 md:gap-6 flex-1 mt-12 md:mt-8">
+            <!-- Left Column: Title + Video + Notes -->
+            <div class="flex-1 flex flex-col min-w-0">
+                <!-- Video Title (above video) -->
+                <h2 id="video-focus-title" class="text-xl md:text-2xl font-bold text-white mb-4 line-clamp-2">Video Title</h2>
+
+                <!-- Video Player -->
+                <div id="video-focus-player" class="w-full aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                    <!-- Video iframe/player inserted here -->
+                </div>
+
+                <!-- Notes Section (below video) -->
+                <div class="mt-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Notas completas</p>
+                        <span id="focus-save-status" class="text-[10px] text-slate-500"></span>
+                    </div>
+                    <textarea id="focus-full-note" placeholder="Tus notas completas sobre este video (máx 500 caracteres)..." maxlength="500" rows="4" class="w-full quick-note-input p-4 rounded-xl text-white text-sm resize-none" oninput="debounceSaveFullNote()"></textarea>
+                    <p class="text-[10px] text-slate-600 text-right"><span id="full-note-char-count">0</span>/500</p>
+                </div>
             </div>
-        </div>
 
-        <!-- Side Panel -->
-        <div class="md:w-[300px] flex-shrink-0 glass rounded-2xl p-6 overflow-y-auto max-h-[40vh] md:max-h-full">
-            <h3 id="video-focus-title" class="text-lg font-bold text-white mb-4 line-clamp-2">Video Title</h3>
-
-            <div class="space-y-4">
-                <!-- Status Checkboxes -->
-                <div class="space-y-3">
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Estado</p>
-                    <label class="flex items-center gap-3 cursor-pointer group">
-                        <input type="checkbox" id="focus-watched" class="status-checkbox watched" onchange="updateFocusStatus()">
-                        <span class="text-white group-hover:text-blue-400 transition">Visto</span>
-                    </label>
-                    <label class="flex items-center gap-3 cursor-pointer group">
-                        <input type="checkbox" id="focus-applied" class="status-checkbox applied" onchange="updateFocusStatus()">
-                        <span class="text-white group-hover:text-emerald-400 transition">Aplicado</span>
-                    </label>
+            <!-- Right Sidebar Panel -->
+            <div class="md:w-[280px] flex-shrink-0 glass rounded-2xl p-5 overflow-y-auto focus-sidebar max-h-[50vh] md:max-h-[calc(100vh-120px)]">
+                <!-- Library & Category Info -->
+                <div class="mb-5 pb-4 border-b border-white/10">
+                    <div class="flex items-center gap-2 text-sm">
+                        <span id="focus-lib-icon" class="text-lg">📚</span>
+                        <span id="focus-lib-name" class="text-slate-300 font-medium truncate">Library</span>
+                    </div>
+                    <p id="focus-cat-name" class="text-xs text-slate-500 mt-1 truncate">Category</p>
                 </div>
 
-                <!-- Quick Note -->
-                <div class="space-y-2">
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Nota rápida</p>
-                    <textarea id="focus-note" placeholder="Escribe una nota... (max 100 chars)" maxlength="100" rows="3" class="w-full quick-note-input p-3 rounded-xl text-white text-sm resize-none" oninput="debounceSaveNote()"></textarea>
-                    <p class="text-[10px] text-slate-600 text-right"><span id="note-char-count">0</span>/100</p>
+                <!-- Status Checkboxes (4 states) -->
+                <div class="mb-5 pb-4 border-b border-white/10">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Estado</p>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-3 cursor-pointer group p-2 rounded-lg hover:bg-white/5 transition">
+                            <input type="checkbox" id="focus-watching" class="status-checkbox watching" onchange="updateFocusStatus()">
+                            <span class="text-yellow-400">🟡</span>
+                            <span class="text-white text-sm group-hover:text-yellow-400 transition">Viendo</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group p-2 rounded-lg hover:bg-white/5 transition">
+                            <input type="checkbox" id="focus-watched" class="status-checkbox watched" onchange="updateFocusStatus()">
+                            <span class="text-blue-400">🔵</span>
+                            <span class="text-white text-sm group-hover:text-blue-400 transition">Visto</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group p-2 rounded-lg hover:bg-white/5 transition">
+                            <input type="checkbox" id="focus-understood" class="status-checkbox understood" onchange="updateFocusStatus()">
+                            <span class="text-emerald-400">🟢</span>
+                            <span class="text-white text-sm group-hover:text-emerald-400 transition">Entendido</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group p-2 rounded-lg hover:bg-white/5 transition">
+                            <input type="checkbox" id="focus-applied" class="status-checkbox applied" onchange="updateFocusStatus()">
+                            <span class="text-amber-400">⭐</span>
+                            <span class="text-white text-sm group-hover:text-amber-400 transition">Aplicado</span>
+                        </label>
+                    </div>
                 </div>
 
-                <!-- Save Indicator -->
-                <div id="focus-save-indicator" class="hidden text-center py-2">
-                    <span class="text-emerald-400 text-sm font-medium save-indicator">💾 Guardado</span>
+                <!-- Next Videos -->
+                <div>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Siguiente</p>
+                    <div id="focus-next-videos" class="space-y-2">
+                        <!-- Populated dynamically -->
+                    </div>
                 </div>
 
-                <!-- Link -->
-                <div class="pt-4 border-t border-white/10">
-                    <a id="focus-link-url" href="#" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm truncate block">Abrir en nueva pestaña →</a>
+                <!-- Link to open externally -->
+                <div class="mt-5 pt-4 border-t border-white/10">
+                    <a id="focus-link-url" href="#" target="_blank" class="text-blue-400 hover:text-blue-300 text-xs truncate block">Abrir en nueva pestaña →</a>
                 </div>
             </div>
         </div>
@@ -466,6 +528,7 @@ let focusLibrary = null;
 let focusCategory2 = null;
 let focusLinkIndex = null;
 let noteDebounceTimer = null;
+let fullNoteDebounceTimer = null;
 
 const ICONS = ['📁','📚','🎬','🧠','⭐','🎯','🛠️','🧾','💡','📌','🗂️','🧩','🧪','🔖'];
 const LIB_ICONS = ['📁','📚','💼','🏠','🎮','🎵','📖','💻','🎨','📷','✈️','🍳','💪','🎓','💰','❤️'];
@@ -475,6 +538,28 @@ const COLORS = ['#4a9eff','#a78bfa','#fbbf24','#4ade80','#ef4444','#22d3ee','#f4
 function migrateOldData(oldData) {
     // Check if already in new format
     if (oldData.libraries) {
+        // Migrate existing data to include new status fields
+        Object.keys(oldData.libraries).forEach(libKey => {
+            const lib = oldData.libraries[libKey];
+            Object.keys(lib.categories || {}).forEach(catKey => {
+                const cat = lib.categories[catKey];
+                (cat.links || []).forEach(link => {
+                    // Ensure status has all 4 fields
+                    if (!link.status) {
+                        link.status = { watching: false, watched: false, understood: false, applied: false };
+                    } else {
+                        // Add missing fields
+                        if (link.status.watching === undefined) link.status.watching = false;
+                        if (link.status.understood === undefined) link.status.understood = false;
+                        // Keep existing watched/applied values
+                    }
+                    // Ensure fullNote exists
+                    if (link.fullNote === undefined) link.fullNote = '';
+                    // Ensure quickNote exists
+                    if (link.quickNote === undefined) link.quickNote = '';
+                });
+            });
+        });
         return oldData;
     }
 
@@ -497,17 +582,20 @@ function migrateOldData(oldData) {
     Object.keys(oldData).forEach(catKey => {
         const cat = oldData[catKey];
         if (cat && typeof cat === 'object' && cat.name) {
-            // Migrate links to new format with status
+            // Migrate links to new format with 4 status fields
             const migratedLinks = (cat.links || []).map(link => ({
                 url: link.url,
                 title: link.title,
                 description: link.description || '',
                 icon: link.icon,
                 status: {
-                    watched: link.isWatching || false,
-                    applied: false
+                    watching: false,
+                    watched: link.isWatching || link.status?.watched || false,
+                    understood: false,
+                    applied: link.status?.applied || false
                 },
-                quickNote: ''
+                quickNote: link.quickNote || '',
+                fullNote: ''
             }));
 
             newData.libraries[defaultLibKey].categories[catKey] = {
@@ -933,6 +1021,26 @@ function deleteLibrary(libKey) {
     render();
 }
 
+// ================= STATUS BADGE HELPER =================
+function getStatusBadge(status) {
+    if (!status) return '';
+
+    // Priority order: Applied > Understood > Watched > Watching
+    if (status.applied) {
+        return '<span class="status-badge badge-applied">⭐ Aplicado</span>';
+    }
+    if (status.understood) {
+        return '<span class="status-badge badge-understood">🟢 Entendido</span>';
+    }
+    if (status.watched) {
+        return '<span class="status-badge badge-watched">🔵 Visto</span>';
+    }
+    if (status.watching) {
+        return '<span class="status-badge badge-watching">🟡 Viendo</span>';
+    }
+    return '';
+}
+
 // ================= UI RENDER =================
 function render() {
     ensureDataStructure();
@@ -1063,9 +1171,9 @@ function renderCategories() {
                 <div class="mb-6 p-5 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center gap-4 mt-6 group" onclick="event.stopPropagation()">
                     <div class="w-1.5 h-10 rounded-full" style="background:${s.color}"></div>
                     <div class="flex-1">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Buscador inteligente</p>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nota de categoría</p>
                         <input class="w-full bg-transparent text-sm font-medium text-white outline-none focus:text-blue-400 transition"
-                               value="${s.task || ''}" placeholder="Filtra links por palabra clave..."
+                               value="${s.task || ''}" placeholder="Nota general de esta categoría..."
                                onkeydown="if(event.key==='Enter') { saveTask('${libKey}', '${catKey}', this.value); this.blur(); }"
                                onblur="saveTask('${libKey}', '${catKey}', this.value)">
                     </div>
@@ -1094,13 +1202,18 @@ function renderLinks(libKey, catKey) {
         const titleMatch = taskWords.some(word => l.title.toLowerCase().includes(word));
         const descMatch = taskWords.some(word => (l.description || '').toLowerCase().includes(word));
         const isSmart = taskWords.length > 0 && (titleMatch || descMatch);
-        const isWatched = l.status?.watched || false;
-        const isApplied = l.status?.applied || false;
         const embed = getEmbedInfo(l.url);
         const pid = `${libKey}-${catKey}-${i}`;
 
+        // Ensure status object exists with all fields
+        if (!l.status) {
+            l.status = { watching: false, watched: false, understood: false, applied: false };
+        }
+
         let cardClass = "glass-card p-4 rounded-2xl border flex flex-col gap-4 group ";
         if (isSmart) cardClass += "smart-highlight";
+
+        const statusBadge = getStatusBadge(l.status);
 
         return `
         <div class="${cardClass}" onclick="event.stopPropagation()">
@@ -1108,30 +1221,36 @@ function renderLinks(libKey, catKey) {
                 <div class="flex items-start gap-3 flex-1 min-w-0">
                     <img src="${l.icon || 'https://www.google.com/s2/favicons?sz=64&domain=' + l.url}" class="w-10 h-10 rounded-lg bg-slate-800 object-contain p-1 border border-white/5 shadow-inner flex-shrink-0">
                     <div class="min-w-0 flex-1">
-                        <a href="${l.url}" target="_blank" class="text-sm font-bold text-blue-400 hover:underline block truncate">
-                            ${l.title}
-                        </a>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <a href="${l.url}" target="_blank" class="text-sm font-bold text-blue-400 hover:underline truncate">
+                                ${l.title}
+                            </a>
+                            ${statusBadge}
+                        </div>
                         <p class="text-[10px] text-slate-500 truncate mt-0.5">${l.description || 'Sin detalles'}</p>
 
-                        <!-- Inline Status -->
-                        <div class="flex items-center gap-4 mt-2">
-                            <label class="flex items-center gap-1.5 cursor-pointer text-[10px]">
-                                <input type="checkbox" class="status-checkbox watched" ${isWatched ? 'checked' : ''} onchange="toggleLinkStatus('${libKey}', '${catKey}', ${i}, 'watched', this.checked)">
-                                <span class="${isWatched ? 'text-blue-400' : 'text-slate-500'}">Visto</span>
+                        <!-- Inline Status (4 checkboxes) -->
+                        <div class="flex items-center gap-3 mt-2 flex-wrap">
+                            <label class="flex items-center gap-1 cursor-pointer text-[10px]">
+                                <input type="checkbox" class="status-checkbox watching" ${l.status.watching ? 'checked' : ''} onchange="toggleLinkStatus('${libKey}', '${catKey}', ${i}, 'watching', this.checked)">
+                                <span class="${l.status.watching ? 'text-yellow-400' : 'text-slate-500'}">🟡</span>
                             </label>
-                            <label class="flex items-center gap-1.5 cursor-pointer text-[10px]">
-                                <input type="checkbox" class="status-checkbox applied" ${isApplied ? 'checked' : ''} onchange="toggleLinkStatus('${libKey}', '${catKey}', ${i}, 'applied', this.checked)">
-                                <span class="${isApplied ? 'text-emerald-400' : 'text-slate-500'}">Aplicado</span>
+                            <label class="flex items-center gap-1 cursor-pointer text-[10px]">
+                                <input type="checkbox" class="status-checkbox watched" ${l.status.watched ? 'checked' : ''} onchange="toggleLinkStatus('${libKey}', '${catKey}', ${i}, 'watched', this.checked)">
+                                <span class="${l.status.watched ? 'text-blue-400' : 'text-slate-500'}">🔵</span>
+                            </label>
+                            <label class="flex items-center gap-1 cursor-pointer text-[10px]">
+                                <input type="checkbox" class="status-checkbox understood" ${l.status.understood ? 'checked' : ''} onchange="toggleLinkStatus('${libKey}', '${catKey}', ${i}, 'understood', this.checked)">
+                                <span class="${l.status.understood ? 'text-emerald-400' : 'text-slate-500'}">🟢</span>
+                            </label>
+                            <label class="flex items-center gap-1 cursor-pointer text-[10px]">
+                                <input type="checkbox" class="status-checkbox applied" ${l.status.applied ? 'checked' : ''} onchange="toggleLinkStatus('${libKey}', '${catKey}', ${i}, 'applied', this.checked)">
+                                <span class="${l.status.applied ? 'text-amber-400' : 'text-slate-500'}">⭐</span>
                             </label>
                         </div>
 
-                        <!-- Quick Note Input -->
-                        <input type="text"
-                               value="${(l.quickNote || '').replace(/"/g, '&quot;')}"
-                               placeholder="Nota rápida..."
-                               maxlength="100"
-                               class="mt-2 w-full text-[10px] px-2 py-1 rounded quick-note-input text-slate-300"
-                               onchange="saveLinkNote('${libKey}', '${catKey}', ${i}, this.value)">
+                        <!-- Quick Note Display -->
+                        ${l.quickNote ? `<p class="text-[10px] text-slate-400 mt-2 italic truncate">📝 ${l.quickNote}</p>` : ''}
                     </div>
                 </div>
                 <div class="flex flex-col items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
@@ -1155,11 +1274,12 @@ function toggleLinkStatus(libKey, catKey, linkIndex, field, value) {
     const link = DATA.libraries[libKey]?.categories[catKey]?.links[linkIndex];
     if (!link) return;
 
-    if (!link.status) link.status = { watched: false, applied: false };
+    if (!link.status) link.status = { watching: false, watched: false, understood: false, applied: false };
     link.status[field] = value;
 
     save();
-    showSaveIndicator();
+    render();
+    showToast('💾 Guardado', false);
 }
 
 function saveLinkNote(libKey, catKey, linkIndex, note) {
@@ -1168,10 +1288,6 @@ function saveLinkNote(libKey, catKey, linkIndex, note) {
 
     link.quickNote = note.substring(0, 100);
     save();
-    showSaveIndicator();
-}
-
-function showSaveIndicator() {
     showToast('💾 Guardado', false);
 }
 
@@ -1181,20 +1297,47 @@ function openVideoFocusModal(libKey, catKey, linkIndex, type, src) {
     focusCategory2 = catKey;
     focusLinkIndex = linkIndex;
 
+    loadVideoInFocusMode(libKey, catKey, linkIndex, type, src);
+
+    // Show modal
+    document.getElementById('video-focus-modal').classList.add('modal-active');
+
+    // Add ESC listener
+    document.addEventListener('keydown', handleFocusEsc);
+}
+
+function loadVideoInFocusMode(libKey, catKey, linkIndex, type, src) {
     const link = DATA.libraries[libKey]?.categories[catKey]?.links[linkIndex];
     if (!link) return;
+
+    const lib = DATA.libraries[libKey];
+    const cat = lib?.categories[catKey];
+
+    // Update state
+    focusLibrary = libKey;
+    focusCategory2 = catKey;
+    focusLinkIndex = linkIndex;
 
     // Set title
     document.getElementById('video-focus-title').textContent = link.title || 'Video';
 
-    // Set status checkboxes
-    document.getElementById('focus-watched').checked = link.status?.watched || false;
-    document.getElementById('focus-applied').checked = link.status?.applied || false;
+    // Set library and category info
+    document.getElementById('focus-lib-icon').textContent = lib?.icon || '📚';
+    document.getElementById('focus-lib-name').textContent = lib?.name || 'Library';
+    document.getElementById('focus-cat-name').textContent = cat?.name || 'Category';
 
-    // Set note
-    const noteEl = document.getElementById('focus-note');
-    noteEl.value = link.quickNote || '';
-    document.getElementById('note-char-count').textContent = (link.quickNote || '').length;
+    // Set status checkboxes (4 states)
+    if (!link.status) link.status = { watching: false, watched: false, understood: false, applied: false };
+    document.getElementById('focus-watching').checked = link.status.watching || false;
+    document.getElementById('focus-watched').checked = link.status.watched || false;
+    document.getElementById('focus-understood').checked = link.status.understood || false;
+    document.getElementById('focus-applied').checked = link.status.applied || false;
+
+    // Set full note
+    const fullNoteEl = document.getElementById('focus-full-note');
+    fullNoteEl.value = link.fullNote || '';
+    document.getElementById('full-note-char-count').textContent = (link.fullNote || '').length;
+    document.getElementById('focus-save-status').textContent = '';
 
     // Set link URL
     document.getElementById('focus-link-url').href = link.url;
@@ -1207,20 +1350,95 @@ function openVideoFocusModal(libKey, catKey, linkIndex, type, src) {
         playerContainer.innerHTML = `<video controls autoplay class="w-full h-full" src="${src}"></video>`;
     }
 
-    // Show modal
-    document.getElementById('video-focus-modal').classList.add('modal-active');
+    // Populate next videos
+    populateNextVideos(libKey, catKey, linkIndex);
+}
 
-    // Add ESC listener
-    document.addEventListener('keydown', handleFocusEsc);
+function populateNextVideos(libKey, catKey, currentIndex) {
+    const container = document.getElementById('focus-next-videos');
+    container.innerHTML = '';
+
+    const category = DATA.libraries[libKey]?.categories[catKey];
+    if (!category || !category.links) {
+        container.innerHTML = '<p class="text-slate-500 text-xs text-center py-4">No hay más videos</p>';
+        return;
+    }
+
+    const links = category.links;
+    let videosAdded = 0;
+    const maxVideos = 5;
+
+    // Find videos with embeds (starting from current index + 1, wrapping around)
+    for (let offset = 1; offset <= links.length && videosAdded < maxVideos; offset++) {
+        const idx = (currentIndex + offset) % links.length;
+        if (idx === currentIndex) continue;
+
+        const link = links[idx];
+        const embed = getEmbedInfo(link.url);
+
+        if (embed) {
+            const isCurrent = idx === currentIndex;
+            const ytId = getYouTubeVideoId(link.url);
+            const thumbnail = ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : '';
+
+            container.innerHTML += `
+                <div class="next-video-item p-2 rounded-lg border border-transparent ${isCurrent ? 'current' : ''} flex items-center gap-3" onclick="navigateToVideo('${libKey}', '${catKey}', ${idx}, '${embed.type}', '${embed.src}')">
+                    ${thumbnail ? `<img src="${thumbnail}" class="w-16 h-10 rounded object-cover flex-shrink-0 bg-slate-700">` : `<div class="w-16 h-10 rounded bg-slate-700 flex items-center justify-center text-slate-500">▶</div>`}
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs text-white truncate font-medium">${link.title}</p>
+                        ${getStatusBadge(link.status) || '<span class="text-[10px] text-slate-500">Sin ver</span>'}
+                    </div>
+                </div>
+            `;
+            videosAdded++;
+        }
+    }
+
+    if (videosAdded === 0) {
+        container.innerHTML = '<p class="text-slate-500 text-xs text-center py-4">No hay más videos</p>';
+    }
+}
+
+function navigateToVideo(libKey, catKey, linkIndex, type, src) {
+    // Save current state first
+    saveCurrentFocusState();
+
+    // Load new video
+    loadVideoInFocusMode(libKey, catKey, linkIndex, type, src);
+}
+
+function saveCurrentFocusState() {
+    if (focusLibrary === null) return;
+
+    const link = DATA.libraries[focusLibrary]?.categories[focusCategory2]?.links[focusLinkIndex];
+    if (!link) return;
+
+    // Save status
+    if (!link.status) link.status = { watching: false, watched: false, understood: false, applied: false };
+    link.status.watching = document.getElementById('focus-watching').checked;
+    link.status.watched = document.getElementById('focus-watched').checked;
+    link.status.understood = document.getElementById('focus-understood').checked;
+    link.status.applied = document.getElementById('focus-applied').checked;
+
+    // Save full note
+    link.fullNote = document.getElementById('focus-full-note').value.substring(0, 500);
+
+    save();
 }
 
 function closeVideoFocusModal() {
+    // Save current state before closing
+    saveCurrentFocusState();
+
     document.getElementById('video-focus-modal').classList.remove('modal-active');
     document.getElementById('video-focus-player').innerHTML = '';
     document.removeEventListener('keydown', handleFocusEsc);
+
     focusLibrary = null;
     focusCategory2 = null;
     focusLinkIndex = null;
+
+    render();
 }
 
 function handleFocusEsc(e) {
@@ -1233,37 +1451,42 @@ function updateFocusStatus() {
     const link = DATA.libraries[focusLibrary]?.categories[focusCategory2]?.links[focusLinkIndex];
     if (!link) return;
 
-    if (!link.status) link.status = { watched: false, applied: false };
+    if (!link.status) link.status = { watching: false, watched: false, understood: false, applied: false };
+    link.status.watching = document.getElementById('focus-watching').checked;
     link.status.watched = document.getElementById('focus-watched').checked;
+    link.status.understood = document.getElementById('focus-understood').checked;
     link.status.applied = document.getElementById('focus-applied').checked;
 
     save();
     showFocusSaveIndicator();
-    render();
 }
 
-function debounceSaveNote() {
-    const noteEl = document.getElementById('focus-note');
-    document.getElementById('note-char-count').textContent = noteEl.value.length;
+function debounceSaveFullNote() {
+    const noteEl = document.getElementById('focus-full-note');
+    document.getElementById('full-note-char-count').textContent = noteEl.value.length;
+    document.getElementById('focus-save-status').textContent = '⏳ Guardando...';
 
-    clearTimeout(noteDebounceTimer);
-    noteDebounceTimer = setTimeout(() => {
+    clearTimeout(fullNoteDebounceTimer);
+    fullNoteDebounceTimer = setTimeout(() => {
         if (focusLibrary === null) return;
 
         const link = DATA.libraries[focusLibrary]?.categories[focusCategory2]?.links[focusLinkIndex];
         if (!link) return;
 
+        link.fullNote = noteEl.value.substring(0, 500);
+        // Also save as quickNote (first 100 chars) for display in cards
         link.quickNote = noteEl.value.substring(0, 100);
         save();
         showFocusSaveIndicator();
-        render();
     }, 2000);
 }
 
 function showFocusSaveIndicator() {
-    const indicator = document.getElementById('focus-save-indicator');
-    indicator.classList.remove('hidden');
-    setTimeout(() => indicator.classList.add('hidden'), 1500);
+    document.getElementById('focus-save-status').textContent = '💾 Guardado';
+    setTimeout(() => {
+        const el = document.getElementById('focus-save-status');
+        if (el) el.textContent = '';
+    }, 2000);
 }
 
 // ================= LOGICA =================
@@ -1407,8 +1630,9 @@ function saveLink() {
         title: document.getElementById('link-title').value || 'Sin Título',
         description: document.getElementById('link-desc').value,
         icon: document.getElementById('link-icon-preview').src,
-        status: existingLink?.status || { watched: false, applied: false },
-        quickNote: existingLink?.quickNote || ''
+        status: existingLink?.status || { watching: false, watched: false, understood: false, applied: false },
+        quickNote: existingLink?.quickNote || '',
+        fullNote: existingLink?.fullNote || ''
     };
 
     if (!l.url) return;
@@ -1542,7 +1766,7 @@ function selectAllExport(select) {
 
 function executeExport() {
     const exportData = {
-        version: "2.0",
+        version: "3.0",
         exportDate: new Date().toISOString(),
         libraries: {}
     };
@@ -1624,6 +1848,24 @@ function validateUrl(url) {
     }
 }
 
+function migrateLinkForImport(link) {
+    // Ensure all fields exist for imported links
+    return {
+        url: link.url,
+        title: link.title,
+        description: link.description || '',
+        icon: link.icon,
+        status: {
+            watching: link.status?.watching || false,
+            watched: link.status?.watched || link.isWatching || false,
+            understood: link.status?.understood || false,
+            applied: link.status?.applied || false
+        },
+        quickNote: link.quickNote || '',
+        fullNote: link.fullNote || ''
+    };
+}
+
 function handleImportFile(file) {
     if (!file) return;
 
@@ -1632,7 +1874,7 @@ function handleImportFile(file) {
         try {
             const data = JSON.parse(e.target.result);
 
-            // Check if it's old format (v1) or new format (v2)
+            // Check if it's old format (v1) or new format (v2/v3)
             if (data.categories && !data.libraries) {
                 // Old format - convert to new format for import
                 data.libraries = {
@@ -1646,17 +1888,7 @@ function handleImportFile(file) {
                 Object.keys(data.categories).forEach(catKey => {
                     const cat = data.categories[catKey];
                     // Migrate links to new format
-                    const migratedLinks = (cat.links || []).map(link => ({
-                        url: link.url,
-                        title: link.title,
-                        description: link.description || '',
-                        icon: link.icon,
-                        status: {
-                            watched: link.isWatching || false,
-                            applied: false
-                        },
-                        quickNote: ''
-                    }));
+                    const migratedLinks = (cat.links || []).map(migrateLinkForImport);
 
                     data.libraries[Object.keys(data.libraries)[0]].categories[catKey] = {
                         ...cat,
@@ -1665,7 +1897,16 @@ function handleImportFile(file) {
                 });
 
                 delete data.categories;
-                data.version = "2.0";
+                data.version = "3.0";
+            } else if (data.libraries) {
+                // Migrate links in v2/v3 format to ensure all fields exist
+                Object.keys(data.libraries).forEach(libKey => {
+                    const lib = data.libraries[libKey];
+                    Object.keys(lib.categories || {}).forEach(catKey => {
+                        const cat = lib.categories[catKey];
+                        cat.links = (cat.links || []).map(migrateLinkForImport);
+                    });
+                });
             }
 
             // Validate new format structure
