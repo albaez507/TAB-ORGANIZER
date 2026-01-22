@@ -179,6 +179,8 @@
     <div class="flex flex-wrap gap-2 md:gap-3 text-white items-center justify-center md:justify-end">
         <span id="cloud-status" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest order-first w-full md:w-auto text-center md:text-left md:mr-2">Iniciando...</span>
         <div id="user-info" class="flex items-center gap-2">
+            <img id="user-avatar-img" class="hidden w-7 h-7 rounded-full border border-slate-600 object-cover" />
+            <div id="user-avatar-initial" class="hidden w-7 h-7 rounded-full border border-slate-600 bg-slate-700 flex items-center justify-center text-xs font-bold text-white"></div>
             <span id="user-email" class="text-xs text-slate-400 hidden max-w-[120px] md:max-w-[180px] truncate"></span>
         </div>
         <button onclick="save()" title="Forzar Sincronización" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition">☁️</button>
@@ -681,6 +683,12 @@ function updateAuthUI(isLoggedIn) {
     const authBtn = document.getElementById('auth-btn');
     const userEmail = document.getElementById('user-email');
     const welcomeScreen = document.getElementById('welcome-screen');
+    const avatarImg = document.getElementById('user-avatar-img');
+    const avatarInitial = document.getElementById('user-avatar-initial');
+
+    // Reset avatars
+    avatarImg.classList.add('hidden');
+    avatarInitial.classList.add('hidden');
 
     if (isLoggedIn && (currentUser || isGuest)) {
         authBtn.textContent = 'Logout';
@@ -688,9 +696,24 @@ function updateAuthUI(isLoggedIn) {
         authBtn.classList.add('bg-red-600', 'hover:bg-red-500');
 
         if (isGuest) {
-            userEmail.textContent = '👤 Invitado';
-        } else {
+            // Guest: mostrar emoji 👤
+            userEmail.textContent = 'Invitado';
+            avatarInitial.textContent = '👤';
+            avatarInitial.classList.remove('hidden');
+        } else if (currentUser) {
             userEmail.textContent = currentUser.email;
+
+            // Verificar si es Google user con avatar
+            const googleAvatar = currentUser.user_metadata?.avatar_url;
+            if (googleAvatar) {
+                avatarImg.src = googleAvatar;
+                avatarImg.classList.remove('hidden');
+            } else {
+                // Email user: mostrar inicial
+                const initial = currentUser.email.charAt(0).toUpperCase();
+                avatarInitial.textContent = initial;
+                avatarInitial.classList.remove('hidden');
+            }
         }
         userEmail.classList.remove('hidden');
         welcomeScreen.classList.remove('modal-active');
@@ -782,8 +805,12 @@ async function logout() {
     isGuest = false;
     currentUser = null;
     DATA = { libraries: {}, currentLibrary: null };
-    render();
-    updateAuthUI(false);
+
+    // Limpiar localStorage completamente para evitar datos residuales
+    localStorage.clear();
+
+    // Recargar página para estado limpio
+    location.reload();
 }
 
 async function handleAuth() {
