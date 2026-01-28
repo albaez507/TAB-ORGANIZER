@@ -36,7 +36,13 @@
 </header>
 
 <!-- Mobile Library Selector -->
-<div id="mobile-library-selector" class="md:hidden mb-4">
+<div id="mobile-library-selector" class="md:hidden mb-4 space-y-3">
+    <!-- Mobile Search Input -->
+    <div class="search-container">
+        <input type="text" id="mobile-search-input" class="search-input" placeholder="Search links..." oninput="handleSearch(this.value)" />
+        <span class="search-icon">🔍</span>
+        <span class="search-clear" onclick="clearSearch()">✕</span>
+    </div>
     <select id="mobile-library-dropdown" onchange="selectLibrary(this.value)" class="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl text-white outline-none focus:border-blue-500 transition">
     </select>
 </div>
@@ -46,6 +52,14 @@
     <!-- Library Sidebar (Desktop) -->
     <aside id="library-sidebar" class="hidden md:block w-[180px] flex-shrink-0">
         <div class="glass-sidebar rounded-2xl p-4 sticky top-6">
+            <!-- Search Input -->
+            <div class="search-container">
+                <input type="text" id="search-input" class="search-input" placeholder="Search links..." oninput="handleSearch(this.value)" />
+                <span class="search-icon">🔍</span>
+                <span class="search-shortcut" id="search-shortcut-hint">Ctrl+K</span>
+                <span class="search-clear" onclick="clearSearch()">✕</span>
+            </div>
+
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Librerias</h3>
                 <button onclick="openLibraryModal()" class="text-blue-400 hover:text-blue-300 transition text-lg" title="Nueva Libreria">+</button>

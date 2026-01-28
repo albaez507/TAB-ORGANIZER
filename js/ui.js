@@ -25,24 +25,26 @@ function getStatusBadge(status) {
 }
 
 // ========================================
-// DRAG & DROP - COMPLETE IMPLEMENTATION
+// DRAG & DROP - CLEAN MINIMAL IMPLEMENTATION
 // ========================================
 
-// Estado global del drag
+// Global drag state
 let draggedData = null;
-let dragType = null; // 'link' o 'category'
+let dragType = null; // 'link' or 'category'
+let lastSwapPreviewIndex = null; // Track which card has swap preview
 
 // ================== FUNCIONALIDAD 1 & 2: LINKS ==================
 
 function handleLinkDragStart(event, libKey, catKey, linkIndex) {
-    // Prevenir que el drag del link interfiera con el drag de la categoría
+    // Prevent link drag from interfering with category drag
     event.stopPropagation();
 
-    // Guardar datos del link siendo arrastrado
+    // Store dragged link data
     draggedData = { libKey, catKey, linkIndex };
     dragType = 'link';
+    lastSwapPreviewIndex = null;
 
-    // Configurar el drag
+    // Configure drag
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('application/json', JSON.stringify({
         type: 'link',
@@ -51,16 +53,15 @@ function handleLinkDragStart(event, libKey, catKey, linkIndex) {
         linkIndex
     }));
 
-    // Encontrar la card correcta y agregar clase dragging
+    // Add dragging class to the card
     const card = event.target.closest('.link-card');
     if (card) {
-        // Delay para que el navegador capture la imagen del drag
         setTimeout(() => {
             card.classList.add('dragging');
         }, 0);
     }
 
-    // Resaltar TODAS las categorías como posibles destinos
+    // Mark drop zones as available (minimal visual feedback)
     setTimeout(() => {
         document.querySelectorAll('.category-drop-zone').forEach(zone => {
             zone.classList.add('drop-zone-available');
@@ -88,7 +89,7 @@ function handleLinkDragOver(event, libKey, catKey) {
 
     const zone = event.currentTarget;
 
-    // Remover active de otras zonas y agregar a esta
+    // Mark this zone as active drop target
     document.querySelectorAll('.drop-target-active').forEach(z => {
         if (z !== zone) z.classList.remove('drop-target-active');
     });
@@ -97,8 +98,11 @@ function handleLinkDragOver(event, libKey, catKey) {
         zone.classList.add('drop-target-active');
     }
 
-    // Mostrar indicador de posición para reordenamiento dentro de misma categoría
+    // Show swap preview animation for reordering within same category
     if (draggedData && draggedData.libKey === libKey && draggedData.catKey === catKey) {
+        showSwapPreview(event, zone);
+    } else {
+        // For different categories, show simple drop indicator
         showLinkDropIndicator(event, zone);
     }
 }
@@ -107,9 +111,10 @@ function handleLinkDragLeave(event) {
     const zone = event.currentTarget;
     const relatedTarget = event.relatedTarget;
 
-    // Solo remover si realmente salimos de la zona
+    // Only remove if we actually left the zone
     if (!zone.contains(relatedTarget)) {
         zone.classList.remove('drop-target-active');
+        clearSwapPreviews();
         removeDropIndicators();
     }
 }
@@ -204,9 +209,10 @@ function getDropIndex(event, libKey, catKey) {
     return linkCards.length;
 }
 
-// Mostrar indicador visual de posición de drop
+// Show simple drop indicator line for cross-category drops
 function showLinkDropIndicator(event, zone) {
     removeDropIndicators();
+    clearSwapPreviews();
 
     const linkCards = zone.querySelectorAll('.link-card:not(.dragging)');
     if (linkCards.length === 0) return;
@@ -226,9 +232,78 @@ function showLinkDropIndicator(event, zone) {
         }
     }
 
-    // Si llegamos aquí, insertar al final
+    // Insert at end
     const lastCard = linkCards[linkCards.length - 1];
     lastCard.parentNode.insertBefore(indicator, lastCard.nextSibling);
+}
+
+// Show swap preview animation when reordering within same category
+function showSwapPreview(event, zone) {
+    removeDropIndicators();
+
+    const linkCards = zone.querySelectorAll('.link-card:not(.dragging)');
+    if (linkCards.length === 0) return;
+
+    const mouseY = event.clientY;
+    let targetIndex = null;
+
+    // Find which card we're hovering over
+    for (let i = 0; i < linkCards.length; i++) {
+        const card = linkCards[i];
+        const rect = card.getBoundingClientRect();
+
+        if (mouseY >= rect.top && mouseY <= rect.bottom) {
+            targetIndex = i;
+            break;
+        }
+    }
+
+    // If hovering between cards, find insertion point
+    if (targetIndex === null) {
+        for (let i = 0; i < linkCards.length; i++) {
+            const card = linkCards[i];
+            const rect = card.getBoundingClientRect();
+            const cardMiddle = rect.top + rect.height / 2;
+
+            if (mouseY < cardMiddle) {
+                targetIndex = i;
+                break;
+            }
+        }
+        if (targetIndex === null) {
+            targetIndex = linkCards.length;
+        }
+    }
+
+    // Only update if target changed
+    if (targetIndex === lastSwapPreviewIndex) return;
+    lastSwapPreviewIndex = targetIndex;
+
+    // Clear previous swap previews
+    clearSwapPreviews();
+
+    // Apply swap preview to the target card
+    if (targetIndex !== null && targetIndex < linkCards.length) {
+        const sourceIndex = draggedData.linkIndex;
+        const targetCard = linkCards[targetIndex];
+
+        // Adjust for visual offset: if dragging to a position before/after source
+        if (targetIndex !== sourceIndex) {
+            if (targetIndex < sourceIndex) {
+                targetCard.classList.add('swap-preview');
+            } else {
+                targetCard.classList.add('swap-preview-down');
+            }
+        }
+    }
+}
+
+// Clear all swap preview classes
+function clearSwapPreviews() {
+    document.querySelectorAll('.swap-preview, .swap-preview-down').forEach(el => {
+        el.classList.remove('swap-preview', 'swap-preview-down');
+    });
+    lastSwapPreviewIndex = null;
 }
 
 // ================== FUNCIONALIDAD 3 & 4: CATEGORIES ==================
@@ -445,21 +520,189 @@ function removeDropIndicators() {
 function cleanupAllDragStates() {
     draggedData = null;
     dragType = null;
+    lastSwapPreviewIndex = null;
 
-    // Limpiar clases de links
+    // Clean up link drag classes
     document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
     document.querySelectorAll('.drop-zone-available').forEach(el => el.classList.remove('drop-zone-available'));
     document.querySelectorAll('.drop-target-active').forEach(el => el.classList.remove('drop-target-active'));
 
-    // Limpiar clases de categorías
+    // Clean up category drag classes
     document.querySelectorAll('.dragging-category').forEach(el => el.classList.remove('dragging-category'));
     document.querySelectorAll('.library-drop-zone').forEach(el => el.classList.remove('library-drop-zone'));
     document.querySelectorAll('.library-drop-active').forEach(el => el.classList.remove('library-drop-active'));
     document.querySelectorAll('.category-reorder-zone').forEach(el => el.classList.remove('category-reorder-zone'));
 
-    // Remover indicadores
+    // Clean up swap previews and indicators
+    clearSwapPreviews();
     removeDropIndicators();
 }
+
+// ========================================
+// SEARCH FUNCTIONALITY
+// ========================================
+
+let currentSearchQuery = '';
+
+// Handle search input
+function handleSearch(query) {
+    currentSearchQuery = query.toLowerCase().trim();
+
+    // Sync both search inputs
+    const desktopInput = document.getElementById('search-input');
+    const mobileInput = document.getElementById('mobile-search-input');
+
+    if (desktopInput && desktopInput.value !== query) {
+        desktopInput.value = query;
+    }
+    if (mobileInput && mobileInput.value !== query) {
+        mobileInput.value = query;
+    }
+
+    // Update clear button visibility for all clear buttons
+    document.querySelectorAll('.search-clear').forEach(clearBtn => {
+        clearBtn.classList.toggle('visible', query.length > 0);
+    });
+
+    // Hide shortcut hint when typing
+    const shortcutHint = document.querySelector('.search-shortcut');
+    if (shortcutHint) {
+        shortcutHint.style.display = query.length > 0 ? 'none' : '';
+    }
+
+    // Re-render with search filter
+    render();
+}
+
+// Clear search
+function clearSearch() {
+    const desktopInput = document.getElementById('search-input');
+    const mobileInput = document.getElementById('mobile-search-input');
+
+    if (desktopInput) desktopInput.value = '';
+    if (mobileInput) mobileInput.value = '';
+
+    handleSearch('');
+
+    // Focus the appropriate input based on screen size
+    if (window.innerWidth >= 768 && desktopInput) {
+        desktopInput.focus();
+    } else if (mobileInput) {
+        mobileInput.focus();
+    }
+}
+
+// Focus search input (keyboard shortcut)
+function focusSearch() {
+    // Focus the appropriate input based on screen size
+    const desktopInput = document.getElementById('search-input');
+    const mobileInput = document.getElementById('mobile-search-input');
+
+    if (window.innerWidth >= 768 && desktopInput) {
+        desktopInput.focus();
+        desktopInput.select();
+    } else if (mobileInput) {
+        mobileInput.focus();
+        mobileInput.select();
+    }
+}
+
+// Initialize keyboard shortcuts
+function initSearchShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Cmd/Ctrl + K to focus search
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            e.preventDefault();
+            focusSearch();
+        }
+
+        // Escape to clear search if input is focused
+        if (e.key === 'Escape') {
+            const desktopInput = document.getElementById('search-input');
+            const mobileInput = document.getElementById('mobile-search-input');
+            const activeElement = document.activeElement;
+
+            if ((desktopInput && activeElement === desktopInput) ||
+                (mobileInput && activeElement === mobileInput)) {
+                if (currentSearchQuery) {
+                    clearSearch();
+                } else {
+                    activeElement.blur();
+                }
+            }
+        }
+    });
+}
+
+// Check if a library matches search query
+function libraryMatchesSearch(lib, libKey) {
+    if (!currentSearchQuery) return true;
+
+    // Check library name
+    if (lib.name.toLowerCase().includes(currentSearchQuery)) return true;
+
+    // Check if any category or link in this library matches
+    if (lib.categories) {
+        for (const catKey in lib.categories) {
+            if (categoryMatchesSearch(lib.categories[catKey], libKey, catKey)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+// Check if a category matches search query
+function categoryMatchesSearch(category, libKey, catKey) {
+    if (!currentSearchQuery) return true;
+
+    // Check category name
+    if (category.name.toLowerCase().includes(currentSearchQuery)) return true;
+
+    // Check category description
+    if (category.description && category.description.toLowerCase().includes(currentSearchQuery)) return true;
+
+    // Check if any link in this category matches
+    if (category.links) {
+        for (const link of category.links) {
+            if (linkMatchesSearch(link)) return true;
+        }
+    }
+
+    return false;
+}
+
+// Check if a link matches search query
+function linkMatchesSearch(link) {
+    if (!currentSearchQuery) return true;
+
+    // Check link title
+    if (link.title && link.title.toLowerCase().includes(currentSearchQuery)) return true;
+
+    // Check link description
+    if (link.description && link.description.toLowerCase().includes(currentSearchQuery)) return true;
+
+    // Check link URL
+    if (link.url && link.url.toLowerCase().includes(currentSearchQuery)) return true;
+
+    // Check quick note
+    if (link.quickNote && link.quickNote.toLowerCase().includes(currentSearchQuery)) return true;
+
+    return false;
+}
+
+// Initialize search on page load
+document.addEventListener('DOMContentLoaded', () => {
+    initSearchShortcuts();
+
+    // Update shortcut hint based on platform
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const shortcutHint = document.getElementById('search-shortcut-hint');
+    if (shortcutHint && isMac) {
+        shortcutHint.textContent = '⌘K';
+    }
+});
 
 // ================= UI RENDER =================
 function render() {
@@ -479,10 +722,13 @@ function renderLibrarySidebar() {
         const isActive = libKey === DATA.currentLibrary;
         const catCount = Object.keys(lib.categories || {}).length;
 
-        const div = document.createElement('div');
-        div.className = `library-item p-3 rounded-xl border border-transparent ${isActive ? 'active' : ''}`;
+        // Check if library matches search
+        const matchesSearch = libraryMatchesSearch(lib, libKey);
 
-        // FUNCIONALIDAD 3: Drop handlers para mover categorías a esta library
+        const div = document.createElement('div');
+        div.className = `library-item p-3 rounded-xl border border-transparent ${isActive ? 'active' : ''} ${currentSearchQuery && matchesSearch ? 'search-match' : ''} ${currentSearchQuery && !matchesSearch ? 'search-hidden' : ''}`;
+
+        // Drop handlers for moving categories to this library
         div.ondragover = (e) => handleLibraryDragOver(e, libKey);
         div.ondragleave = (e) => handleLibraryDragLeave(e);
         div.ondrop = (e) => handleLibraryDrop(e, libKey);
@@ -528,16 +774,22 @@ function renderCategories() {
     if (!currentLib || !currentLib.categories) return;
 
     const searchAll = document.getElementById('search-all-libraries')?.checked;
+    const hasSearchQuery = currentSearchQuery.length > 0;
 
     // Determine which categories to show
     let categoriesToRender = [];
 
-    if (searchAll) {
+    // When searching, always search across all libraries
+    if (hasSearchQuery || searchAll) {
         // Show categories from all libraries
         Object.keys(DATA.libraries).forEach(libKey => {
             const lib = DATA.libraries[libKey];
             Object.keys(lib.categories || {}).forEach(catKey => {
-                categoriesToRender.push({ libKey, catKey, category: lib.categories[catKey] });
+                const category = lib.categories[catKey];
+                // Only include if category matches search
+                if (!hasSearchQuery || categoryMatchesSearch(category, libKey, catKey)) {
+                    categoriesToRender.push({ libKey, catKey, category });
+                }
             });
         });
     } else {
@@ -557,10 +809,15 @@ function renderCategories() {
     }
 
     if (categoriesToRender.length === 0) {
+        const emptyMessage = hasSearchQuery
+            ? `<p class="text-slate-500">No se encontraron resultados para "<span class="text-white">${currentSearchQuery}</span>"</p>
+               <button onclick="clearSearch()" class="mt-4 px-6 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-medium transition">Limpiar busqueda</button>`
+            : `<p class="text-slate-500">No hay categorias en esta libreria.</p>
+               <button onclick="openCategoryModal()" class="mt-4 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium transition">+ Crear Categoria</button>`;
+
         container.innerHTML = `
             <div class="glass rounded-3xl p-12 text-center">
-                <p class="text-slate-500">No hay categorias en esta libreria.</p>
-                <button onclick="openCategoryModal()" class="mt-4 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium transition">+ Crear Categoria</button>
+                ${emptyMessage}
             </div>
         `;
         return;
@@ -588,7 +845,7 @@ function renderCategories() {
                         <span class="text-3xl">${s.icon}</span>
                         <h2 class="text-xl font-bold text-white uppercase tracking-tight">${s.name}</h2>
                         ${s.progress ? `<span class="text-[10px] bg-blue-500/20 px-2 py-0.5 rounded text-blue-400 font-bold border border-blue-500/30 uppercase">${s.progress}</span>` : ''}
-                        ${searchAll ? `<span class="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-400">${DATA.libraries[libKey].icon} ${DATA.libraries[libKey].name}</span>` : ''}
+                        ${(searchAll || hasSearchQuery) ? `<span class="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-400">${DATA.libraries[libKey].icon} ${DATA.libraries[libKey].name}</span>` : ''}
                     </div>
                     ${s.description ? `<p class="text-xs text-slate-500 ml-12 mt-1 line-clamp-1">${s.description}</p>` : ''}
                 </div>
@@ -634,9 +891,22 @@ function renderLinks(libKey, catKey) {
     const taskText = (category.task || '').toLowerCase().trim();
     const taskWords = taskText.split(/\s+/).filter(w => w.length > 2);
 
-    if (!links.length) return `<div class="col-span-full py-8 text-center text-slate-600 italic">Lista vacía - arrastra links aquí</div>`;
+    // Filter links based on search query
+    const filteredLinks = currentSearchQuery
+        ? links.map((link, index) => ({ link, index, matches: linkMatchesSearch(link) }))
+        : links.map((link, index) => ({ link, index, matches: true }));
 
-    return links.map((l, i) => {
+    const visibleLinks = filteredLinks.filter(item => item.matches);
+
+    if (!links.length) return `<div class="col-span-full py-8 text-center text-slate-600 italic">Lista vacia - arrastra links aqui</div>`;
+
+    if (visibleLinks.length === 0 && currentSearchQuery) {
+        return `<div class="col-span-full py-8 text-center text-slate-600 italic">No hay links que coincidan con la busqueda</div>`;
+    }
+
+    return filteredLinks.map(({ link: l, index: i, matches }) => {
+        // Hide non-matching links with CSS class
+        const hiddenClass = !matches ? 'search-hidden' : '';
         const titleMatch = taskWords.some(word => l.title.toLowerCase().includes(word));
         const descMatch = taskWords.some(word => (l.description || '').toLowerCase().includes(word));
         const isSmart = taskWords.length > 0 && (titleMatch || descMatch);
@@ -649,7 +919,8 @@ function renderLinks(libKey, catKey) {
         }
 
         let cardClass = "glass-card link-card p-4 rounded-2xl border flex flex-col gap-4 group ";
-        if (isSmart) cardClass += "smart-highlight";
+        if (isSmart) cardClass += "smart-highlight ";
+        if (hiddenClass) cardClass += hiddenClass;
 
         const statusBadge = getStatusBadge(l.status);
 

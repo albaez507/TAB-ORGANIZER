@@ -69,6 +69,109 @@ input:checked + .slider:before { transform: translateX(14px); }
     border-color: rgba(59, 130, 246, 0.5);
 }
 
+/* === SEARCH INPUT === */
+.search-container {
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.search-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 8px 32px 8px 32px;
+    color: white;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.search-input:focus {
+    border-color: rgba(59, 130, 246, 0.5);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 12px;
+    pointer-events: none;
+}
+
+.search-clear {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+    transition: color 0.15s ease, background 0.15s ease;
+    display: none;
+}
+
+.search-clear:hover {
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.search-clear.visible {
+    display: block;
+}
+
+.search-shortcut {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 9px;
+    font-family: monospace;
+    padding: 2px 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+    pointer-events: none;
+}
+
+.search-input:focus + .search-icon + .search-shortcut,
+.search-input:not(:placeholder-shown) + .search-icon + .search-shortcut {
+    display: none;
+}
+
+/* Search highlight for matching items */
+.library-item.search-match {
+    background: rgba(59, 130, 246, 0.15);
+}
+
+.library-item.search-hidden {
+    display: none;
+}
+
+.category-card.search-hidden {
+    display: none;
+}
+
+.link-card.search-hidden {
+    display: none;
+}
+
+/* Search match highlighting */
+.search-highlight {
+    background: rgba(251, 191, 36, 0.3);
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
 /* Video Focus Mode */
 .focus-modal {
     background: rgba(0, 0, 0, 0.95);
@@ -160,29 +263,26 @@ input:checked + .slider:before { transform: translateX(14px); }
 .focus-sidebar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
 
 /* ========================================
-   DRAG & DROP STYLES - COMPLETE
+   DRAG & DROP STYLES - CLEAN & MINIMAL
    ======================================== */
 
 /* === LINK DRAG HANDLE === */
 .link-drag-handle {
-    color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.2);
     font-size: 14px;
     font-weight: bold;
     cursor: grab;
     user-select: none;
-    transition: all 0.2s ease;
+    transition: color 0.15s ease;
     padding: 4px 2px;
-    border-radius: 4px;
 }
 
 .link-card:hover .link-drag-handle {
-    color: rgba(255, 255, 255, 0.6);
-    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.4);
 }
 
 .link-drag-handle:hover {
-    color: rgba(59, 130, 246, 0.8) !important;
-    background: rgba(59, 130, 246, 0.1) !important;
+    color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .link-drag-handle:active {
@@ -193,14 +293,12 @@ input:checked + .slider:before { transform: translateX(14px); }
 .category-drag-handle {
     cursor: grab;
     user-select: none;
-    transition: all 0.2s ease;
+    transition: color 0.15s ease;
     padding: 4px 6px;
-    border-radius: 6px;
 }
 
 .category-drag-handle:hover {
-    color: rgba(34, 197, 94, 0.8) !important;
-    background: rgba(34, 197, 94, 0.1);
+    color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .category-drag-handle:active {
@@ -210,21 +308,31 @@ input:checked + .slider:before { transform: translateX(14px); }
 /* === LINK CARD - DRAGGABLE === */
 .link-card {
     cursor: grab;
-    transition: all 0.2s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    position: relative;
 }
 
 .link-card:active {
     cursor: grabbing;
 }
 
-/* Link card mientras se arrastra */
+/* Link card while being dragged - FULL OPACITY, no distortion */
 .link-card.dragging {
-    opacity: 0.5 !important;
     cursor: grabbing !important;
-    transform: scale(1.02) rotate(1deg) !important;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
     z-index: 1000;
     pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Swap preview animation for link cards */
+.link-card.swap-preview {
+    transform: translateY(-4px);
+    transition: transform 0.12s ease;
+}
+
+.link-card.swap-preview-down {
+    transform: translateY(4px);
+    transition: transform 0.12s ease;
 }
 
 /* === CATEGORY CARD - DRAGGABLE === */
@@ -236,189 +344,60 @@ input:checked + .slider:before { transform: translateX(14px); }
     cursor: grabbing;
 }
 
-/* Category card mientras se arrastra */
+/* Category card while being dragged - FULL OPACITY */
 .category-card.dragging-category {
-    opacity: 0.6 !important;
-    transform: scale(0.98) !important;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4) !important;
     z-index: 100;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 /* === DROP ZONES - LINKS === */
 
-/* Todas las categorías se resaltan cuando arrastramos un link */
+/* Minimal indicator when drag starts - no distracting borders */
 .category-drop-zone.drop-zone-available {
-    border: 2px dashed rgba(59, 130, 246, 0.4);
-    border-radius: 12px;
-    background: rgba(59, 130, 246, 0.05);
-    transition: all 0.2s ease;
+    transition: background 0.15s ease;
 }
 
-/* Categoría activa (hover con link arrastrado) */
+/* Active drop zone - subtle background only */
 .category-drop-zone.drop-target-active {
-    border: 3px dashed #3b82f6 !important;
-    background: rgba(59, 130, 246, 0.15) !important;
-    box-shadow:
-        0 0 0 4px rgba(59, 130, 246, 0.2),
-        0 0 30px rgba(59, 130, 246, 0.3) !important;
-    animation: pulse-border 1.2s ease-in-out infinite;
-    position: relative;
+    background: rgba(255, 255, 255, 0.02);
 }
 
-/* Texto "Suelta aquí" */
-.category-drop-zone.drop-target-active::after {
-    content: '⬇️ Suelta aquí';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(59, 130, 246, 0.95);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-weight: 700;
-    font-size: 13px;
-    letter-spacing: 0.5px;
-    pointer-events: none;
-    z-index: 10;
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-    animation: bounce-in 0.3s ease;
-}
+/* === DROP ZONES - LIBRARIES (for categories) === */
 
-@keyframes bounce-in {
-    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
-    50% { transform: translate(-50%, -50%) scale(1.05); }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-}
-
-@keyframes pulse-border {
-    0%, 100% {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2), 0 0 30px rgba(59, 130, 246, 0.3);
-    }
-    50% {
-        border-color: #60a5fa;
-        box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.3), 0 0 40px rgba(59, 130, 246, 0.4);
-    }
-}
-
-/* === DROP ZONES - LIBRARIES (para categorías) === */
-
-/* Libraries en sidebar se resaltan cuando arrastramos una categoría */
+/* Libraries in sidebar - minimal highlight */
 .library-item.library-drop-zone {
-    border: 2px dashed rgba(34, 197, 94, 0.5) !important;
-    background: rgba(34, 197, 94, 0.1) !important;
-    transition: all 0.2s ease;
+    transition: background 0.15s ease;
 }
 
-/* Library activa (hover con categoría arrastrada) */
+/* Library active (hover with dragged category) */
 .library-item.library-drop-active {
-    border: 2px dashed #22c55e !important;
-    background: rgba(34, 197, 94, 0.25) !important;
-    box-shadow: 0 0 20px rgba(34, 197, 94, 0.4) !important;
-    transform: scale(1.02);
+    background: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* === DROP ZONES - CATEGORY REORDER === */
 
-/* Otras categorías se resaltan para reordenamiento */
+/* No extra decoration for category reorder zones */
 .category-card.category-reorder-zone {
     position: relative;
 }
 
-.category-card.category-reorder-zone::before {
-    content: '';
-    position: absolute;
-    top: -4px;
-    left: -4px;
-    right: -4px;
-    bottom: -4px;
-    border: 2px dashed rgba(34, 197, 94, 0.3);
-    border-radius: 28px;
-    pointer-events: none;
-    opacity: 0.5;
-}
-
 /* === DROP INDICATOR LINE === */
 
-/* Línea indicadora de posición para reordenamiento */
+/* Clean, simple position indicator line */
 .drop-indicator {
-    height: 4px;
-    background: linear-gradient(90deg, transparent, #3b82f6, #3b82f6, transparent);
-    border-radius: 2px;
-    margin: 8px 0;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 1px;
+    margin: 4px 0;
     pointer-events: none;
-    animation: indicator-glow 1s ease-in-out infinite;
     position: relative;
 }
 
-.drop-indicator::before,
-.drop-indicator::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 12px;
-    height: 12px;
-    background: #3b82f6;
-    border-radius: 50%;
-    box-shadow: 0 0 10px #3b82f6;
-}
-
-.drop-indicator::before {
-    left: -6px;
-}
-
-.drop-indicator::after {
-    right: -6px;
-}
-
-/* Indicador para categorías (más grande) */
+/* Category indicator - slightly thicker */
 .drop-indicator.category-indicator {
-    height: 6px;
-    margin: 12px 0;
-    background: linear-gradient(90deg, transparent, #22c55e, #22c55e, transparent);
-}
-
-.drop-indicator.category-indicator::before,
-.drop-indicator.category-indicator::after {
-    width: 14px;
-    height: 14px;
-    background: #22c55e;
-    box-shadow: 0 0 12px #22c55e;
-}
-
-@keyframes indicator-glow {
-    0%, 100% {
-        opacity: 1;
-        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
-    }
-    50% {
-        opacity: 0.8;
-        box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
-    }
-}
-
-/* === TOOLTIPS === */
-
-/* Tooltip para elementos draggable */
-.link-card[title]:hover::after,
-.category-header[title]:hover::after {
-    content: attr(title);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 11px;
-    white-space: nowrap;
-    pointer-events: none;
-    z-index: 1000;
-    opacity: 0;
-    transition: opacity 0.2s;
+    height: 3px;
+    margin: 8px 0;
+    background: rgba(255, 255, 255, 0.5);
 }
 
 /* === RESPONSIVE === */
@@ -433,22 +412,16 @@ input:checked + .slider:before { transform: translateX(14px); }
         font-size: 18px;
         padding: 6px 8px;
     }
-
-    .category-drop-zone.drop-target-active::after {
-        font-size: 11px;
-        padding: 8px 14px;
-    }
 }
 
 /* === ACCESSIBILITY === */
 
-/* Reduce motion para usuarios que lo prefieren */
+/* Reduce motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
-    .link-card.dragging,
-    .category-card.dragging-category,
-    .drop-indicator,
-    .category-drop-zone.drop-target-active {
-        animation: none !important;
+    .link-card,
+    .link-card.swap-preview,
+    .link-card.swap-preview-down,
+    .category-card.dragging-category {
         transition: none !important;
     }
 }
