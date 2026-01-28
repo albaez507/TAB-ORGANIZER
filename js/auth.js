@@ -154,8 +154,16 @@ async function logout() {
     currentUser = null;
     DATA = { libraries: {}, currentLibrary: null };
 
+    // Preserve theme preference before clearing localStorage
+    const savedTheme = localStorage.getItem('tab-organizer-theme');
+
     // Limpiar localStorage completamente para evitar datos residuales
     localStorage.clear();
+
+    // Restore theme preference after clear
+    if (savedTheme) {
+        localStorage.setItem('tab-organizer-theme', savedTheme);
+    }
 
     // Recargar pagina para estado limpio
     location.reload();

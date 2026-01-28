@@ -11,6 +11,17 @@
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="p-4 md:p-6">
+<script>
+// Prevent flash: apply saved theme immediately before render
+(function() {
+    const savedTheme = localStorage.getItem('tab-organizer-theme');
+    if (savedTheme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+    } else if (!savedTheme && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.setAttribute('data-theme', 'light');
+    }
+})();
+</script>
 <div class="max-w-7xl mx-auto">
 <header class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
     <div>
@@ -26,6 +37,7 @@
             <div id="user-avatar-initial" class="hidden w-7 h-7 rounded-full border border-slate-600 bg-slate-700 flex items-center justify-center text-xs font-bold text-white"></div>
             <span id="user-email" class="text-xs text-slate-400 hidden max-w-[120px] md:max-w-[180px] truncate"></span>
         </div>
+        <button id="theme-toggle" onclick="toggleTheme()" title="Cambiar tema" class="theme-toggle p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition text-lg">🌙</button>
         <button onclick="save()" title="Forzar Sincronizacion" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition">☁️</button>
         <button onclick="openExportModal()" title="Exportar datos" class="px-3 md:px-4 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 transition text-sm font-medium">📤 Export</button>
         <button onclick="openImportModal()" title="Importar datos" class="px-3 md:px-4 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 transition text-sm font-medium">📥 Import</button>

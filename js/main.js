@@ -5,6 +5,7 @@
 // ========================================
 
 // INICIO
+loadTheme();
 ensureDataStructure();
 initAuth();
 render();

@@ -4,6 +4,54 @@
 // Dependencies: data.js, links.js
 // ========================================
 
+// ================= THEME FUNCTIONS =================
+const THEME_STORAGE_KEY = 'tab-organizer-theme';
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+    document.documentElement.setAttribute('data-theme', newTheme === 'light' ? 'light' : '');
+    if (newTheme === 'dark') {
+        document.documentElement.removeAttribute('data-theme');
+    }
+
+    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    updateThemeToggleIcon(newTheme);
+}
+
+function updateThemeToggleIcon(theme) {
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+
+    if (theme === 'light') {
+        btn.textContent = '☀️';
+        btn.title = 'Cambiar a modo oscuro';
+    } else {
+        btn.textContent = '🌙';
+        btn.title = 'Cambiar a modo claro';
+    }
+}
+
+function loadTheme() {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    let theme = 'dark'; // default
+
+    if (savedTheme) {
+        theme = savedTheme;
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+        theme = 'light';
+    }
+
+    if (theme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+    }
+
+    updateThemeToggleIcon(theme);
+}
+
 // ================= STATUS BADGE HELPER =================
 function getStatusBadge(status) {
     if (!status) return '';
