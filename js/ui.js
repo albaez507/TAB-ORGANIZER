@@ -612,12 +612,6 @@ function handleSearch(query) {
         clearBtn.classList.toggle('visible', query.length > 0);
     });
 
-    // Hide shortcut hint when typing
-    const shortcutHint = document.querySelector('.search-shortcut');
-    if (shortcutHint) {
-        shortcutHint.style.display = query.length > 0 ? 'none' : '';
-    }
-
     // Re-render with search filter
     render();
 }
@@ -743,13 +737,6 @@ function linkMatchesSearch(link) {
 // Initialize search on page load
 document.addEventListener('DOMContentLoaded', () => {
     initSearchShortcuts();
-
-    // Update shortcut hint based on platform
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    const shortcutHint = document.getElementById('search-shortcut-hint');
-    if (shortcutHint && isMac) {
-        shortcutHint.textContent = '⌘K';
-    }
 });
 
 // ================= UI RENDER =================
