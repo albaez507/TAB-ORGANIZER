@@ -4,6 +4,19 @@
 // Dependencies: data.js, links.js
 // ========================================
 
+// ================= HELPER FUNCTIONS =================
+
+// Escape HTML attribute to preserve backslashes and special characters
+function escapeHtmlAttribute(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
 // ================= THEME FUNCTIONS =================
 const THEME_STORAGE_KEY = 'tab-organizer-theme';
 
@@ -73,6 +86,31 @@ function getStatusBadge(status) {
 }
 
 // ========================================
+// ORGANIZE MODE FUNCTIONS
+// ========================================
+
+function toggleOrganizeMode(libKey, catKey) {
+    const key = `${libKey}-${catKey}`;
+    if (organizeMode.has(key)) {
+        organizeMode.delete(key);
+    } else {
+        organizeMode.add(key);
+    }
+    render();
+}
+
+function isOrganizeMode(libKey, catKey) {
+    return organizeMode.has(`${libKey}-${catKey}`);
+}
+
+function saveOrganizeOrder(libKey, catKey) {
+    organizeMode.delete(`${libKey}-${catKey}`);
+    save();
+    render();
+    showToast('✅ Orden guardado');
+}
+
+// ========================================
 // DRAG & DROP - CLEAN MINIMAL IMPLEMENTATION
 // ========================================
 
@@ -101,8 +139,8 @@ function handleLinkDragStart(event, libKey, catKey, linkIndex) {
         linkIndex
     }));
 
-    // Add dragging class to the card
-    const card = event.target.closest('.link-card');
+    // Add dragging class to the card (works for both link-card and organize-item)
+    const card = event.target.closest('.organize-item') || event.target.closest('.link-card');
     if (card) {
         setTimeout(() => {
             card.classList.add('dragging');
@@ -118,8 +156,8 @@ function handleLinkDragStart(event, libKey, catKey, linkIndex) {
 }
 
 function handleLinkDragEnd(event) {
-    // Remover clase dragging
-    const card = event.target.closest('.link-card');
+    // Remover clase dragging (works for both link-card and organize-item)
+    const card = event.target.closest('.organize-item') || event.target.closest('.link-card');
     if (card) {
         card.classList.remove('dragging');
     }
@@ -238,14 +276,15 @@ function handleLinkDrop(event, targetLibKey, targetCatKey) {
 // Calcular índice de inserción basado en posición del mouse
 function getDropIndex(event, libKey, catKey) {
     const zone = event.currentTarget;
-    const linkCards = zone.querySelectorAll('.link-card:not(.dragging)');
+    // Support both organize-item (organize mode) and link-card (for cross-category drops)
+    const items = zone.querySelectorAll('.organize-item:not(.dragging), .link-card:not(.dragging)');
 
-    if (linkCards.length === 0) return 0;
+    if (items.length === 0) return 0;
 
     const mouseY = event.clientY;
 
-    for (let i = 0; i < linkCards.length; i++) {
-        const card = linkCards[i];
+    for (let i = 0; i < items.length; i++) {
+        const card = items[i];
         const rect = card.getBoundingClientRect();
         const cardMiddle = rect.top + rect.height / 2;
 
@@ -254,7 +293,7 @@ function getDropIndex(event, libKey, catKey) {
         }
     }
 
-    return linkCards.length;
+    return items.length;
 }
 
 // Show simple drop indicator line for cross-category drops
@@ -262,15 +301,15 @@ function showLinkDropIndicator(event, zone) {
     removeDropIndicators();
     clearSwapPreviews();
 
-    const linkCards = zone.querySelectorAll('.link-card:not(.dragging)');
-    if (linkCards.length === 0) return;
+    const items = zone.querySelectorAll('.organize-item:not(.dragging), .link-card:not(.dragging)');
+    if (items.length === 0) return;
 
     const mouseY = event.clientY;
     const indicator = document.createElement('div');
     indicator.className = 'drop-indicator';
 
-    for (let i = 0; i < linkCards.length; i++) {
-        const card = linkCards[i];
+    for (let i = 0; i < items.length; i++) {
+        const card = items[i];
         const rect = card.getBoundingClientRect();
         const cardMiddle = rect.top + rect.height / 2;
 
@@ -281,7 +320,7 @@ function showLinkDropIndicator(event, zone) {
     }
 
     // Insert at end
-    const lastCard = linkCards[linkCards.length - 1];
+    const lastCard = items[items.length - 1];
     lastCard.parentNode.insertBefore(indicator, lastCard.nextSibling);
 }
 
@@ -289,15 +328,15 @@ function showLinkDropIndicator(event, zone) {
 function showSwapPreview(event, zone) {
     removeDropIndicators();
 
-    const linkCards = zone.querySelectorAll('.link-card:not(.dragging)');
-    if (linkCards.length === 0) return;
+    const items = zone.querySelectorAll('.organize-item:not(.dragging)');
+    if (items.length === 0) return;
 
     const mouseY = event.clientY;
     let targetIndex = null;
 
-    // Find which card we're hovering over
-    for (let i = 0; i < linkCards.length; i++) {
-        const card = linkCards[i];
+    // Find which item we're hovering over
+    for (let i = 0; i < items.length; i++) {
+        const card = items[i];
         const rect = card.getBoundingClientRect();
 
         if (mouseY >= rect.top && mouseY <= rect.bottom) {
@@ -306,10 +345,10 @@ function showSwapPreview(event, zone) {
         }
     }
 
-    // If hovering between cards, find insertion point
+    // If hovering between items, find insertion point
     if (targetIndex === null) {
-        for (let i = 0; i < linkCards.length; i++) {
-            const card = linkCards[i];
+        for (let i = 0; i < items.length; i++) {
+            const card = items[i];
             const rect = card.getBoundingClientRect();
             const cardMiddle = rect.top + rect.height / 2;
 
@@ -319,7 +358,7 @@ function showSwapPreview(event, zone) {
             }
         }
         if (targetIndex === null) {
-            targetIndex = linkCards.length;
+            targetIndex = items.length;
         }
     }
 
@@ -330,10 +369,10 @@ function showSwapPreview(event, zone) {
     // Clear previous swap previews
     clearSwapPreviews();
 
-    // Apply swap preview to the target card
-    if (targetIndex !== null && targetIndex < linkCards.length) {
+    // Apply swap preview to the target item
+    if (targetIndex !== null && targetIndex < items.length) {
         const sourceIndex = draggedData.linkIndex;
-        const targetCard = linkCards[targetIndex];
+        const targetCard = items[targetIndex];
 
         // Adjust for visual offset: if dragging to a position before/after source
         if (targetIndex !== sourceIndex) {
@@ -570,7 +609,7 @@ function cleanupAllDragStates() {
     dragType = null;
     lastSwapPreviewIndex = null;
 
-    // Clean up link drag classes
+    // Clean up link/organize-item drag classes
     document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
     document.querySelectorAll('.drop-zone-available').forEach(el => el.classList.remove('drop-zone-available'));
     document.querySelectorAll('.drop-target-active').forEach(el => el.classList.remove('drop-target-active'));
@@ -899,17 +938,34 @@ function renderCategories() {
                     <div class="w-1.5 h-10 rounded-full" style="background:${s.color}"></div>
                     <div class="flex-1">
                         <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nota de categoria</p>
-                        <input class="w-full bg-transparent text-sm font-medium text-white outline-none focus:text-blue-400 transition"
-                               value="${s.task || ''}" placeholder="Nota general de esta categoria..."
+                        <input class="w-full bg-transparent text-sm font-medium text-white outline-none focus:text-blue-400 transition category-note-input"
+                               value="${escapeHtmlAttribute(s.task || '')}" placeholder="Nota general de esta categoria..."
                                onkeydown="if(event.key==='Enter') { saveTask('${libKey}', '${catKey}', this.value); this.blur(); }"
                                onblur="saveTask('${libKey}', '${catKey}', this.value)">
                     </div>
                 </div>
 
-                <div class="category-drop-zone grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-[100px] rounded-xl p-2 transition-all"
-                     ondragover="handleLinkDragOver(event, '${libKey}', '${catKey}')"
-                     ondragleave="handleLinkDragLeave(event)"
-                     ondrop="handleLinkDrop(event, '${libKey}', '${catKey}')">
+                <!-- Organize Mode Controls -->
+                <div class="flex items-center justify-between mb-4" onclick="event.stopPropagation()">
+                    ${isOrganizeMode(libKey, catKey) ? `
+                        <span class="text-xs text-slate-400">Arrastra para reordenar</span>
+                        <button onclick="saveOrganizeOrder('${libKey}', '${catKey}')" class="px-4 py-2 rounded-xl text-xs font-bold text-emerald-400 bg-emerald-500/20 hover:bg-emerald-500/30 transition">
+                            Guardar Orden
+                        </button>
+                    ` : `
+                        <span class="text-xs text-slate-500">${(s.links || []).length} links</span>
+                        <button onclick="toggleOrganizeMode('${libKey}', '${catKey}')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 bg-white/5 hover:bg-white/10 transition flex items-center gap-2">
+                            <span>Organizar</span>
+                        </button>
+                    `}
+                </div>
+
+                <div class="category-drop-zone ${isOrganizeMode(libKey, catKey) ? 'organize-mode flex flex-col' : 'grid grid-cols-1 lg:grid-cols-2'} gap-4 min-h-[100px] rounded-xl p-2 transition-all"
+                     ${isOrganizeMode(libKey, catKey) ? `
+                         ondragover="handleLinkDragOver(event, '${libKey}', '${catKey}')"
+                         ondragleave="handleLinkDragLeave(event)"
+                         ondrop="handleLinkDrop(event, '${libKey}', '${catKey}')"
+                     ` : ''}>
                     ${renderLinks(libKey, catKey)}
                 </div>
             </div>
@@ -925,6 +981,7 @@ function renderLinks(libKey, catKey) {
     const links = category.links || [];
     const taskText = (category.task || '').toLowerCase().trim();
     const taskWords = taskText.split(/\s+/).filter(w => w.length > 2);
+    const inOrganizeMode = isOrganizeMode(libKey, catKey);
 
     // Filter links based on search query
     const filteredLinks = currentSearchQuery
@@ -933,14 +990,40 @@ function renderLinks(libKey, catKey) {
 
     const visibleLinks = filteredLinks.filter(item => item.matches);
 
-    if (!links.length) return `<div class="col-span-full py-8 text-center text-slate-600 italic">Lista vacia - arrastra links aqui</div>`;
+    if (!links.length) return `<div class="col-span-full py-8 text-center text-slate-600 italic">Lista vacia${inOrganizeMode ? '' : ' - usa el boton Organizar para reordenar'}</div>`;
 
     if (visibleLinks.length === 0 && currentSearchQuery) {
         return `<div class="col-span-full py-8 text-center text-slate-600 italic">No hay links que coincidan con la busqueda</div>`;
     }
 
+    // ORGANIZE MODE: List view with drag handles
+    if (inOrganizeMode) {
+        return filteredLinks.map(({ link: l, index: i, matches }) => {
+            const hiddenClass = !matches ? 'search-hidden' : '';
+
+            return `
+            <div class="organize-item flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition ${hiddenClass}"
+                 draggable="true"
+                 ondragstart="handleLinkDragStart(event, '${libKey}', '${catKey}', ${i})"
+                 ondragend="handleLinkDragEnd(event)"
+                 onclick="event.stopPropagation()">
+                <span class="text-slate-500 text-xs font-mono w-6 text-center">${i + 1}</span>
+                <span class="organize-drag-handle text-slate-400 hover:text-slate-200 cursor-grab text-lg" title="Arrastra para reordenar">≡</span>
+                <img src="${l.icon || 'https://www.google.com/s2/favicons?sz=64&domain=' + l.url}" class="w-8 h-8 rounded-lg bg-slate-800 object-contain p-0.5 border border-white/5 flex-shrink-0">
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-white truncate">${l.title || 'Sin titulo'}</p>
+                    <p class="text-[10px] text-slate-500 truncate">${l.url}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="text-blue-400/60 hover:text-blue-400 transition p-1" onclick="editLink('${libKey}', '${catKey}', ${i})" title="Editar">✏️</button>
+                    <button class="text-red-500/40 hover:text-red-500 transition p-1" onclick="deleteLink('${libKey}', '${catKey}', ${i})" title="Eliminar">🗑️</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // NORMAL MODE: Thumbnail cards (no drag)
     return filteredLinks.map(({ link: l, index: i, matches }) => {
-        // Hide non-matching links with CSS class
         const hiddenClass = !matches ? 'search-hidden' : '';
         const titleMatch = taskWords.some(word => l.title.toLowerCase().includes(word));
         const descMatch = taskWords.some(word => (l.description || '').toLowerCase().includes(word));
@@ -959,17 +1042,27 @@ function renderLinks(libKey, catKey) {
 
         const statusBadge = getStatusBadge(l.status);
 
+        // For non-video links, show notes section
+        const notesSection = !embed ? `
+            <div class="link-notes-section mt-2 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Mis Notas:</p>
+                <textarea
+                    class="w-full bg-transparent text-xs text-slate-300 outline-none resize-none placeholder-slate-600"
+                    placeholder="Agrega notas sobre este link..."
+                    rows="2"
+                    maxlength="500"
+                    oninput="saveLinkNotes('${libKey}', '${catKey}', ${i}, this.value)"
+                    onclick="event.stopPropagation()">${escapeHtmlAttribute(l.linkNotes || '')}</textarea>
+                <p class="text-[9px] text-slate-600 text-right mt-1"><span id="link-notes-count-${libKey}-${catKey}-${i}">${(l.linkNotes || '').length}</span>/500</p>
+            </div>
+        ` : '';
+
         return `
         <div class="${cardClass}"
-             draggable="true"
-             ondragstart="handleLinkDragStart(event, '${libKey}', '${catKey}', ${i})"
-             ondragend="handleLinkDragEnd(event)"
-             title="Arrastra para mover o reordenar"
              onclick="event.stopPropagation()">
             <div class="flex justify-between items-start gap-3">
                 <div class="flex items-start gap-3 flex-1 min-w-0">
                     <div class="flex flex-col items-center gap-1">
-                        <span class="link-drag-handle">⋮⋮</span>
                         <img src="${l.icon || 'https://www.google.com/s2/favicons?sz=64&domain=' + l.url}" class="w-10 h-10 rounded-lg bg-slate-800 object-contain p-1 border border-white/5 shadow-inner flex-shrink-0">
                     </div>
                     <div class="min-w-0 flex-1">
@@ -1016,7 +1109,7 @@ function renderLinks(libKey, catKey) {
                     <button class="px-3 py-1.5 rounded-lg bg-purple-500/20 text-[9px] font-bold text-purple-400 uppercase hover:bg-purple-500/30 transition" onclick="openVideoFocusModal('${libKey}', '${catKey}', ${i}, '${embed.type}', '${embed.src}')">🎬 Focus</button>
                 </div>
                 <div id="preview-${pid}"></div>
-            ` : ''}
+            ` : notesSection}
         </div>`;
     }).join('');
 }

@@ -13,6 +13,9 @@ let DATA = {
 let openSections = new Set();
 let activeCategory = null, activeIndex = null, focusCategory = null, manageCategories = false, editingCategoryKey = null;
 let editingLinkIndex = null;
+
+// Organize mode state - tracks which categories are in organize mode
+let organizeMode = new Set();
 let editingLibraryKey = null;
 let currentUser = null;
 let isGuest = false;
@@ -51,6 +54,8 @@ function migrateOldData(oldData) {
                     if (link.fullNote === undefined) link.fullNote = '';
                     // Ensure quickNote exists
                     if (link.quickNote === undefined) link.quickNote = '';
+                    // Ensure linkNotes exists (for non-video links)
+                    if (link.linkNotes === undefined) link.linkNotes = '';
                 });
             });
         });
@@ -89,7 +94,8 @@ function migrateOldData(oldData) {
                     applied: link.status?.applied || false
                 },
                 quickNote: link.quickNote || '',
-                fullNote: ''
+                fullNote: '',
+                linkNotes: link.linkNotes || ''
             }));
 
             newData.libraries[defaultLibKey].categories[catKey] = {

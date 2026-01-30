@@ -45,7 +45,8 @@ function saveLink() {
         icon: document.getElementById('link-icon-preview').src,
         status: existingLink?.status || { watching: false, watched: false, understood: false, applied: false },
         quickNote: existingLink?.quickNote || '',
-        fullNote: existingLink?.fullNote || ''
+        fullNote: existingLink?.fullNote || '',
+        linkNotes: existingLink?.linkNotes || ''
     };
 
     if (!l.url) return;
@@ -92,6 +93,26 @@ function saveLinkNote(libKey, catKey, linkIndex, note) {
     link.quickNote = note.substring(0, 100);
     save();
     showToast('💾 Guardado', false);
+}
+
+// Save notes for non-video links
+let linkNotesDebounceTimer = null;
+function saveLinkNotes(libKey, catKey, linkIndex, notes) {
+    const link = DATA.libraries[libKey]?.categories[catKey]?.links[linkIndex];
+    if (!link) return;
+
+    link.linkNotes = notes.substring(0, 500);
+
+    // Update character count
+    const countEl = document.getElementById(`link-notes-count-${libKey}-${catKey}-${linkIndex}`);
+    if (countEl) countEl.textContent = link.linkNotes.length;
+
+    // Debounced save
+    clearTimeout(linkNotesDebounceTimer);
+    linkNotesDebounceTimer = setTimeout(() => {
+        save();
+        showToast('💾 Notas guardadas', false);
+    }, 800);
 }
 
 // ================= EMBED HELPERS =================

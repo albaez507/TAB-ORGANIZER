@@ -247,27 +247,9 @@ input:checked + .slider:before { transform: translateX(14px); }
    DRAG & DROP STYLES - CLEAN & MINIMAL
    ======================================== */
 
-/* === LINK DRAG HANDLE === */
+/* === LINK DRAG HANDLE (only visible in organize mode) === */
 .link-drag-handle {
-    color: rgba(255, 255, 255, 0.2);
-    font-size: 14px;
-    font-weight: bold;
-    cursor: grab;
-    user-select: none;
-    transition: color 0.15s ease;
-    padding: 4px 2px;
-}
-
-.link-card:hover .link-drag-handle {
-    color: rgba(255, 255, 255, 0.4);
-}
-
-.link-drag-handle:hover {
-    color: rgba(255, 255, 255, 0.6) !important;
-}
-
-.link-drag-handle:active {
-    cursor: grabbing;
+    display: none; /* Hidden in normal mode */
 }
 
 /* === CATEGORY DRAG HANDLE === */
@@ -286,39 +268,40 @@ input:checked + .slider:before { transform: translateX(14px); }
     cursor: grabbing;
 }
 
-/* === LINK CARD - DRAGGABLE === */
+/* === LINK CARD - NON-DRAGGABLE BY DEFAULT === */
 .link-card {
-    cursor: grab;
+    cursor: default;
     transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.2s ease;
     position: relative;
     opacity: 1 !important;
 }
 
-.link-card:active {
-    cursor: grabbing;
-}
-
-/* Link card while being dragged - FULL OPACITY, elevated appearance */
-.link-card.dragging {
+/* Link card while being dragged (organize mode) - FULL OPACITY, elevated appearance */
+.link-card.dragging,
+.organize-item.dragging {
     cursor: grabbing !important;
     z-index: 1000;
     pointer-events: none;
-    opacity: 1 !important;
+    opacity: 0.7 !important;
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
     transform: scale(1.02);
+    background: rgba(59, 130, 246, 0.15) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
 }
 
-/* Swap preview animation - target link shifts smoothly to make space */
-.link-card.swap-preview {
-    transform: translateY(-24px);
+/* Swap preview animation - target item shifts smoothly to make space (organize mode only) */
+.organize-item.swap-preview {
+    transform: translateY(-12px);
     transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
     opacity: 1 !important;
+    background: rgba(59, 130, 246, 0.05);
 }
 
-.link-card.swap-preview-down {
-    transform: translateY(24px);
+.organize-item.swap-preview-down {
+    transform: translateY(12px);
     transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
     opacity: 1 !important;
+    background: rgba(59, 130, 246, 0.05);
 }
 
 /* === CATEGORY CARD - DRAGGABLE === */
@@ -672,26 +655,15 @@ input:checked + .slider:before { transform: translateX(14px); }
     border-color: rgba(59, 130, 246, 0.5);
 }
 
-/* === DRAG & DROP === */
-[data-theme="light"] .link-drag-handle {
-    color: rgba(0, 0, 0, 0.25);
-}
-
-[data-theme="light"] .link-card:hover .link-drag-handle {
-    color: rgba(0, 0, 0, 0.4);
-}
-
-[data-theme="light"] .link-drag-handle:hover {
-    color: rgba(0, 0, 0, 0.6) !important;
-}
-
+/* === DRAG & DROP - LIGHT MODE === */
 [data-theme="light"] .category-drag-handle:hover {
     color: rgba(0, 0, 0, 0.6) !important;
 }
 
-[data-theme="light"] .link-card.dragging {
+[data-theme="light"] .organize-item.dragging {
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
-    opacity: 1 !important;
+    opacity: 0.7 !important;
+    background: rgba(59, 130, 246, 0.12) !important;
 }
 
 [data-theme="light"] .category-card.dragging-category {
@@ -775,10 +747,11 @@ input:checked + .slider:before { transform: translateX(14px); }
     border-color: rgba(37, 99, 235, 0.3) !important;
 }
 
-/* === SWAP PREVIEW - LIGHT MODE (no opacity changes) === */
-[data-theme="light"] .link-card.swap-preview,
-[data-theme="light"] .link-card.swap-preview-down {
+/* === SWAP PREVIEW - LIGHT MODE === */
+[data-theme="light"] .organize-item.swap-preview,
+[data-theme="light"] .organize-item.swap-preview-down {
     opacity: 1 !important;
+    background: rgba(59, 130, 246, 0.08);
 }
 
 /* === INPUT FIELDS - LIGHT MODE === */
@@ -939,4 +912,187 @@ input:checked + .slider:before { transform: translateX(14px); }
 
 .theme-toggle:hover {
     transform: scale(1.1);
+}
+
+/* ========================================
+   ORGANIZE MODE STYLES
+   ======================================== */
+
+.organize-mode {
+    background: rgba(0, 0, 0, 0.1);
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+}
+
+.organize-item {
+    cursor: default;
+    transition: all 0.2s ease;
+}
+
+.organize-item.dragging {
+    opacity: 0.5;
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.organize-drag-handle {
+    cursor: grab;
+    user-select: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.15s ease;
+}
+
+.organize-drag-handle:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.organize-drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Light mode organize styles */
+[data-theme="light"] .organize-mode {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .organize-item.dragging {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .organize-drag-handle:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* ========================================
+   LINK NOTES SECTION
+   ======================================== */
+
+.link-notes-section {
+    transition: all 0.2s ease;
+}
+
+.link-notes-section:focus-within {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.link-notes-section textarea {
+    background: transparent;
+    line-height: 1.5;
+}
+
+.link-notes-section textarea:focus {
+    color: white;
+}
+
+/* Light mode link notes */
+[data-theme="light"] .link-notes-section {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .link-notes-section:focus-within {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="light"] .link-notes-section textarea {
+    color: #334155;
+}
+
+[data-theme="light"] .link-notes-section textarea::placeholder {
+    color: #94a3b8;
+}
+
+[data-theme="light"] .link-notes-section textarea:focus {
+    color: #0f172a;
+}
+
+/* ========================================
+   SCROLL CONTAINERS
+   ======================================== */
+
+/* Library list scroll container */
+#library-list {
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+#library-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+#library-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+#library-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Categories container scroll */
+#sections-container {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    padding-right: 4px;
+}
+
+#sections-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+#sections-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+#sections-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Light mode scroll containers */
+[data-theme="light"] #library-list::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] #library-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] #sections-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] #sections-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] #library-list {
+    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+}
+
+[data-theme="light"] #sections-container {
+    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+}
+
+/* ========================================
+   NORMAL MODE LINK CARDS (no drag)
+   ======================================== */
+
+/* Remove drag cursor from normal link cards */
+.link-card:not(.organize-item) {
+    cursor: default;
+}
+
+/* Keep hover effects but remove drag-related styling */
+.glass-card.link-card:not(.organize-item):hover {
+    transform: translateY(-4px) scale(1.01);
 }
