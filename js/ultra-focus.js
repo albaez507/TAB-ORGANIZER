@@ -1,17 +1,21 @@
 // ========================================
 // ULTRA FOCUS MODE
-// Description: Cinematic full-screen library focus view with accordion categories
+// Description: Cinematic full-screen library focus view with accordion/grid+list views
 // Dependencies: data.js, storage.js, ui.js
 // ========================================
 
 // ================= STATE =================
 let ultraFocusActive = false;
 let ultraFocusLibKey = null;
-let ultraFocusExpandedCatKey = null; // Which category is currently expanded
+let ultraFocusExpandedCatKey = null; // Which category is currently expanded (accordion view)
 let quickAccessLibraries = []; // Array of library keys for quick access
+let ultraFocusViewMode = 'accordion'; // 'accordion' or 'gridlist'
+let ultraFocusSelectedCatKey = null; // Which category is selected (grid+list view)
+let ultraFocusExpandedLinkIndex = null; // Which link is expanded for preview (grid+list view)
 
 const ULTRA_FOCUS_STORAGE_KEY = 'tab-organizer-quick-access';
 const ULTRA_FOCUS_LAST_KEY = 'tab-organizer-last-ultra-focus';
+const ULTRA_FOCUS_VIEW_KEY = 'tab-organizer-ultra-focus-view';
 
 // ================= PERSISTENCE =================
 
@@ -21,8 +25,21 @@ function loadQuickAccessSettings() {
         if (saved) {
             quickAccessLibraries = JSON.parse(saved);
         }
+        // Load view mode preference
+        const savedView = localStorage.getItem(ULTRA_FOCUS_VIEW_KEY);
+        if (savedView && (savedView === 'accordion' || savedView === 'gridlist')) {
+            ultraFocusViewMode = savedView;
+        }
     } catch (e) {
         console.error('Error loading quick access settings:', e);
+    }
+}
+
+function saveViewModePreference() {
+    try {
+        localStorage.setItem(ULTRA_FOCUS_VIEW_KEY, ultraFocusViewMode);
+    } catch (e) {
+        console.error('Error saving view mode:', e);
     }
 }
 
@@ -359,7 +376,345 @@ function updateAccordionHeaders() {
     });
 }
 
+// ================= VIEW TOGGLE FUNCTIONS =================
+
+function setUltraFocusView(mode) {
+    if (mode !== 'accordion' && mode !== 'gridlist') return;
+    if (mode === ultraFocusViewMode) return;
+
+    const oldMode = ultraFocusViewMode;
+    ultraFocusViewMode = mode;
+    saveViewModePreference();
+
+    // Reset view-specific state
+    ultraFocusExpandedCatKey = null;
+    ultraFocusSelectedCatKey = null;
+    ultraFocusExpandedLinkIndex = null;
+
+    // Update toggle buttons
+    updateViewToggleButtons();
+
+    // Animate transition
+    animateViewTransition(oldMode, mode);
+}
+
+function updateViewToggleButtons() {
+    const accordionBtn = document.getElementById('uf-view-accordion');
+    const gridlistBtn = document.getElementById('uf-view-gridlist');
+
+    if (accordionBtn) {
+        accordionBtn.classList.toggle('active', ultraFocusViewMode === 'accordion');
+    }
+    if (gridlistBtn) {
+        gridlistBtn.classList.toggle('active', ultraFocusViewMode === 'gridlist');
+    }
+}
+
+function animateViewTransition(oldMode, newMode) {
+    const container = document.getElementById('ultra-focus-categories');
+    if (!container) return;
+
+    // Fade out current content
+    container.style.transition = 'opacity 150ms ease-out';
+    container.style.opacity = '0';
+
+    setTimeout(() => {
+        // Re-render with new mode
+        renderUltraFocusContent(ultraFocusLibKey);
+
+        // Fade in new content
+        requestAnimationFrame(() => {
+            container.style.transition = 'opacity 200ms ease-in';
+            container.style.opacity = '1';
+
+            // Animate items in
+            if (newMode === 'accordion') {
+                animateCategoriesIn();
+            } else {
+                animateGridListIn();
+            }
+        });
+    }, 150);
+}
+
+function renderViewToggle() {
+    return `
+        <div class="uf-view-toggle" id="uf-view-toggle">
+            <button
+                id="uf-view-accordion"
+                class="uf-view-btn ${ultraFocusViewMode === 'accordion' ? 'active' : ''}"
+                onclick="setUltraFocusView('accordion')"
+                title="Accordion View"
+            >
+                <span class="uf-view-icon">☰</span>
+                <span class="uf-view-label">Accordion</span>
+            </button>
+            <button
+                id="uf-view-gridlist"
+                class="uf-view-btn ${ultraFocusViewMode === 'gridlist' ? 'active' : ''}"
+                onclick="setUltraFocusView('gridlist')"
+                title="Grid + List View"
+            >
+                <span class="uf-view-icon">▦</span>
+                <span class="uf-view-label">Grid</span>
+            </button>
+        </div>
+    `;
+}
+
+// ================= GRID + LIST VIEW FUNCTIONS =================
+
+function selectGridCategory(catKey) {
+    if (ultraFocusSelectedCatKey === catKey) {
+        // Deselect
+        ultraFocusSelectedCatKey = null;
+        ultraFocusExpandedLinkIndex = null;
+    } else {
+        ultraFocusSelectedCatKey = catKey;
+        ultraFocusExpandedLinkIndex = null;
+    }
+
+    // Update category cards visual state
+    updateGridCategorySelection();
+
+    // Render links list with animation
+    renderGridLinksList();
+}
+
+function updateGridCategorySelection() {
+    const cards = document.querySelectorAll('.uf-grid-cat-card');
+    cards.forEach(card => {
+        const catKey = card.dataset.catKey;
+        if (catKey === ultraFocusSelectedCatKey) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+    });
+}
+
+function renderGridLinksList() {
+    const container = document.getElementById('uf-gridlist-links');
+    if (!container) return;
+
+    if (!ultraFocusSelectedCatKey) {
+        // Collapse the links section
+        container.style.transition = 'height 250ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 150ms ease';
+        container.style.height = '0px';
+        container.style.opacity = '0';
+        return;
+    }
+
+    const lib = DATA.libraries[ultraFocusLibKey];
+    if (!lib) return;
+
+    const cat = lib.categories[ultraFocusSelectedCatKey];
+    if (!cat || !cat.links || cat.links.length === 0) {
+        container.innerHTML = `
+            <div class="uf-gridlist-empty">
+                <span class="text-slate-500">No links in this category</span>
+            </div>
+        `;
+        container.style.height = 'auto';
+        container.style.opacity = '1';
+        return;
+    }
+
+    const links = cat.links;
+    container.innerHTML = `
+        <div class="uf-links-list">
+            ${links.map((link, index) => renderGridListLinkRow(link, index)).join('')}
+        </div>
+    `;
+
+    // Animate expansion
+    const targetHeight = container.scrollHeight;
+    container.style.height = '0px';
+    container.offsetHeight; // Force reflow
+
+    requestAnimationFrame(() => {
+        container.style.transition = 'height 300ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 200ms ease';
+        container.style.height = targetHeight + 'px';
+        container.style.opacity = '1';
+
+        // Animate links in with stagger
+        const rows = container.querySelectorAll('.uf-link-row');
+        rows.forEach((row, i) => {
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(-10px)';
+
+            setTimeout(() => {
+                row.style.transition = 'opacity 200ms ease, transform 200ms ease';
+                row.style.opacity = '1';
+                row.style.transform = 'translateX(0)';
+            }, i * 40);
+        });
+
+        // Set height to auto after animation
+        setTimeout(() => {
+            container.style.height = 'auto';
+        }, 310);
+    });
+}
+
+function renderGridListLinkRow(link, index) {
+    const isExpanded = ultraFocusExpandedLinkIndex === index;
+    const statusBadge = getUltraFocusStatusBadge(link.status);
+    const isVideo = isVideoUrl(link.url);
+
+    return `
+        <div class="uf-link-row ${isExpanded ? 'expanded' : ''}" data-link-index="${index}">
+            <div class="uf-link-row-main" onclick="event.stopPropagation()">
+                <img src="${link.icon || 'https://www.google.com/s2/favicons?sz=64&domain=' + link.url}"
+                     class="uf-link-row-favicon"
+                     onerror="this.src='https://www.google.com/s2/favicons?sz=64&domain=example.com'">
+                <div class="uf-link-row-info">
+                    <a href="${link.url}" target="_blank" class="uf-link-row-title">
+                        ${link.title || 'Untitled'}
+                    </a>
+                    ${link.description ? `<p class="uf-link-row-desc">${link.description}</p>` : ''}
+                </div>
+                ${statusBadge}
+                <button class="uf-link-row-preview-btn" onclick="toggleLinkPreview(${index})" title="${isExpanded ? 'Hide preview' : 'Show preview'}">
+                    ${isExpanded ? '▲' : '▼'} Ver
+                </button>
+            </div>
+            ${isExpanded ? renderLinkPreview(link, index) : ''}
+        </div>
+    `;
+}
+
+function isVideoUrl(url) {
+    if (!url) return false;
+    return url.includes('youtube.com/watch') ||
+           url.includes('youtu.be/') ||
+           url.includes('vimeo.com/');
+}
+
+function getYoutubeVideoId(url) {
+    if (!url) return null;
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[7].length === 11) ? match[7] : null;
+}
+
+function renderLinkPreview(link, index) {
+    const isVideo = isVideoUrl(link.url);
+
+    if (isVideo) {
+        const videoId = getYoutubeVideoId(link.url);
+        if (videoId) {
+            return `
+                <div class="uf-link-preview">
+                    <div class="uf-link-preview-video">
+                        <iframe
+                            src="https://www.youtube.com/embed/${videoId}"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    ${link.quickNote ? `<p class="uf-link-preview-note">${link.quickNote}</p>` : ''}
+                </div>
+            `;
+        }
+    }
+
+    // Non-video preview - show description and notes
+    return `
+        <div class="uf-link-preview">
+            <div class="uf-link-preview-details">
+                ${link.description ? `<p class="uf-link-preview-desc">${link.description}</p>` : ''}
+                ${link.quickNote ? `<p class="uf-link-preview-note"><strong>Note:</strong> ${link.quickNote}</p>` : ''}
+                ${link.linkNotes ? `<p class="uf-link-preview-note"><strong>Notes:</strong> ${link.linkNotes}</p>` : ''}
+                <a href="${link.url}" target="_blank" class="uf-link-preview-open">
+                    Open Link →
+                </a>
+            </div>
+        </div>
+    `;
+}
+
+function toggleLinkPreview(index) {
+    if (ultraFocusExpandedLinkIndex === index) {
+        ultraFocusExpandedLinkIndex = null;
+    } else {
+        ultraFocusExpandedLinkIndex = index;
+    }
+
+    // Re-render the links list to update the expanded state
+    renderGridLinksList();
+}
+
+function animateGridListIn() {
+    const container = document.getElementById('ultra-focus-categories');
+    const catCards = container.querySelectorAll('.uf-grid-cat-card');
+
+    catCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+
+        setTimeout(() => {
+            requestAnimationFrame(() => {
+                card.style.transition = 'opacity 200ms ease-out, transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+                card.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+            });
+        }, index * 40);
+    });
+}
+
+function renderGridListView(libKey) {
+    const lib = DATA.libraries[libKey];
+
+    if (!lib || !lib.categories) {
+        return '<p class="text-slate-500 text-center py-12">No categories in this library</p>';
+    }
+
+    const catKeys = Object.keys(lib.categories);
+
+    if (catKeys.length === 0) {
+        return '<p class="text-slate-500 text-center py-12">No categories yet. Add some!</p>';
+    }
+
+    return `
+        <div class="uf-grid-categories">
+            ${catKeys.map(catKey => {
+                const cat = lib.categories[catKey];
+                const linkCount = (cat.links || []).length;
+                const isSelected = catKey === ultraFocusSelectedCatKey;
+
+                return `
+                    <div class="uf-grid-cat-card ${isSelected ? 'selected' : ''}"
+                         data-cat-key="${catKey}"
+                         onclick="selectGridCategory('${catKey}')">
+                        <span class="uf-grid-cat-icon">${cat.icon || '📁'}</span>
+                        <span class="uf-grid-cat-name">${cat.name}</span>
+                        <span class="uf-grid-cat-count">${linkCount}</span>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+        <div class="uf-gridlist-links" id="uf-gridlist-links"></div>
+    `;
+}
+
 // ================= RENDER FUNCTIONS =================
+
+function renderUltraFocusContent(libKey) {
+    const container = document.getElementById('ultra-focus-categories');
+
+    if (ultraFocusViewMode === 'accordion') {
+        renderUltraFocusCategories(libKey);
+    } else {
+        container.innerHTML = renderGridListView(libKey);
+
+        // If a category was selected, render its links
+        if (ultraFocusSelectedCatKey) {
+            renderGridLinksList();
+        }
+    }
+}
 
 function renderUltraFocusCategories(libKey) {
     const container = document.getElementById('ultra-focus-categories');
@@ -509,6 +864,8 @@ async function enterUltraFocus(libKey) {
     ultraFocusActive = true;
     ultraFocusLibKey = libKey;
     ultraFocusExpandedCatKey = null;
+    ultraFocusSelectedCatKey = null;
+    ultraFocusExpandedLinkIndex = null;
 
     // Save last active
     localStorage.setItem(ULTRA_FOCUS_LAST_KEY, libKey);
@@ -520,13 +877,19 @@ async function enterUltraFocus(libKey) {
     const sidebar = document.getElementById('library-sidebar');
     const title = document.getElementById('ultra-focus-title');
     const description = document.getElementById('ultra-focus-description');
+    const viewToggleContainer = document.getElementById('ultra-focus-view-toggle-container');
 
     // Set content
     title.textContent = lib.name;
     description.textContent = lib.description || `${Object.keys(lib.categories || {}).length} categories`;
 
+    // Render view toggle
+    if (viewToggleContainer) {
+        viewToggleContainer.innerHTML = renderViewToggle();
+    }
+
     // Render categories (hidden initially)
-    renderUltraFocusCategories(libKey);
+    renderUltraFocusContent(libKey);
 
     // Show overlay
     overlay.classList.add('active');
@@ -546,9 +909,18 @@ async function enterUltraFocus(libKey) {
     // 4. Description fades in (350-500ms)
     await animateTextIn(description, 50);
 
-    // 5. Categories fall in with stagger (450-700ms)
+    // 5. View toggle fades in
+    if (viewToggleContainer) {
+        await animateTextIn(viewToggleContainer, 30);
+    }
+
+    // 6. Categories/Grid fall in with stagger (450-700ms)
     await new Promise(r => setTimeout(r, 50));
-    animateCategoriesIn();
+    if (ultraFocusViewMode === 'accordion') {
+        animateCategoriesIn();
+    } else {
+        animateGridListIn();
+    }
 }
 
 async function exitUltraFocus() {
@@ -591,6 +963,8 @@ async function exitUltraFocus() {
     ultraFocusActive = false;
     ultraFocusLibKey = null;
     ultraFocusExpandedCatKey = null;
+    ultraFocusSelectedCatKey = null;
+    ultraFocusExpandedLinkIndex = null;
 
     // Update quick access bar
     renderQuickAccessBar();
