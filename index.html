@@ -23,12 +23,22 @@
 })();
 </script>
 <div class="max-w-7xl mx-auto">
-<header class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+<header class="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
     <div>
         <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
             <span class="bg-blue-600/20 p-2 rounded-xl border border-blue-500/20">📑</span> Tab Organizer
         </h1>
         <p class="text-slate-500 text-sm mt-1">Tu centro de mando digital con IA de metadatos.</p>
+        <!-- Quick Access Bar -->
+        <div id="quick-access-bar" class="flex items-center gap-2 mt-3">
+            <button id="settings-btn" class="quick-access-icon settings-icon" title="Configuración (próximamente)" disabled>
+                <span>⚙️</span>
+            </button>
+            <div class="quick-access-divider"></div>
+            <div id="quick-access-icons" class="flex items-center gap-2">
+                <!-- Dynamically populated with first 4 libraries -->
+            </div>
+        </div>
     </div>
     <div class="flex flex-wrap gap-2 md:gap-3 text-white items-center justify-center md:justify-end">
         <span id="cloud-status" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest order-first w-full md:w-auto text-center md:text-left md:mr-2">Iniciando...</span>
@@ -368,6 +378,28 @@
     </div>
 </div>
 
+<!-- Ultra Focus Mode Overlay -->
+<div id="ultra-focus-overlay" class="ultra-focus-overlay">
+    <!-- Centered Library Header -->
+    <div id="ultra-focus-header" class="ultra-focus-header">
+        <div id="ultra-focus-icon-container" class="ultra-focus-icon-container">
+            <span id="ultra-focus-icon" class="ultra-focus-icon">📚</span>
+        </div>
+        <h1 id="ultra-focus-title" class="ultra-focus-title">Library Name</h1>
+        <p id="ultra-focus-description" class="ultra-focus-description">Library description goes here</p>
+    </div>
+
+    <!-- Categories Grid -->
+    <div id="ultra-focus-categories" class="ultra-focus-categories">
+        <!-- Dynamically populated -->
+    </div>
+
+    <!-- Exit hint -->
+    <div class="ultra-focus-exit-hint">
+        Press <kbd>ESC</kbd> or click the active icon to exit
+    </div>
+</div>
+
 <!-- Notificacion Toast -->
 <div id="toast-notification" class="fixed bottom-6 right-6 bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
     <span id="toast-icon">✅</span>
@@ -385,6 +417,7 @@
 <script src="js/links.js"></script>
 <script src="js/focus-mode.js"></script>
 <script src="js/export-import.js"></script>
+<script src="js/ultra-focus.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
 </body>

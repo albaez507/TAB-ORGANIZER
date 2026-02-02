@@ -1047,6 +1047,11 @@ function render() {
     renderMobileLibraryDropdown();
     renderCategories();
     document.getElementById('manageBtn').innerText = manageCategories ? 'Hecho' : 'Gestionar';
+
+    // Update Quick Access Bar if Ultra Focus module is loaded
+    if (typeof renderQuickAccessBar === 'function') {
+        renderQuickAccessBar();
+    }
 }
 
 function renderLibrarySidebar() {
@@ -1163,6 +1168,7 @@ function renderCategories() {
         const isOpen = openSections.has(catKey);
         const div = document.createElement('div');
         div.className = `glass category-card rounded-3xl overflow-hidden border-l-[6px] shadow-lg mb-6 transition-all`;
+        div.dataset.catKey = catKey;
         div.style.borderColor = s.color;
 
         // FUNCIONALIDAD 4: Drop handlers para reordenar categorías
