@@ -111,13 +111,209 @@ function saveOrganizeOrder(libKey, catKey) {
 }
 
 // ========================================
-// DRAG & DROP - CLEAN MINIMAL IMPLEMENTATION
+// DRAG & DROP - STAIR STEP IMPLEMENTATION
+// Items swap positions with visible 400ms animations
+// NO opacity changes - items always 100% solid
 // ========================================
 
 // Global drag state
 let draggedData = null;
 let dragType = null; // 'link' or 'category'
-let lastSwapPreviewIndex = null; // Track which card has swap preview
+let stairDragState = null; // Stair step drag tracking
+
+// ================== STAIR STEP DRAG SYSTEM ==================
+
+/**
+ * Initialize stair step drag for organize mode
+ * Items swap positions with visible 400ms animations when crossing midpoints
+ * Uses FLIP technique for smooth DOM reorder animations
+ */
+function initStairDrag(element, libKey, catKey, linkIndex) {
+    const container = element.closest('.category-drop-zone');
+    if (!container) return null;
+
+    const items = Array.from(container.querySelectorAll('.organize-item'));
+    const itemIndex = items.indexOf(element);
+
+    // Create transparent drag image to hide default ghost
+    const dragImage = document.createElement('div');
+    dragImage.style.cssText = 'position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px;';
+    document.body.appendChild(dragImage);
+
+    return {
+        element,
+        container,
+        libKey,
+        catKey,
+        originalIndex: linkIndex,
+        currentIndex: itemIndex,
+        items,
+        dragImage,
+        lastSwapTime: 0,
+        swapCooldown: 450, // Slightly longer than animation to ensure completion
+        isSwapping: false
+    };
+}
+
+/**
+ * Handle stair step drag movement
+ * Checks for midpoint crossings and triggers swaps
+ */
+function handleStairDragMove(event) {
+    if (!stairDragState || stairDragState.isSwapping) return;
+
+    const { element, items, currentIndex, lastSwapTime, swapCooldown } = stairDragState;
+    const now = Date.now();
+
+    // Cooldown to prevent rapid swapping
+    if (now - lastSwapTime < swapCooldown) return;
+
+    const mouseY = event.clientY;
+
+    // Find target based on midpoint crossing
+    let targetIndex = null;
+
+    for (let i = 0; i < items.length; i++) {
+        if (items[i] === element) continue;
+
+        const rect = items[i].getBoundingClientRect();
+        const itemMidpoint = rect.top + rect.height / 2;
+
+        // Dragging down: check if we've passed the item below
+        if (i > currentIndex && mouseY > itemMidpoint) {
+            targetIndex = i;
+        }
+        // Dragging up: check if we've passed the item above
+        else if (i < currentIndex && mouseY < itemMidpoint) {
+            targetIndex = i;
+            break; // Take first match when going up
+        }
+    }
+
+    // Perform swap if we found a valid target
+    if (targetIndex !== null && targetIndex !== currentIndex) {
+        performStairSwap(targetIndex);
+    }
+}
+
+/**
+ * Perform the swap using FLIP technique for smooth animation
+ * FLIP = First, Last, Invert, Play
+ */
+function performStairSwap(targetIndex) {
+    if (!stairDragState) return;
+
+    const { element, container, items, currentIndex } = stairDragState;
+
+    stairDragState.isSwapping = true;
+    stairDragState.lastSwapTime = Date.now();
+
+    const movingDown = targetIndex > currentIndex;
+
+    // FIRST: Record positions before swap
+    const firstPositions = new Map();
+    items.forEach(item => {
+        const rect = item.getBoundingClientRect();
+        firstPositions.set(item, { top: rect.top, left: rect.left });
+    });
+
+    // Perform DOM swap
+    if (movingDown) {
+        const targetElement = items[targetIndex];
+        if (targetElement.nextSibling) {
+            container.insertBefore(element, targetElement.nextSibling);
+        } else {
+            container.appendChild(element);
+        }
+    } else {
+        const targetElement = items[targetIndex];
+        container.insertBefore(element, targetElement);
+    }
+
+    // Update items array to match new DOM order
+    const [movedItem] = stairDragState.items.splice(currentIndex, 1);
+    stairDragState.items.splice(targetIndex, 0, movedItem);
+    stairDragState.currentIndex = targetIndex;
+
+    // LAST & INVERT: Calculate and apply inverse transforms
+    items.forEach(item => {
+        const firstPos = firstPositions.get(item);
+        const lastRect = item.getBoundingClientRect();
+
+        const deltaY = firstPos.top - lastRect.top;
+
+        if (Math.abs(deltaY) > 1) {
+            // Disable transitions, apply inverse transform
+            item.style.transition = 'none';
+            item.style.transform = `translateY(${deltaY}px)`;
+        }
+    });
+
+    // PLAY: Animate to final position
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            items.forEach(item => {
+                const firstPos = firstPositions.get(item);
+                const lastRect = item.getBoundingClientRect();
+                // Only animate items that actually moved (check original delta)
+                const currentTransform = item.style.transform;
+                if (currentTransform && currentTransform !== 'none') {
+                    item.style.transition = 'transform 400ms cubic-bezier(0.4, 0.0, 0.2, 1)';
+                    item.style.transform = '';
+                }
+            });
+
+            // Clean up after animation
+            setTimeout(() => {
+                items.forEach(item => {
+                    item.style.transition = '';
+                    item.style.transform = '';
+                });
+                if (stairDragState) {
+                    stairDragState.isSwapping = false;
+                }
+            }, 420);
+        });
+    });
+}
+
+/**
+ * Finalize stair drag and update data
+ */
+function finalizeStairDrag() {
+    if (!stairDragState) return;
+
+    const { libKey, catKey, originalIndex, currentIndex, element, items, dragImage } = stairDragState;
+
+    // Clean up visual states
+    element.classList.remove('stair-dragging');
+    items.forEach(item => {
+        item.style.transition = '';
+        item.style.transform = '';
+        item.classList.remove('swap-up', 'swap-down', 'swap-settled');
+    });
+
+    // Remove the transparent drag image helper
+    if (dragImage && dragImage.parentNode) {
+        dragImage.parentNode.removeChild(dragImage);
+    }
+
+    // Update data if position changed
+    if (currentIndex !== originalIndex) {
+        const category = DATA.libraries[libKey]?.categories[catKey];
+        if (category && category.links && category.links[originalIndex]) {
+            // Remove from original position and insert at new position
+            const [movedLink] = category.links.splice(originalIndex, 1);
+            category.links.splice(currentIndex, 0, movedLink);
+
+            save();
+            showToast('✅ Link reordenado');
+        }
+    }
+
+    stairDragState = null;
+    render();
+}
 
 // ================== FUNCIONALIDAD 1 & 2: LINKS ==================
 
@@ -125,10 +321,12 @@ function handleLinkDragStart(event, libKey, catKey, linkIndex) {
     // Prevent link drag from interfering with category drag
     event.stopPropagation();
 
+    const card = event.target.closest('.organize-item') || event.target.closest('.link-card');
+    if (!card) return;
+
     // Store dragged link data
     draggedData = { libKey, catKey, linkIndex };
     dragType = 'link';
-    lastSwapPreviewIndex = null;
 
     // Configure drag
     event.dataTransfer.effectAllowed = 'move';
@@ -139,15 +337,26 @@ function handleLinkDragStart(event, libKey, catKey, linkIndex) {
         linkIndex
     }));
 
-    // Add dragging class to the card (works for both link-card and organize-item)
-    const card = event.target.closest('.organize-item') || event.target.closest('.link-card');
-    if (card) {
+    // For organize mode, use stair step drag
+    if (card.classList.contains('organize-item')) {
+        stairDragState = initStairDrag(card, libKey, catKey, linkIndex);
+
+        // Use transparent drag image to hide browser's ghost
+        // This keeps our original element visible and animatable
+        if (stairDragState && stairDragState.dragImage) {
+            event.dataTransfer.setDragImage(stairDragState.dragImage, 0, 0);
+        }
+
+        setTimeout(() => {
+            card.classList.add('stair-dragging');
+        }, 0);
+    } else {
         setTimeout(() => {
             card.classList.add('dragging');
         }, 0);
     }
 
-    // Mark drop zones as available (minimal visual feedback)
+    // Mark drop zones as available
     setTimeout(() => {
         document.querySelectorAll('.category-drop-zone').forEach(zone => {
             zone.classList.add('drop-zone-available');
@@ -156,13 +365,19 @@ function handleLinkDragStart(event, libKey, catKey, linkIndex) {
 }
 
 function handleLinkDragEnd(event) {
-    // Remover clase dragging (works for both link-card and organize-item)
     const card = event.target.closest('.organize-item') || event.target.closest('.link-card');
-    if (card) {
-        card.classList.remove('dragging');
+
+    // Handle stair drag finalization
+    if (stairDragState) {
+        finalizeStairDrag();
+        cleanupAllDragStates();
+        return;
     }
 
-    // Limpiar todo el estado
+    if (card) {
+        card.classList.remove('dragging', 'stair-dragging');
+    }
+
     cleanupAllDragStates();
 }
 
@@ -184,9 +399,11 @@ function handleLinkDragOver(event, libKey, catKey) {
         zone.classList.add('drop-target-active');
     }
 
-    // Show swap preview animation for reordering within same category
-    if (draggedData && draggedData.libKey === libKey && draggedData.catKey === catKey) {
-        showSwapPreview(event, zone);
+    // Handle stair step drag for same category (organize mode)
+    if (stairDragState && draggedData.libKey === libKey && draggedData.catKey === catKey) {
+        handleStairDragMove(event);
+    } else if (draggedData && draggedData.libKey === libKey && draggedData.catKey === catKey) {
+        // Same category but not stair drag - no preview needed, position tracked by DOM
     } else {
         // For different categories, show simple drop indicator
         showLinkDropIndicator(event, zone);
@@ -200,7 +417,6 @@ function handleLinkDragLeave(event) {
     // Only remove if we actually left the zone
     if (!zone.contains(relatedTarget)) {
         zone.classList.remove('drop-target-active');
-        clearSwapPreviews();
         removeDropIndicators();
     }
 }
@@ -209,6 +425,12 @@ function handleLinkDrop(event, targetLibKey, targetCatKey) {
     event.preventDefault();
     event.stopPropagation();
 
+    // Stair drag handles its own finalization
+    if (stairDragState && draggedData.libKey === targetLibKey && draggedData.catKey === targetCatKey) {
+        // Let dragend handle finalization
+        return;
+    }
+
     if (dragType !== 'link' || !draggedData) {
         cleanupAllDragStates();
         return;
@@ -216,7 +438,7 @@ function handleLinkDrop(event, targetLibKey, targetCatKey) {
 
     const { libKey: sourceLibKey, catKey: sourceCatKey, linkIndex: sourceIndex } = draggedData;
 
-    // Verificar que existen los datos
+    // Verify data exists
     const sourceCategory = DATA.libraries[sourceLibKey]?.categories[sourceCatKey];
     if (!sourceCategory || !sourceCategory.links || !sourceCategory.links[sourceIndex]) {
         console.error('Link origen no encontrado');
@@ -231,18 +453,15 @@ function handleLinkDrop(event, targetLibKey, targetCatKey) {
         return;
     }
 
-    // Copiar el link
+    // Copy the link
     const link = { ...sourceCategory.links[sourceIndex] };
 
-    // FUNCIONALIDAD 2: Reordenar dentro de la misma categoría
+    // Same category reorder (non-stair mode)
     if (sourceLibKey === targetLibKey && sourceCatKey === targetCatKey) {
         const dropIndex = getDropIndex(event, targetLibKey, targetCatKey);
 
         if (dropIndex !== null && dropIndex !== sourceIndex) {
-            // Remover de posición original
             sourceCategory.links.splice(sourceIndex, 1);
-
-            // Insertar en nueva posición (ajustar si movemos hacia abajo)
             const adjustedIndex = dropIndex > sourceIndex ? dropIndex - 1 : dropIndex;
             sourceCategory.links.splice(adjustedIndex, 0, link);
 
@@ -251,11 +470,9 @@ function handleLinkDrop(event, targetLibKey, targetCatKey) {
             showToast('✅ Link reordenado');
         }
     } else {
-        // FUNCIONALIDAD 1: Mover entre categorías
-        // Remover de origen
+        // FUNCIONALIDAD 1: Move between categories
         sourceCategory.links.splice(sourceIndex, 1);
 
-        // Agregar a destino
         if (!targetCategory.links) targetCategory.links = [];
 
         const dropIndex = getDropIndex(event, targetLibKey, targetCatKey);
@@ -273,11 +490,10 @@ function handleLinkDrop(event, targetLibKey, targetCatKey) {
     cleanupAllDragStates();
 }
 
-// Calcular índice de inserción basado en posición del mouse
+// Calculate insertion index based on mouse position
 function getDropIndex(event, libKey, catKey) {
     const zone = event.currentTarget;
-    // Support both organize-item (organize mode) and link-card (for cross-category drops)
-    const items = zone.querySelectorAll('.organize-item:not(.dragging), .link-card:not(.dragging)');
+    const items = zone.querySelectorAll('.organize-item:not(.stair-dragging):not(.dragging), .link-card:not(.dragging)');
 
     if (items.length === 0) return 0;
 
@@ -299,10 +515,15 @@ function getDropIndex(event, libKey, catKey) {
 // Show simple drop indicator line for cross-category drops
 function showLinkDropIndicator(event, zone) {
     removeDropIndicators();
-    clearSwapPreviews();
 
-    const items = zone.querySelectorAll('.organize-item:not(.dragging), .link-card:not(.dragging)');
-    if (items.length === 0) return;
+    const items = zone.querySelectorAll('.organize-item:not(.stair-dragging):not(.dragging), .link-card:not(.dragging)');
+    if (items.length === 0) {
+        // Empty category - show indicator at top
+        const indicator = document.createElement('div');
+        indicator.className = 'drop-indicator';
+        zone.prepend(indicator);
+        return;
+    }
 
     const mouseY = event.clientY;
     const indicator = document.createElement('div');
@@ -322,75 +543,6 @@ function showLinkDropIndicator(event, zone) {
     // Insert at end
     const lastCard = items[items.length - 1];
     lastCard.parentNode.insertBefore(indicator, lastCard.nextSibling);
-}
-
-// Show swap preview animation when reordering within same category
-function showSwapPreview(event, zone) {
-    removeDropIndicators();
-
-    const items = zone.querySelectorAll('.organize-item:not(.dragging)');
-    if (items.length === 0) return;
-
-    const mouseY = event.clientY;
-    let targetIndex = null;
-
-    // Find which item we're hovering over
-    for (let i = 0; i < items.length; i++) {
-        const card = items[i];
-        const rect = card.getBoundingClientRect();
-
-        if (mouseY >= rect.top && mouseY <= rect.bottom) {
-            targetIndex = i;
-            break;
-        }
-    }
-
-    // If hovering between items, find insertion point
-    if (targetIndex === null) {
-        for (let i = 0; i < items.length; i++) {
-            const card = items[i];
-            const rect = card.getBoundingClientRect();
-            const cardMiddle = rect.top + rect.height / 2;
-
-            if (mouseY < cardMiddle) {
-                targetIndex = i;
-                break;
-            }
-        }
-        if (targetIndex === null) {
-            targetIndex = items.length;
-        }
-    }
-
-    // Only update if target changed
-    if (targetIndex === lastSwapPreviewIndex) return;
-    lastSwapPreviewIndex = targetIndex;
-
-    // Clear previous swap previews
-    clearSwapPreviews();
-
-    // Apply swap preview to the target item
-    if (targetIndex !== null && targetIndex < items.length) {
-        const sourceIndex = draggedData.linkIndex;
-        const targetCard = items[targetIndex];
-
-        // Adjust for visual offset: if dragging to a position before/after source
-        if (targetIndex !== sourceIndex) {
-            if (targetIndex < sourceIndex) {
-                targetCard.classList.add('swap-preview');
-            } else {
-                targetCard.classList.add('swap-preview-down');
-            }
-        }
-    }
-}
-
-// Clear all swap preview classes
-function clearSwapPreviews() {
-    document.querySelectorAll('.swap-preview, .swap-preview-down').forEach(el => {
-        el.classList.remove('swap-preview', 'swap-preview-down');
-    });
-    lastSwapPreviewIndex = null;
 }
 
 // ================== FUNCIONALIDAD 3 & 4: CATEGORIES ==================
@@ -598,6 +750,103 @@ function handleCategoryReorderDrop(event, targetLibKey, targetCatKey) {
     cleanupAllDragStates();
 }
 
+// ================== TOUCH SUPPORT FOR MOBILE ==================
+
+let touchDragState = null;
+
+function handleTouchStart(event, libKey, catKey, linkIndex) {
+    // Only handle single touch
+    if (event.touches.length !== 1) return;
+
+    const touch = event.touches[0];
+    const card = event.target.closest('.organize-item');
+    if (!card) return;
+
+    // Store initial touch state
+    touchDragState = {
+        card,
+        libKey,
+        catKey,
+        linkIndex,
+        startY: touch.clientY,
+        startX: touch.clientX,
+        isDragging: false,
+        scrollStartY: card.closest('.category-drop-zone')?.scrollTop || 0
+    };
+
+    // Don't prevent default yet - let user scroll if they swipe horizontally
+}
+
+function handleTouchMove(event) {
+    if (!touchDragState) return;
+
+    const touch = event.touches[0];
+    const deltaY = Math.abs(touch.clientY - touchDragState.startY);
+    const deltaX = Math.abs(touch.clientX - touchDragState.startX);
+
+    // If dragging hasn't started, check if we should start it
+    if (!touchDragState.isDragging) {
+        // Start drag if moved enough vertically and more vertical than horizontal
+        if (deltaY > 10 && deltaY > deltaX) {
+            touchDragState.isDragging = true;
+
+            // Initialize stair drag system
+            const { card, libKey, catKey, linkIndex } = touchDragState;
+            draggedData = { libKey, catKey, linkIndex };
+            dragType = 'link';
+            stairDragState = initStairDrag(card, libKey, catKey, linkIndex);
+
+            card.classList.add('stair-dragging');
+
+            // Prevent scrolling while dragging
+            event.preventDefault();
+        }
+        return;
+    }
+
+    // Prevent scrolling while dragging
+    event.preventDefault();
+
+    // Simulate drag move
+    if (stairDragState) {
+        const syntheticEvent = { clientY: touch.clientY };
+        handleStairDragMove(syntheticEvent);
+    }
+}
+
+function handleTouchEnd(event) {
+    if (!touchDragState) return;
+
+    if (touchDragState.isDragging && stairDragState) {
+        // Finalize the drag
+        finalizeStairDrag();
+        cleanupAllDragStates();
+    }
+
+    touchDragState = null;
+}
+
+function handleTouchCancel(event) {
+    if (touchDragState && touchDragState.isDragging) {
+        cleanupAllDragStates();
+    }
+    touchDragState = null;
+}
+
+// Initialize touch event listeners (called after DOM ready)
+function initTouchDragSupport() {
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+    document.addEventListener('touchcancel', handleTouchCancel);
+}
+
+// Call on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTouchDragSupport);
+} else {
+    initTouchDragSupport();
+}
+
 // ================== HELPERS ==================
 
 function removeDropIndicators() {
@@ -605,14 +854,28 @@ function removeDropIndicators() {
 }
 
 function cleanupAllDragStates() {
+    // Clean up drag image if exists
+    if (stairDragState && stairDragState.dragImage && stairDragState.dragImage.parentNode) {
+        stairDragState.dragImage.parentNode.removeChild(stairDragState.dragImage);
+    }
+
     draggedData = null;
     dragType = null;
-    lastSwapPreviewIndex = null;
+    stairDragState = null;
+    touchDragState = null;
 
-    // Clean up link/organize-item drag classes
+    // Clean up link/organize-item drag classes and inline styles
     document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+    document.querySelectorAll('.stair-dragging').forEach(el => el.classList.remove('stair-dragging'));
     document.querySelectorAll('.drop-zone-available').forEach(el => el.classList.remove('drop-zone-available'));
     document.querySelectorAll('.drop-target-active').forEach(el => el.classList.remove('drop-target-active'));
+
+    // Clean up stair step animation classes and inline styles
+    document.querySelectorAll('.organize-item').forEach(el => {
+        el.classList.remove('swap-up', 'swap-down', 'swap-settled');
+        el.style.transition = '';
+        el.style.transform = '';
+    });
 
     // Clean up category drag classes
     document.querySelectorAll('.dragging-category').forEach(el => el.classList.remove('dragging-category'));
@@ -620,8 +883,7 @@ function cleanupAllDragStates() {
     document.querySelectorAll('.library-drop-active').forEach(el => el.classList.remove('library-drop-active'));
     document.querySelectorAll('.category-reorder-zone').forEach(el => el.classList.remove('category-reorder-zone'));
 
-    // Clean up swap previews and indicators
-    clearSwapPreviews();
+    // Clean up indicators
     removeDropIndicators();
 }
 
@@ -1006,6 +1268,7 @@ function renderLinks(libKey, catKey) {
                  draggable="true"
                  ondragstart="handleLinkDragStart(event, '${libKey}', '${catKey}', ${i})"
                  ondragend="handleLinkDragEnd(event)"
+                 ontouchstart="handleTouchStart(event, '${libKey}', '${catKey}', ${i})"
                  onclick="event.stopPropagation()">
                 <span class="text-slate-500 text-xs font-mono w-6 text-center">${i + 1}</span>
                 <span class="organize-drag-handle text-slate-400 hover:text-slate-200 cursor-grab text-lg" title="Arrastra para reordenar">≡</span>

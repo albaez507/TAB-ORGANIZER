@@ -53,8 +53,15 @@ input:checked + .slider:before { transform: translateX(14px); }
 .loading-pulse { animation: pulse 1.5s infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+::-webkit-scrollbar { width: 16px; }
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    border: 4px solid transparent;
+    background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); background-clip: padding-box; }
+::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 8px; }
 
 /* Library sidebar styles */
 .library-item {
@@ -239,18 +246,22 @@ input:checked + .slider:before { transform: translateX(14px); }
     border-color: rgba(59, 130, 246, 0.5);
 }
 
-/* Focus mode scrollbar */
-.focus-sidebar::-webkit-scrollbar { width: 4px; }
-.focus-sidebar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+/* Focus mode scrollbar - keep slightly thinner for cinema mode */
+.focus-sidebar::-webkit-scrollbar { width: 12px; }
+.focus-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+}
+.focus-sidebar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); background-clip: padding-box; }
+.focus-sidebar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 6px; }
 
 /* ========================================
-   DRAG & DROP STYLES - CLEAN & MINIMAL
+   DRAG & DROP STYLES - STAIR STEP SYSTEM
+   Items swap positions with visible 400ms animations
+   NO opacity changes - items always 100% solid
    ======================================== */
-
-/* === LINK DRAG HANDLE (only visible in organize mode) === */
-.link-drag-handle {
-    display: none; /* Hidden in normal mode */
-}
 
 /* === CATEGORY DRAG HANDLE === */
 .category-drag-handle {
@@ -268,40 +279,39 @@ input:checked + .slider:before { transform: translateX(14px); }
     cursor: grabbing;
 }
 
-/* === LINK CARD - NON-DRAGGABLE BY DEFAULT === */
-.link-card {
-    cursor: default;
-    transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.2s ease;
+/* === ORGANIZE ITEMS - STAIR STEP DRAG === */
+
+/* Base styles for organize items */
+.organize-item {
+    will-change: transform;
     position: relative;
-    opacity: 1 !important;
 }
 
-/* Link card while being dragged (organize mode) - FULL OPACITY, elevated appearance */
+/* Item being dragged - "lifted" appearance with shadow, NO opacity change */
+.organize-item.stair-dragging {
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(59, 130, 246, 0.5);
+    background: rgba(59, 130, 246, 0.12) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+    transform: scale(1.02);
+    cursor: grabbing !important;
+}
+
+/* === LINK CARD - NON-DRAGGABLE IN NORMAL MODE === */
+.link-card {
+    cursor: default;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+    position: relative;
+}
+
+/* Legacy dragging class - keep for compatibility but no opacity */
 .link-card.dragging,
 .organize-item.dragging {
     cursor: grabbing !important;
     z-index: 1000;
-    pointer-events: none;
-    opacity: 0.7 !important;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
-    transform: scale(1.02);
-    background: rgba(59, 130, 246, 0.15) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    background: rgba(59, 130, 246, 0.12) !important;
     border-color: rgba(59, 130, 246, 0.4) !important;
-}
-
-/* Swap preview animation - target item shifts smoothly to make space (organize mode only) */
-.organize-item.swap-preview {
-    transform: translateY(-12px);
-    transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
-    opacity: 1 !important;
-    background: rgba(59, 130, 246, 0.05);
-}
-
-.organize-item.swap-preview-down {
-    transform: translateY(12px);
-    transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
-    opacity: 1 !important;
-    background: rgba(59, 130, 246, 0.05);
 }
 
 /* === CATEGORY CARD - DRAGGABLE === */
@@ -313,7 +323,7 @@ input:checked + .slider:before { transform: translateX(14px); }
     cursor: grabbing;
 }
 
-/* Category card while being dragged - FULL OPACITY */
+/* Category card while being dragged */
 .category-card.dragging-category {
     z-index: 100;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
@@ -321,75 +331,69 @@ input:checked + .slider:before { transform: translateX(14px); }
 
 /* === DROP ZONES - LINKS === */
 
-/* Minimal indicator when drag starts - no distracting borders */
 .category-drop-zone.drop-zone-available {
     transition: background 0.15s ease;
 }
 
-/* Active drop zone - subtle background only */
 .category-drop-zone.drop-target-active {
     background: rgba(255, 255, 255, 0.02);
 }
 
 /* === DROP ZONES - LIBRARIES (for categories) === */
 
-/* Libraries in sidebar - minimal highlight */
 .library-item.library-drop-zone {
     transition: background 0.15s ease;
 }
 
-/* Library active (hover with dragged category) */
 .library-item.library-drop-active {
     background: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* === DROP ZONES - CATEGORY REORDER === */
 
-/* No extra decoration for category reorder zones */
 .category-card.category-reorder-zone {
     position: relative;
 }
 
 /* === DROP INDICATOR LINE === */
 
-/* Clean, simple position indicator line */
 .drop-indicator {
-    height: 2px;
-    background: rgba(255, 255, 255, 0.4);
-    border-radius: 1px;
+    height: 3px;
+    background: rgba(59, 130, 246, 0.6);
+    border-radius: 2px;
     margin: 4px 0;
     pointer-events: none;
     position: relative;
 }
 
-/* Category indicator - slightly thicker */
 .drop-indicator.category-indicator {
-    height: 3px;
+    height: 4px;
     margin: 8px 0;
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(59, 130, 246, 0.7);
 }
 
 /* === RESPONSIVE === */
 
 @media (max-width: 768px) {
-    .link-drag-handle {
-        font-size: 16px;
-        padding: 6px 4px;
-    }
-
     .category-drag-handle {
         font-size: 18px;
         padding: 6px 8px;
+    }
+
+    /* Slightly faster animations on mobile for better responsiveness */
+    .organize-item {
+        transition: transform 300ms cubic-bezier(0.4, 0.0, 0.2, 1),
+                    box-shadow 150ms ease,
+                    background 150ms ease,
+                    border-color 150ms ease;
     }
 }
 
 /* === ACCESSIBILITY === */
 
-/* Reduce motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
+    .organize-item,
     .link-card,
-    .link-card.swap-preview,
-    .link-card.swap-preview-down,
     .category-card.dragging-category {
         transition: none !important;
     }
@@ -633,10 +637,8 @@ input:checked + .slider:before { transform: translateX(14px); }
     background: rgba(59, 130, 246, 0.1);
 }
 
-/* === SCROLLBAR === */
-[data-theme="light"] ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.15);
-}
+/* === SCROLLBAR - LIGHT MODE === */
+/* Note: Main scrollbar styles inherit from global with light mode overrides below */
 
 /* === STATUS CHECKBOX BORDER === */
 [data-theme="light"] .status-checkbox {
@@ -660,10 +662,14 @@ input:checked + .slider:before { transform: translateX(14px); }
     color: rgba(0, 0, 0, 0.6) !important;
 }
 
+[data-theme="light"] .organize-item.stair-dragging {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(59, 130, 246, 0.4);
+    background: rgba(59, 130, 246, 0.1) !important;
+}
+
 [data-theme="light"] .organize-item.dragging {
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
-    opacity: 0.7 !important;
-    background: rgba(59, 130, 246, 0.12) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    background: rgba(59, 130, 246, 0.1) !important;
 }
 
 [data-theme="light"] .category-card.dragging-category {
@@ -671,11 +677,11 @@ input:checked + .slider:before { transform: translateX(14px); }
 }
 
 [data-theme="light"] .drop-indicator {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(59, 130, 246, 0.5);
 }
 
 [data-theme="light"] .drop-indicator.category-indicator {
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(59, 130, 246, 0.6);
 }
 
 [data-theme="light"] .category-drop-zone.drop-target-active {
@@ -747,12 +753,8 @@ input:checked + .slider:before { transform: translateX(14px); }
     border-color: rgba(37, 99, 235, 0.3) !important;
 }
 
-/* === SWAP PREVIEW - LIGHT MODE === */
-[data-theme="light"] .organize-item.swap-preview,
-[data-theme="light"] .organize-item.swap-preview-down {
-    opacity: 1 !important;
-    background: rgba(59, 130, 246, 0.08);
-}
+/* === STAIR DRAG - LIGHT MODE === */
+/* (Light mode stair-dragging already defined above) */
 
 /* === INPUT FIELDS - LIGHT MODE === */
 [data-theme="light"] input.bg-slate-800,
@@ -924,16 +926,7 @@ input:checked + .slider:before { transform: translateX(14px); }
     border-radius: 12px;
 }
 
-.organize-item {
-    cursor: default;
-    transition: all 0.2s ease;
-}
-
-.organize-item.dragging {
-    opacity: 0.5;
-    background: rgba(59, 130, 246, 0.1);
-    border-color: rgba(59, 130, 246, 0.3);
-}
+/* Note: .organize-item transition is defined in DRAG & DROP section above */
 
 .organize-drag-handle {
     cursor: grab;
@@ -955,11 +948,6 @@ input:checked + .slider:before { transform: translateX(14px); }
 [data-theme="light"] .organize-mode {
     background: rgba(0, 0, 0, 0.03);
     border-color: rgba(0, 0, 0, 0.1);
-}
-
-[data-theme="light"] .organize-item.dragging {
-    background: rgba(59, 130, 246, 0.08);
-    border-color: rgba(59, 130, 246, 0.2);
 }
 
 [data-theme="light"] .organize-drag-handle:hover {
@@ -1019,68 +1007,102 @@ input:checked + .slider:before { transform: translateX(14px); }
 #library-list {
     max-height: 400px;
     overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    scrollbar-width: auto;
+    scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.02);
 }
 
 #library-list::-webkit-scrollbar {
-    width: 6px;
+    width: 16px;
 }
 
 #library-list::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    border: 4px solid transparent;
+    background-clip: padding-box;
 }
 
 #library-list::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
+    background-clip: padding-box;
+}
+
+#library-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
 }
 
 /* Categories container scroll */
 #sections-container {
     max-height: calc(100vh - 200px);
     overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    scrollbar-width: auto;
+    scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.02);
     padding-right: 4px;
 }
 
 #sections-container::-webkit-scrollbar {
-    width: 8px;
+    width: 16px;
 }
 
 #sections-container::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    border: 4px solid transparent;
+    background-clip: padding-box;
 }
 
 #sections-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
+    background-clip: padding-box;
+}
+
+#sections-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
 }
 
 /* Light mode scroll containers */
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    background-clip: padding-box;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.25);
+    background-clip: padding-box;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.02);
+}
+
 [data-theme="light"] #library-list::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.15);
+    background-clip: padding-box;
 }
 
 [data-theme="light"] #library-list::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.25);
+    background-clip: padding-box;
 }
 
 [data-theme="light"] #sections-container::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.15);
+    background-clip: padding-box;
 }
 
 [data-theme="light"] #sections-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.25);
+    background-clip: padding-box;
 }
 
 [data-theme="light"] #library-list {
-    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.02);
 }
 
 [data-theme="light"] #sections-container {
-    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.02);
 }
 
 /* ========================================
