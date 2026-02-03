@@ -1329,6 +1329,9 @@ function render() {
         renderQuickAccessBar();
     }
 
+    // Update avatar dropdown with user info
+    updateAvatarDropdown();
+
     // Trigger library change animation
     triggerLibraryChangeAnimation();
 }
@@ -1731,6 +1734,60 @@ function deleteLinkAnimated(libKey, catKey, linkIndex, buttonElement) {
         save();
         render();
     });
+}
+
+// ================= AVATAR DROPDOWN =================
+
+function toggleAvatarDropdown() {
+    const dropdown = document.getElementById('avatar-dropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('open');
+    }
+}
+
+function closeAvatarDropdown() {
+    const dropdown = document.getElementById('avatar-dropdown');
+    if (dropdown) {
+        dropdown.classList.remove('open');
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    const wrapper = document.getElementById('avatar-dropdown-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+        closeAvatarDropdown();
+    }
+});
+
+// Update avatar dropdown with user info
+function updateAvatarDropdown() {
+    const emailEl = document.getElementById('dropdown-user-email');
+    const authBtn = document.getElementById('dropdown-auth-btn');
+    const avatarPlaceholder = document.getElementById('user-avatar-placeholder');
+
+    if (currentUser) {
+        if (emailEl) emailEl.textContent = currentUser.email || 'Logged in';
+        if (authBtn) {
+            authBtn.textContent = '🚪 Logout';
+            authBtn.onclick = () => { handleAuth(); closeAvatarDropdown(); };
+        }
+        if (avatarPlaceholder) avatarPlaceholder.classList.add('hidden');
+    } else if (isGuest) {
+        if (emailEl) emailEl.textContent = 'Guest Mode';
+        if (authBtn) {
+            authBtn.textContent = '🔑 Login';
+            authBtn.onclick = () => { handleAuth(); closeAvatarDropdown(); };
+        }
+        if (avatarPlaceholder) avatarPlaceholder.classList.remove('hidden');
+    } else {
+        if (emailEl) emailEl.textContent = 'Not logged in';
+        if (authBtn) {
+            authBtn.textContent = '🔑 Login';
+            authBtn.onclick = () => { handleAuth(); closeAvatarDropdown(); };
+        }
+        if (avatarPlaceholder) avatarPlaceholder.classList.remove('hidden');
+    }
 }
 
 // ================= TOAST =================
