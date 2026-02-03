@@ -3,6 +3,99 @@
    Description: All CSS styles for the app
    ======================================== */
 
+/* ========================================
+   NORMAL VIEW ANIMATIONS
+   Staggered entrance animations for categories and links
+   ======================================== */
+
+@keyframes categorySlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes linkSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-15px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes itemAdd {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes itemDelete {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+        max-height: 200px;
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.8);
+        max-height: 0;
+        padding: 0;
+        margin: 0;
+        border-width: 0;
+    }
+}
+
+@keyframes statusPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 currentColor;
+    }
+    50% {
+        transform: scale(1.2);
+        box-shadow: 0 0 0 4px transparent;
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 transparent;
+    }
+}
+
+/* Animation classes */
+.category-animate-in {
+    animation: categorySlideIn 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+}
+
+.link-animate-in {
+    animation: linkSlideIn 250ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+}
+
+.item-animate-add {
+    animation: itemAdd 400ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.item-animate-delete {
+    animation: itemDelete 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    overflow: hidden;
+    pointer-events: none;
+}
+
 body {
     font-family: 'Inter', sans-serif;
     background: radial-gradient(circle at top left, #1e293b, #0f172a);
@@ -1155,16 +1248,7 @@ input:checked + .slider:before { transform: translateX(14px); }
     transform: translateY(0) scale(0.95);
 }
 
-.quick-access-icon.settings-icon {
-    background: rgba(255, 255, 255, 0.03);
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.quick-access-icon.settings-icon:hover {
-    transform: none;
-    background: rgba(255, 255, 255, 0.03);
-}
+/* Settings icon is now enabled - no special disabled styling needed */
 
 .quick-access-emoji {
     font-size: 20px;
@@ -2170,5 +2254,655 @@ input:checked + .slider:before { transform: translateX(14px); }
 @media (min-width: 769px) and (max-width: 1024px) {
     .uf-grid-categories {
         grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* ========================================
+   LAYOUT TOGGLE (Per Category)
+   Grid / Compact / Expanded views
+   ======================================== */
+
+.layout-toggle-group {
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.layout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #64748b;
+    font-size: 12px;
+    transition: all 150ms ease;
+}
+
+.layout-btn:hover {
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.layout-btn.active {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.15);
+}
+
+/* Compact Link Row */
+.compact-link-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    transition: all 200ms ease;
+}
+
+.compact-link-row:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.compact-link-favicon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.compact-link-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.compact-link-title {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #3b82f6;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+}
+
+.compact-link-title:hover {
+    text-decoration: underline;
+}
+
+.compact-link-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 150ms ease;
+}
+
+.compact-link-row:hover .compact-link-actions {
+    opacity: 1;
+}
+
+/* Expanded Link Card */
+.expanded-link-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 200ms ease;
+}
+
+.expanded-link-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.expanded-link-card.preview-open {
+    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.expanded-link-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+}
+
+.expanded-link-preview {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.expanded-link-preview.open {
+    max-height: 500px;
+}
+
+.expanded-link-preview-inner {
+    padding: 0 14px 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Light mode layout toggle */
+[data-theme="light"] .layout-toggle-group {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .layout-btn {
+    color: #64748b;
+}
+
+[data-theme="light"] .layout-btn:hover {
+    color: #475569;
+    background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .layout-btn.active {
+    color: #2563eb;
+    background: rgba(59, 130, 246, 0.12);
+}
+
+[data-theme="light"] .compact-link-row {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .compact-link-row:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .compact-link-title {
+    color: #2563eb;
+}
+
+[data-theme="light"] .expanded-link-card {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .expanded-link-card:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .expanded-link-card.preview-open {
+    background: rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* ========================================
+   STATUS HOVER INDICATOR
+   Compact status dot with hover reveal
+   ======================================== */
+
+.status-indicator-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #334155;
+    cursor: pointer;
+    transition: all 200ms ease;
+    flex-shrink: 0;
+}
+
+.status-dot:hover {
+    transform: scale(1.2);
+}
+
+.status-dot.watching { background: #fbbf24; }
+.status-dot.watched { background: #3b82f6; }
+.status-dot.understood { background: #22c55e; }
+.status-dot.applied { background: #f59e0b; }
+
+.status-dot.pulse {
+    animation: statusPulse 400ms ease-out;
+}
+
+.status-options {
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%) translateX(10px);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: rgba(30, 41, 59, 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 200ms ease;
+    z-index: 10;
+}
+
+.status-indicator-wrapper:hover .status-options,
+.status-indicator-wrapper.touch-active .status-options {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(0);
+}
+
+.status-option {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 150ms ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+.status-option:hover {
+    transform: scale(1.15);
+}
+
+.status-option.active {
+    border-color: white;
+}
+
+.status-option.none { background: #334155; }
+.status-option.watching { background: #fbbf24; }
+.status-option.watched { background: #3b82f6; }
+.status-option.understood { background: #22c55e; }
+.status-option.applied { background: #f59e0b; }
+
+/* Light mode status indicator */
+[data-theme="light"] .status-options {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .status-dot {
+    background: #cbd5e1;
+}
+
+[data-theme="light"] .status-option.none {
+    background: #cbd5e1;
+}
+
+/* ========================================
+   EXPANDABLE NOTES
+   Collapsible note section with premium textarea
+   ======================================== */
+
+.note-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 200ms ease;
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+.note-trigger:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+}
+
+.note-trigger.has-note {
+    color: #94a3b8;
+}
+
+.note-trigger-icon {
+    font-size: 14px;
+}
+
+.note-trigger-text {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.expandable-note {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.expandable-note.open {
+    max-height: 300px;
+    overflow: visible;
+}
+
+.expandable-note-inner {
+    padding-top: 8px;
+}
+
+.premium-textarea {
+    width: 100%;
+    min-height: 80px;
+    max-height: 200px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    color: #e2e8f0;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+    transition: all 200ms ease;
+}
+
+.premium-textarea::placeholder {
+    color: #475569;
+}
+
+.premium-textarea:focus {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.note-save-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 0.6875rem;
+    color: #475569;
+}
+
+.note-save-indicator .saved {
+    color: #22c55e;
+}
+
+/* Light mode expandable notes */
+[data-theme="light"] .note-trigger {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.06);
+    color: #64748b;
+}
+
+[data-theme="light"] .note-trigger:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #475569;
+}
+
+[data-theme="light"] .note-trigger.has-note {
+    color: #475569;
+}
+
+[data-theme="light"] .premium-textarea {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #1e293b;
+}
+
+[data-theme="light"] .premium-textarea::placeholder {
+    color: #94a3b8;
+}
+
+[data-theme="light"] .premium-textarea:focus {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+/* ========================================
+   SETTINGS MODAL
+   Theme toggle, Quick Access management
+   ======================================== */
+
+.settings-modal-content {
+    width: 100%;
+    max-width: 480px;
+}
+
+.settings-section {
+    margin-bottom: 24px;
+}
+
+.settings-section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+}
+
+.settings-theme-group {
+    display: flex;
+    gap: 8px;
+}
+
+.settings-theme-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 200ms ease;
+    color: #94a3b8;
+}
+
+.settings-theme-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.settings-theme-btn.active {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.5);
+    color: #3b82f6;
+}
+
+.settings-theme-icon {
+    font-size: 24px;
+}
+
+.settings-theme-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.settings-qa-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.settings-qa-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    cursor: grab;
+    transition: all 200ms ease;
+}
+
+.settings-qa-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.settings-qa-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.settings-qa-drag {
+    color: #475569;
+    font-size: 14px;
+}
+
+.settings-qa-icon {
+    font-size: 20px;
+}
+
+.settings-qa-name {
+    flex: 1;
+    font-size: 0.875rem;
+    color: white;
+    font-weight: 500;
+}
+
+.settings-qa-toggle {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    background: #334155;
+    border-radius: 11px;
+    cursor: pointer;
+    transition: background 200ms ease;
+}
+
+.settings-qa-toggle.active {
+    background: #3b82f6;
+}
+
+.settings-qa-toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 200ms ease;
+}
+
+.settings-qa-toggle.active::after {
+    transform: translateX(18px);
+}
+
+.settings-actions {
+    display: flex;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.settings-action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #94a3b8;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 200ms ease;
+}
+
+.settings-action-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+/* Light mode settings */
+[data-theme="light"] .settings-theme-btn {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #64748b;
+}
+
+[data-theme="light"] .settings-theme-btn:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .settings-theme-btn.active {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #2563eb;
+}
+
+[data-theme="light"] .settings-qa-item {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .settings-qa-item:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .settings-qa-name {
+    color: #0f172a;
+}
+
+[data-theme="light"] .settings-qa-toggle {
+    background: #cbd5e1;
+}
+
+[data-theme="light"] .settings-action-btn {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #64748b;
+}
+
+[data-theme="light"] .settings-action-btn:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: #0f172a;
+}
+
+/* ========================================
+   REDUCED MOTION - ALL NEW ANIMATIONS
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .category-animate-in,
+    .link-animate-in,
+    .item-animate-add,
+    .item-animate-delete,
+    .status-dot,
+    .status-options,
+    .expandable-note,
+    .expanded-link-preview,
+    .layout-btn,
+    .settings-theme-btn,
+    .settings-qa-item {
+        animation: none !important;
+        transition: none !important;
     }
 }

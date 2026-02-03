@@ -17,6 +17,92 @@ let editingLinkIndex = null;
 // Organize mode state - tracks which categories are in organize mode
 let organizeMode = new Set();
 let editingLibraryKey = null;
+
+// ================= LAYOUT TOGGLE STATE =================
+let categoryLayouts = {}; // { catKey: 'grid' | 'compact' | 'expanded' }
+const LAYOUT_STORAGE_KEY = 'tab-organizer-category-layouts';
+
+function loadCategoryLayouts() {
+    try {
+        const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
+        if (saved) {
+            categoryLayouts = JSON.parse(saved);
+        }
+    } catch (e) {
+        console.warn('Failed to load category layouts:', e);
+        categoryLayouts = {};
+    }
+}
+
+function saveCategoryLayouts() {
+    try {
+        localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(categoryLayouts));
+    } catch (e) {
+        console.warn('Failed to save category layouts:', e);
+    }
+}
+
+function getCategoryLayout(catKey) {
+    return categoryLayouts[catKey] || 'grid';
+}
+
+function setCategoryLayout(catKey, layout) {
+    categoryLayouts[catKey] = layout;
+    saveCategoryLayouts();
+    render();
+}
+
+// ================= EXPANDABLE NOTES STATE =================
+let expandedNotes = new Set(); // Track which link notes are expanded
+
+function toggleNoteExpanded(noteId) {
+    if (expandedNotes.has(noteId)) {
+        expandedNotes.delete(noteId);
+    } else {
+        expandedNotes.add(noteId);
+    }
+}
+
+function isNoteExpanded(noteId) {
+    return expandedNotes.has(noteId);
+}
+
+// ================= SETTINGS STATE =================
+const SETTINGS_STORAGE_KEY = 'tab-organizer-settings';
+const QUICK_ACCESS_KEY = 'tab-organizer-quick-access';
+
+let appSettings = {
+    theme: 'auto', // 'dark', 'light', 'auto'
+    quickAccessLibraries: [] // Array of libKeys (max 4)
+};
+
+function loadAppSettings() {
+    try {
+        const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        if (saved) {
+            appSettings = { ...appSettings, ...JSON.parse(saved) };
+        }
+        const quickAccess = localStorage.getItem(QUICK_ACCESS_KEY);
+        if (quickAccess) {
+            appSettings.quickAccessLibraries = JSON.parse(quickAccess);
+        }
+    } catch (e) {
+        console.warn('Failed to load app settings:', e);
+    }
+}
+
+function saveAppSettings() {
+    try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(appSettings));
+        localStorage.setItem(QUICK_ACCESS_KEY, JSON.stringify(appSettings.quickAccessLibraries));
+    } catch (e) {
+        console.warn('Failed to save app settings:', e);
+    }
+}
+
+// ================= ANIMATION STATE =================
+let lastLibraryChange = null; // Track library changes for animation
+let lastAddedLink = null; // Track newly added links for animation
 let currentUser = null;
 let isGuest = false;
 

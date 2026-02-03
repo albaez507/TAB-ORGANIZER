@@ -65,6 +65,282 @@ function loadTheme() {
     updateThemeToggleIcon(theme);
 }
 
+// ================= ANIMATION HELPERS =================
+
+/**
+ * Animate categories when they appear (staggered entrance)
+ */
+function animateCategoriesIn() {
+    const categories = document.querySelectorAll('.category-card:not(.animated)');
+    categories.forEach((cat, index) => {
+        cat.classList.add('category-animate-in');
+        cat.style.animationDelay = `${index * 50}ms`;
+        cat.classList.add('animated');
+
+        // Clean up after animation
+        setTimeout(() => {
+            cat.classList.remove('category-animate-in');
+            cat.style.animationDelay = '';
+        }, 300 + (index * 50));
+    });
+}
+
+/**
+ * Animate links when category is opened (staggered entrance)
+ */
+function animateLinksIn(catKey) {
+    const container = document.querySelector(`[data-cat-key="${catKey}"] .category-drop-zone`);
+    if (!container) return;
+
+    const links = container.querySelectorAll('.link-card, .compact-link-row, .expanded-link-card, .organize-item');
+    links.forEach((link, index) => {
+        link.classList.add('link-animate-in');
+        link.style.animationDelay = `${index * 40}ms`;
+
+        // Clean up after animation
+        setTimeout(() => {
+            link.classList.remove('link-animate-in');
+            link.style.animationDelay = '';
+        }, 250 + (index * 40));
+    });
+}
+
+/**
+ * Animate newly added item
+ */
+function animateItemAdd(element) {
+    if (!element) return;
+    element.classList.add('item-animate-add');
+    setTimeout(() => {
+        element.classList.remove('item-animate-add');
+    }, 400);
+}
+
+/**
+ * Animate item deletion with callback
+ */
+function animateItemDelete(element, callback) {
+    if (!element) {
+        if (callback) callback();
+        return;
+    }
+
+    element.classList.add('item-animate-delete');
+    setTimeout(() => {
+        if (callback) callback();
+    }, 300);
+}
+
+// ================= STATUS INDICATOR HELPERS =================
+
+/**
+ * Get the current status level (highest active status)
+ */
+function getCurrentStatus(status) {
+    if (!status) return 'none';
+    if (status.applied) return 'applied';
+    if (status.understood) return 'understood';
+    if (status.watched) return 'watched';
+    if (status.watching) return 'watching';
+    return 'none';
+}
+
+/**
+ * Render status indicator with hover options
+ */
+function renderStatusIndicator(libKey, catKey, linkIndex, status) {
+    const currentStatus = getCurrentStatus(status);
+
+    return `
+        <div class="status-indicator-wrapper" onclick="event.stopPropagation()">
+            <div class="status-dot ${currentStatus}"
+                 onclick="toggleStatusOptions(this.parentElement)"
+                 title="Click to change status"></div>
+            <div class="status-options">
+                <div class="status-option none ${currentStatus === 'none' ? 'active' : ''}"
+                     onclick="setLinkStatusLevel('${libKey}', '${catKey}', ${linkIndex}, 'none', this)" title="Sin estado">✕</div>
+                <div class="status-option watching ${currentStatus === 'watching' ? 'active' : ''}"
+                     onclick="setLinkStatusLevel('${libKey}', '${catKey}', ${linkIndex}, 'watching', this)" title="Viendo">🟡</div>
+                <div class="status-option watched ${currentStatus === 'watched' ? 'active' : ''}"
+                     onclick="setLinkStatusLevel('${libKey}', '${catKey}', ${linkIndex}, 'watched', this)" title="Visto">🔵</div>
+                <div class="status-option understood ${currentStatus === 'understood' ? 'active' : ''}"
+                     onclick="setLinkStatusLevel('${libKey}', '${catKey}', ${linkIndex}, 'understood', this)" title="Entendido">🟢</div>
+                <div class="status-option applied ${currentStatus === 'applied' ? 'active' : ''}"
+                     onclick="setLinkStatusLevel('${libKey}', '${catKey}', ${linkIndex}, 'applied', this)" title="Aplicado">⭐</div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Toggle status options visibility (for mobile)
+ */
+function toggleStatusOptions(wrapper) {
+    // Close all other open status options
+    document.querySelectorAll('.status-indicator-wrapper.touch-active').forEach(w => {
+        if (w !== wrapper) w.classList.remove('touch-active');
+    });
+    wrapper.classList.toggle('touch-active');
+}
+
+/**
+ * Set link status to a specific level
+ */
+function setLinkStatusLevel(libKey, catKey, linkIndex, level, optionElement) {
+    const link = DATA.libraries[libKey]?.categories[catKey]?.links[linkIndex];
+    if (!link) return;
+
+    // Reset all statuses
+    link.status = { watching: false, watched: false, understood: false, applied: false };
+
+    // Set the appropriate level
+    if (level === 'watching') {
+        link.status.watching = true;
+    } else if (level === 'watched') {
+        link.status.watching = true;
+        link.status.watched = true;
+    } else if (level === 'understood') {
+        link.status.watching = true;
+        link.status.watched = true;
+        link.status.understood = true;
+    } else if (level === 'applied') {
+        link.status.watching = true;
+        link.status.watched = true;
+        link.status.understood = true;
+        link.status.applied = true;
+    }
+
+    // Animate the dot
+    const wrapper = optionElement.closest('.status-indicator-wrapper');
+    const dot = wrapper.querySelector('.status-dot');
+    dot.classList.remove('none', 'watching', 'watched', 'understood', 'applied');
+    dot.classList.add(level, 'pulse');
+
+    // Update active state on options
+    wrapper.querySelectorAll('.status-option').forEach(opt => opt.classList.remove('active'));
+    optionElement.classList.add('active');
+
+    // Close options after selection
+    setTimeout(() => {
+        wrapper.classList.remove('touch-active');
+        dot.classList.remove('pulse');
+    }, 400);
+
+    save();
+    showToast('💾 Estado actualizado', false);
+}
+
+// Close status options when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.status-indicator-wrapper')) {
+        document.querySelectorAll('.status-indicator-wrapper.touch-active').forEach(w => {
+            w.classList.remove('touch-active');
+        });
+    }
+});
+
+// ================= EXPANDABLE NOTES HELPERS =================
+
+/**
+ * Render expandable note for a link
+ */
+function renderExpandableNote(libKey, catKey, linkIndex, link) {
+    const noteId = `${libKey}-${catKey}-${linkIndex}`;
+    const isExpanded = isNoteExpanded(noteId);
+    const hasNote = link.linkNotes && link.linkNotes.trim().length > 0;
+    const previewText = hasNote ? link.linkNotes.substring(0, 50) + (link.linkNotes.length > 50 ? '...' : '') : 'Add note...';
+
+    return `
+        <div class="mt-2" onclick="event.stopPropagation()">
+            <div class="note-trigger ${hasNote ? 'has-note' : ''}" onclick="toggleExpandableNote('${noteId}')">
+                <span class="note-trigger-icon">📝</span>
+                <span class="note-trigger-text">${escapeHtmlAttribute(previewText)}</span>
+                <span style="transform: rotate(${isExpanded ? '180deg' : '0deg'}); transition: transform 200ms;">▼</span>
+            </div>
+            <div class="expandable-note ${isExpanded ? 'open' : ''}" id="expandable-note-${noteId}">
+                <div class="expandable-note-inner">
+                    <textarea
+                        class="premium-textarea"
+                        placeholder="Write your notes here..."
+                        maxlength="500"
+                        oninput="handleNoteInput('${libKey}', '${catKey}', ${linkIndex}, this)"
+                        onkeydown="handleNoteKeydown(event, '${noteId}')"
+                    >${escapeHtmlAttribute(link.linkNotes || '')}</textarea>
+                    <div class="note-save-indicator">
+                        <span id="note-count-${noteId}">${(link.linkNotes || '').length}/500</span>
+                        <span id="note-saved-${noteId}"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Toggle expandable note open/closed
+ */
+function toggleExpandableNote(noteId) {
+    toggleNoteExpanded(noteId);
+    const noteEl = document.getElementById(`expandable-note-${noteId}`);
+    if (noteEl) {
+        noteEl.classList.toggle('open', isNoteExpanded(noteId));
+        // Focus textarea if opening
+        if (isNoteExpanded(noteId)) {
+            const textarea = noteEl.querySelector('textarea');
+            if (textarea) {
+                setTimeout(() => textarea.focus(), 100);
+            }
+        }
+    }
+}
+
+/**
+ * Handle note input with debounced save
+ */
+let noteInputDebounce = null;
+function handleNoteInput(libKey, catKey, linkIndex, textarea) {
+    const noteId = `${libKey}-${catKey}-${linkIndex}`;
+    const link = DATA.libraries[libKey]?.categories[catKey]?.links[linkIndex];
+    if (!link) return;
+
+    link.linkNotes = textarea.value.substring(0, 500);
+
+    // Update count
+    const countEl = document.getElementById(`note-count-${noteId}`);
+    if (countEl) countEl.textContent = `${link.linkNotes.length}/500`;
+
+    // Show saving indicator
+    const savedEl = document.getElementById(`note-saved-${noteId}`);
+    if (savedEl) savedEl.textContent = 'Saving...';
+
+    // Auto-grow textarea
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+
+    // Debounced save
+    clearTimeout(noteInputDebounce);
+    noteInputDebounce = setTimeout(() => {
+        save();
+        if (savedEl) {
+            savedEl.textContent = '✓ Saved';
+            savedEl.classList.add('saved');
+            setTimeout(() => {
+                savedEl.textContent = '';
+                savedEl.classList.remove('saved');
+            }, 2000);
+        }
+    }, 500);
+}
+
+/**
+ * Handle keydown in note (ESC to close)
+ */
+function handleNoteKeydown(event, noteId) {
+    if (event.key === 'Escape') {
+        toggleExpandableNote(noteId);
+    }
+}
+
 // ================= STATUS BADGE HELPER =================
 function getStatusBadge(status) {
     if (!status) return '';
@@ -1052,6 +1328,9 @@ function render() {
     if (typeof renderQuickAccessBar === 'function') {
         renderQuickAccessBar();
     }
+
+    // Trigger library change animation
+    triggerLibraryChangeAnimation();
 }
 
 function renderLibrarySidebar() {
@@ -1213,7 +1492,7 @@ function renderCategories() {
                     </div>
                 </div>
 
-                <!-- Organize Mode Controls -->
+                <!-- Organize Mode Controls with Layout Toggle -->
                 <div class="flex items-center justify-between mb-4" onclick="event.stopPropagation()">
                     ${isOrganizeMode(libKey, catKey) ? `
                         <span class="text-xs text-slate-400">Arrastra para reordenar</span>
@@ -1221,14 +1500,25 @@ function renderCategories() {
                             Guardar Orden
                         </button>
                     ` : `
-                        <span class="text-xs text-slate-500">${(s.links || []).length} links</span>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-slate-500">${(s.links || []).length} links</span>
+                            <!-- Layout Toggle -->
+                            <div class="layout-toggle-group">
+                                <button class="layout-btn ${getCategoryLayout(catKey) === 'grid' ? 'active' : ''}"
+                                        onclick="setCategoryLayout('${catKey}', 'grid')" title="Grid view">⊞</button>
+                                <button class="layout-btn ${getCategoryLayout(catKey) === 'compact' ? 'active' : ''}"
+                                        onclick="setCategoryLayout('${catKey}', 'compact')" title="Compact view">≡</button>
+                                <button class="layout-btn ${getCategoryLayout(catKey) === 'expanded' ? 'active' : ''}"
+                                        onclick="setCategoryLayout('${catKey}', 'expanded')" title="Expanded view">☰</button>
+                            </div>
+                        </div>
                         <button onclick="toggleOrganizeMode('${libKey}', '${catKey}')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 bg-white/5 hover:bg-white/10 transition flex items-center gap-2">
                             <span>Organizar</span>
                         </button>
                     `}
                 </div>
 
-                <div class="category-drop-zone ${isOrganizeMode(libKey, catKey) ? 'organize-mode flex flex-col' : 'grid grid-cols-1 lg:grid-cols-2'} gap-4 min-h-[100px] rounded-xl p-2 transition-all"
+                <div class="category-drop-zone ${isOrganizeMode(libKey, catKey) ? 'organize-mode flex flex-col' : getCategoryLayout(catKey) === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2' : 'flex flex-col'} gap-4 min-h-[100px] rounded-xl p-2 transition-all"
                      ${isOrganizeMode(libKey, catKey) ? `
                          ondragover="handleLinkDragOver(event, '${libKey}', '${catKey}')"
                          ondragleave="handleLinkDragLeave(event)"
@@ -1250,6 +1540,7 @@ function renderLinks(libKey, catKey) {
     const taskText = (category.task || '').toLowerCase().trim();
     const taskWords = taskText.split(/\s+/).filter(w => w.length > 2);
     const inOrganizeMode = isOrganizeMode(libKey, catKey);
+    const layout = getCategoryLayout(catKey);
 
     // Filter links based on search query
     const filteredLinks = currentSearchQuery
@@ -1285,13 +1576,72 @@ function renderLinks(libKey, catKey) {
                 </div>
                 <div class="flex items-center gap-2">
                     <button class="text-blue-400/60 hover:text-blue-400 transition p-1" onclick="editLink('${libKey}', '${catKey}', ${i})" title="Editar">✏️</button>
-                    <button class="text-red-500/40 hover:text-red-500 transition p-1" onclick="deleteLink('${libKey}', '${catKey}', ${i})" title="Eliminar">🗑️</button>
+                    <button class="text-red-500/40 hover:text-red-500 transition p-1" onclick="deleteLinkAnimated('${libKey}', '${catKey}', ${i}, this)" title="Eliminar">🗑️</button>
                 </div>
             </div>`;
         }).join('');
     }
 
-    // NORMAL MODE: Thumbnail cards (no drag)
+    // COMPACT MODE: Minimal rows with status dot
+    if (layout === 'compact') {
+        return filteredLinks.map(({ link: l, index: i, matches }) => {
+            const hiddenClass = !matches ? 'search-hidden' : '';
+            if (!l.status) l.status = { watching: false, watched: false, understood: false, applied: false };
+
+            return `
+            <div class="compact-link-row ${hiddenClass}" onclick="event.stopPropagation()">
+                <img src="${l.icon || 'https://www.google.com/s2/favicons?sz=64&domain=' + l.url}" class="compact-link-favicon">
+                <div class="compact-link-info">
+                    <a href="${l.url}" target="_blank" class="compact-link-title" onclick="event.stopPropagation()">${l.title || 'Sin titulo'}</a>
+                </div>
+                ${renderStatusIndicator(libKey, catKey, i, l.status)}
+                <div class="compact-link-actions">
+                    <button class="text-blue-400/60 hover:text-blue-400 transition text-sm" onclick="editLink('${libKey}', '${catKey}', ${i})" title="Editar">✏️</button>
+                    <button class="text-red-500/40 hover:text-red-500 transition text-sm" onclick="deleteLinkAnimated('${libKey}', '${catKey}', ${i}, this)" title="Eliminar">🗑️</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // EXPANDED MODE: Compact + collapsible preview
+    if (layout === 'expanded') {
+        return filteredLinks.map(({ link: l, index: i, matches }) => {
+            const hiddenClass = !matches ? 'search-hidden' : '';
+            const embed = getEmbedInfo(l.url);
+            const previewId = `expanded-preview-${libKey}-${catKey}-${i}`;
+            if (!l.status) l.status = { watching: false, watched: false, understood: false, applied: false };
+
+            return `
+            <div class="expanded-link-card ${hiddenClass}" onclick="event.stopPropagation()" id="expanded-card-${libKey}-${catKey}-${i}">
+                <div class="expanded-link-header" onclick="toggleExpandedPreview('${previewId}', '${libKey}-${catKey}-${i}')">
+                    <img src="${l.icon || 'https://www.google.com/s2/favicons?sz=64&domain=' + l.url}" class="compact-link-favicon">
+                    <div class="compact-link-info">
+                        <a href="${l.url}" target="_blank" class="compact-link-title" onclick="event.stopPropagation()">${l.title || 'Sin titulo'}</a>
+                        <p class="text-[10px] text-slate-500 truncate">${l.description || ''}</p>
+                    </div>
+                    ${renderStatusIndicator(libKey, catKey, i, l.status)}
+                    <div class="compact-link-actions" style="opacity: 1;">
+                        <button class="text-blue-400/60 hover:text-blue-400 transition text-sm" onclick="event.stopPropagation(); editLink('${libKey}', '${catKey}', ${i})" title="Editar">✏️</button>
+                        <button class="text-red-500/40 hover:text-red-500 transition text-sm" onclick="event.stopPropagation(); deleteLinkAnimated('${libKey}', '${catKey}', ${i}, this)" title="Eliminar">🗑️</button>
+                    </div>
+                    <span class="text-slate-500 text-xs ml-2" id="expanded-arrow-${libKey}-${catKey}-${i}">▼</span>
+                </div>
+                <div class="expanded-link-preview" id="${previewId}">
+                    <div class="expanded-link-preview-inner">
+                        ${embed ? `
+                            <div class="aspect-video bg-black rounded-xl overflow-hidden mt-2 border border-white/10">
+                                <iframe class="w-full h-full" src="${embed.src}" allowfullscreen></iframe>
+                            </div>
+                            <button class="mt-3 px-4 py-2 rounded-lg bg-purple-500/20 text-xs font-bold text-purple-400 hover:bg-purple-500/30 transition" onclick="openVideoFocusModal('${libKey}', '${catKey}', ${i}, '${embed.type}', '${embed.src}')">🎬 Focus Mode</button>
+                        ` : ''}
+                        ${renderExpandableNote(libKey, catKey, i, l)}
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // GRID MODE (default): Full cards with all details
     return filteredLinks.map(({ link: l, index: i, matches }) => {
         const hiddenClass = !matches ? 'search-hidden' : '';
         const titleMatch = taskWords.some(word => l.title.toLowerCase().includes(word));
@@ -1311,21 +1661,6 @@ function renderLinks(libKey, catKey) {
 
         const statusBadge = getStatusBadge(l.status);
 
-        // For non-video links, show notes section
-        const notesSection = !embed ? `
-            <div class="link-notes-section mt-2 p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Mis Notas:</p>
-                <textarea
-                    class="w-full bg-transparent text-xs text-slate-300 outline-none resize-none placeholder-slate-600"
-                    placeholder="Agrega notas sobre este link..."
-                    rows="2"
-                    maxlength="500"
-                    oninput="saveLinkNotes('${libKey}', '${catKey}', ${i}, this.value)"
-                    onclick="event.stopPropagation()">${escapeHtmlAttribute(l.linkNotes || '')}</textarea>
-                <p class="text-[9px] text-slate-600 text-right mt-1"><span id="link-notes-count-${libKey}-${catKey}-${i}">${(l.linkNotes || '').length}</span>/500</p>
-            </div>
-        ` : '';
-
         return `
         <div class="${cardClass}"
              onclick="event.stopPropagation()">
@@ -1343,33 +1678,16 @@ function renderLinks(libKey, catKey) {
                         </div>
                         <p class="text-[10px] text-slate-500 truncate mt-0.5">${l.description || 'Sin detalles'}</p>
 
-                        <!-- Inline Status (4 checkboxes) -->
-                        <div class="flex items-center gap-3 mt-2 flex-wrap">
-                            <label class="flex items-center gap-1 cursor-pointer text-[10px]">
-                                <input type="checkbox" class="status-checkbox watching" ${l.status.watching ? 'checked' : ''} onchange="toggleLinkStatus('${libKey}', '${catKey}', ${i}, 'watching', this.checked)">
-                                <span class="${l.status.watching ? 'text-yellow-400' : 'text-slate-500'}">🟡</span>
-                            </label>
-                            <label class="flex items-center gap-1 cursor-pointer text-[10px]">
-                                <input type="checkbox" class="status-checkbox watched" ${l.status.watched ? 'checked' : ''} onchange="toggleLinkStatus('${libKey}', '${catKey}', ${i}, 'watched', this.checked)">
-                                <span class="${l.status.watched ? 'text-blue-400' : 'text-slate-500'}">🔵</span>
-                            </label>
-                            <label class="flex items-center gap-1 cursor-pointer text-[10px]">
-                                <input type="checkbox" class="status-checkbox understood" ${l.status.understood ? 'checked' : ''} onchange="toggleLinkStatus('${libKey}', '${catKey}', ${i}, 'understood', this.checked)">
-                                <span class="${l.status.understood ? 'text-emerald-400' : 'text-slate-500'}">🟢</span>
-                            </label>
-                            <label class="flex items-center gap-1 cursor-pointer text-[10px]">
-                                <input type="checkbox" class="status-checkbox applied" ${l.status.applied ? 'checked' : ''} onchange="toggleLinkStatus('${libKey}', '${catKey}', ${i}, 'applied', this.checked)">
-                                <span class="${l.status.applied ? 'text-amber-400' : 'text-slate-500'}">⭐</span>
-                            </label>
+                        <!-- Status Indicator with Hover -->
+                        <div class="flex items-center gap-3 mt-2">
+                            ${renderStatusIndicator(libKey, catKey, i, l.status)}
+                            ${l.quickNote ? `<span class="text-[10px] text-slate-400 italic truncate">📝 ${l.quickNote}</span>` : ''}
                         </div>
-
-                        <!-- Quick Note Display -->
-                        ${l.quickNote ? `<p class="text-[10px] text-slate-400 mt-2 italic truncate">📝 ${l.quickNote}</p>` : ''}
                     </div>
                 </div>
                 <div class="flex flex-col items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
                     <button class="text-blue-400/60 hover:text-blue-400 transition" onclick="editLink('${libKey}', '${catKey}', ${i})" title="Editar">✏️</button>
-                    <button class="text-red-500/40 hover:text-red-500 transition" onclick="deleteLink('${libKey}', '${catKey}', ${i})" title="Eliminar">🗑️</button>
+                    <button class="text-red-500/40 hover:text-red-500 transition" onclick="deleteLinkAnimated('${libKey}', '${catKey}', ${i}, this)" title="Eliminar">🗑️</button>
                 </div>
             </div>
             ${embed ? `
@@ -1378,9 +1696,41 @@ function renderLinks(libKey, catKey) {
                     <button class="px-3 py-1.5 rounded-lg bg-purple-500/20 text-[9px] font-bold text-purple-400 uppercase hover:bg-purple-500/30 transition" onclick="openVideoFocusModal('${libKey}', '${catKey}', ${i}, '${embed.type}', '${embed.src}')">🎬 Focus</button>
                 </div>
                 <div id="preview-${pid}"></div>
-            ` : notesSection}
+            ` : renderExpandableNote(libKey, catKey, i, l)}
         </div>`;
     }).join('');
+}
+
+/**
+ * Toggle expanded preview in expanded layout
+ */
+function toggleExpandedPreview(previewId, cardId) {
+    const preview = document.getElementById(previewId);
+    const card = document.getElementById(`expanded-card-${cardId}`);
+    const arrow = document.getElementById(`expanded-arrow-${cardId}`);
+
+    if (preview && card) {
+        const isOpen = preview.classList.contains('open');
+        preview.classList.toggle('open', !isOpen);
+        card.classList.toggle('preview-open', !isOpen);
+        if (arrow) {
+            arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+    }
+}
+
+/**
+ * Delete link with animation
+ */
+function deleteLinkAnimated(libKey, catKey, linkIndex, buttonElement) {
+    if (!confirm('Borrar link?')) return;
+
+    const card = buttonElement.closest('.link-card, .compact-link-row, .expanded-link-card, .organize-item');
+    animateItemDelete(card, () => {
+        DATA.libraries[libKey].categories[catKey].links.splice(linkIndex, 1);
+        save();
+        render();
+    });
 }
 
 // ================= TOAST =================
@@ -1401,4 +1751,212 @@ function showToast(message, isError = false) {
         toast.classList.add('translate-y-20', 'opacity-0');
         toast.classList.remove('translate-y-0', 'opacity-100');
     }, 3000);
+}
+
+// ================= SETTINGS MODAL =================
+
+function openSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) {
+        modal.classList.add('modal-active');
+        renderSettingsContent();
+    }
+}
+
+function closeSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) {
+        modal.classList.remove('modal-active');
+    }
+}
+
+function renderSettingsContent() {
+    // Theme selection
+    const currentTheme = appSettings.theme || 'auto';
+    const themeButtons = document.querySelectorAll('.settings-theme-btn');
+    themeButtons.forEach(btn => {
+        const theme = btn.dataset.theme;
+        btn.classList.toggle('active', theme === currentTheme);
+    });
+
+    // Quick Access Libraries
+    renderQuickAccessSettings();
+}
+
+function setThemeMode(mode) {
+    appSettings.theme = mode;
+    saveAppSettings();
+
+    // Update theme buttons
+    document.querySelectorAll('.settings-theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === mode);
+    });
+
+    // Apply theme
+    applyTheme(mode);
+}
+
+function applyTheme(mode) {
+    if (mode === 'auto') {
+        // Check system preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = prefersDark ? 'dark' : 'light';
+        if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+        localStorage.setItem(THEME_STORAGE_KEY, 'auto');
+    } else if (mode === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem(THEME_STORAGE_KEY, 'light');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+    }
+    updateThemeToggleIcon(mode === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : mode);
+}
+
+function renderQuickAccessSettings() {
+    const container = document.getElementById('settings-qa-list');
+    if (!container) return;
+
+    const libKeys = Object.keys(DATA.libraries || {});
+    const quickAccess = appSettings.quickAccessLibraries || [];
+
+    container.innerHTML = libKeys.map(libKey => {
+        const lib = DATA.libraries[libKey];
+        const isEnabled = quickAccess.includes(libKey);
+        const position = quickAccess.indexOf(libKey);
+
+        return `
+            <div class="settings-qa-item" draggable="true"
+                 ondragstart="handleQADragStart(event, '${libKey}')"
+                 ondragover="handleQADragOver(event)"
+                 ondrop="handleQADrop(event, '${libKey}')"
+                 ondragend="handleQADragEnd(event)">
+                <span class="settings-qa-drag">⋮⋮</span>
+                <span class="settings-qa-icon">${lib.icon}</span>
+                <span class="settings-qa-name">${lib.name}</span>
+                ${position >= 0 && position < 4 ? `<span class="text-[10px] text-blue-400 font-bold">#${position + 1}</span>` : ''}
+                <div class="settings-qa-toggle ${isEnabled ? 'active' : ''}"
+                     onclick="toggleQuickAccessLibrary('${libKey}')"></div>
+            </div>
+        `;
+    }).join('');
+}
+
+function toggleQuickAccessLibrary(libKey) {
+    const index = appSettings.quickAccessLibraries.indexOf(libKey);
+    if (index >= 0) {
+        appSettings.quickAccessLibraries.splice(index, 1);
+    } else {
+        // Add to end, but limit to reasonable number
+        appSettings.quickAccessLibraries.push(libKey);
+    }
+    saveAppSettings();
+    renderQuickAccessSettings();
+
+    // Update quick access bar
+    if (typeof renderQuickAccessBar === 'function') {
+        renderQuickAccessBar();
+    }
+}
+
+// Quick Access Drag & Drop
+let qaDraggedKey = null;
+
+function handleQADragStart(event, libKey) {
+    qaDraggedKey = libKey;
+    event.target.classList.add('dragging');
+    event.dataTransfer.effectAllowed = 'move';
+}
+
+function handleQADragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+}
+
+function handleQADrop(event, targetKey) {
+    event.preventDefault();
+    if (!qaDraggedKey || qaDraggedKey === targetKey) return;
+
+    const qa = appSettings.quickAccessLibraries;
+    const dragIndex = qa.indexOf(qaDraggedKey);
+    const targetIndex = qa.indexOf(targetKey);
+
+    // Only reorder if both are in the quick access list
+    if (dragIndex >= 0 && targetIndex >= 0) {
+        qa.splice(dragIndex, 1);
+        qa.splice(targetIndex, 0, qaDraggedKey);
+        saveAppSettings();
+        renderQuickAccessSettings();
+
+        if (typeof renderQuickAccessBar === 'function') {
+            renderQuickAccessBar();
+        }
+    }
+}
+
+function handleQADragEnd(event) {
+    qaDraggedKey = null;
+    document.querySelectorAll('.settings-qa-item.dragging').forEach(el => {
+        el.classList.remove('dragging');
+    });
+}
+
+// Initialize settings on load
+document.addEventListener('DOMContentLoaded', () => {
+    loadCategoryLayouts();
+    loadAppSettings();
+
+    // Initialize quick access with first 4 libraries if empty
+    if (appSettings.quickAccessLibraries.length === 0 && DATA.libraries) {
+        appSettings.quickAccessLibraries = Object.keys(DATA.libraries).slice(0, 4);
+        saveAppSettings();
+    }
+
+    // Apply saved theme
+    if (appSettings.theme) {
+        applyTheme(appSettings.theme);
+    }
+});
+
+// ================= ANIMATION TRIGGERS =================
+
+// Track library changes for category animations
+let previousLibrary = null;
+
+function triggerLibraryChangeAnimation() {
+    if (previousLibrary !== DATA.currentLibrary) {
+        previousLibrary = DATA.currentLibrary;
+        // Trigger category animations after render
+        requestAnimationFrame(() => {
+            animateCategoriesIn();
+        });
+    }
+}
+
+// Override toggleSectionDisplay to animate links
+const originalToggleSectionDisplay = typeof toggleSectionDisplay === 'function' ? toggleSectionDisplay : null;
+
+function toggleSectionDisplay(catKey) {
+    const wasOpen = openSections.has(catKey);
+
+    if (wasOpen) {
+        openSections.delete(catKey);
+    } else {
+        openSections.add(catKey);
+    }
+
+    render();
+
+    // Animate links if opening
+    if (!wasOpen) {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                animateLinksIn(catKey);
+            });
+        });
+    }
 }

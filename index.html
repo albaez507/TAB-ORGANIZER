@@ -31,7 +31,7 @@
         <p class="text-slate-500 text-sm mt-1">Tu centro de mando digital con IA de metadatos.</p>
         <!-- Quick Access Bar -->
         <div id="quick-access-bar" class="flex items-center gap-2 mt-3">
-            <button id="settings-btn" class="quick-access-icon settings-icon" title="Configuración (próximamente)" disabled>
+            <button id="settings-btn" class="quick-access-icon" title="Configuración" onclick="openSettingsModal()">
                 <span>⚙️</span>
             </button>
             <div class="quick-access-divider"></div>
@@ -402,6 +402,66 @@
     <!-- Exit hint -->
     <div class="ultra-focus-exit-hint">
         Press <kbd>ESC</kbd> or click the active icon to exit
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="glass modal-content settings-modal-content p-8 rounded-3xl shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold text-white">⚙️ Settings</h3>
+            <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white transition text-xl">✕</button>
+        </div>
+
+        <!-- Theme Section -->
+        <div class="settings-section">
+            <h4 class="settings-section-title">Theme</h4>
+            <div class="settings-theme-group">
+                <button class="settings-theme-btn" data-theme="dark" onclick="setThemeMode('dark')">
+                    <span class="settings-theme-icon">🌙</span>
+                    <span class="settings-theme-label">Dark</span>
+                </button>
+                <button class="settings-theme-btn" data-theme="light" onclick="setThemeMode('light')">
+                    <span class="settings-theme-icon">☀️</span>
+                    <span class="settings-theme-label">Light</span>
+                </button>
+                <button class="settings-theme-btn" data-theme="auto" onclick="setThemeMode('auto')">
+                    <span class="settings-theme-icon">💻</span>
+                    <span class="settings-theme-label">Auto</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Access Section -->
+        <div class="settings-section">
+            <h4 class="settings-section-title">Quick Access Libraries</h4>
+            <p class="text-xs text-slate-500 mb-3">Toggle and drag to reorder the first 4 libraries shown in the quick access bar.</p>
+            <div id="settings-qa-list" class="settings-qa-list">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
+        <!-- Actions Section -->
+        <div class="settings-section">
+            <h4 class="settings-section-title">Data</h4>
+            <div class="settings-actions">
+                <button class="settings-action-btn" onclick="closeSettingsModal(); openExportModal();">
+                    <span>📤</span>
+                    <span>Export</span>
+                </button>
+                <button class="settings-action-btn" onclick="closeSettingsModal(); openImportModal();">
+                    <span>📥</span>
+                    <span>Import</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Close Button -->
+        <div class="pt-4 border-t border-white/5">
+            <button onclick="closeSettingsModal()" class="w-full py-3 rounded-xl bg-slate-800 font-bold hover:bg-slate-700 transition text-white">
+                Done
+            </button>
+        </div>
     </div>
 </div>
 

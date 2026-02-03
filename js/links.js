@@ -66,11 +66,22 @@ function closeLinkModal() {
     document.getElementById('link-modal').classList.remove('modal-active');
 }
 
-function deleteLink(libKey, catKey, i) {
+function deleteLink(libKey, catKey, i, buttonElement) {
     if (confirm('Borrar link?')) {
-        DATA.libraries[libKey].categories[catKey].links.splice(i, 1);
-        save();
-        render();
+        // If called with button element, use animated delete
+        if (buttonElement && typeof animateItemDelete === 'function') {
+            const card = buttonElement.closest('.link-card, .compact-link-row, .expanded-link-card, .organize-item');
+            animateItemDelete(card, () => {
+                DATA.libraries[libKey].categories[catKey].links.splice(i, 1);
+                save();
+                render();
+            });
+        } else {
+            // Fallback to immediate delete
+            DATA.libraries[libKey].categories[catKey].links.splice(i, 1);
+            save();
+            render();
+        }
     }
 }
 
