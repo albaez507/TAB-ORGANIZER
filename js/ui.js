@@ -174,17 +174,27 @@ document.addEventListener('DOMContentLoaded', loadAnimationSettings);
  * Animate categories when they appear (staggered entrance)
  */
 function animateCategoriesIn() {
+    // Check if category animations are enabled
+    if (!isAnimationEnabled('category')) {
+        return;
+    }
+
     const categories = document.querySelectorAll('.category-card:not(.animated)');
+    const duration = getAnimationDuration('category');
+    const stagger = Math.round(50 * (duration / 400)); // Scale stagger with duration
+
     categories.forEach((cat, index) => {
         cat.classList.add('category-animate-in');
-        cat.style.animationDelay = `${index * 50}ms`;
+        cat.style.animationDelay = `${index * stagger}ms`;
+        cat.style.animationDuration = `${duration}ms`;
         cat.classList.add('animated');
 
         // Clean up after animation
         setTimeout(() => {
             cat.classList.remove('category-animate-in');
             cat.style.animationDelay = '';
-        }, 300 + (index * 50));
+            cat.style.animationDuration = '';
+        }, duration + (index * stagger));
     });
 }
 
@@ -192,19 +202,29 @@ function animateCategoriesIn() {
  * Animate links when category is opened (staggered entrance)
  */
 function animateLinksIn(catKey) {
+    // Check if category animations are enabled
+    if (!isAnimationEnabled('category')) {
+        return;
+    }
+
     const container = document.querySelector(`[data-cat-key="${catKey}"] .category-drop-zone`);
     if (!container) return;
 
     const links = container.querySelectorAll('.link-card, .compact-link-row, .expanded-link-card, .organize-item');
+    const duration = getAnimationDuration('category');
+    const stagger = Math.round(40 * (duration / 400)); // Scale stagger with duration
+
     links.forEach((link, index) => {
         link.classList.add('link-animate-in');
-        link.style.animationDelay = `${index * 40}ms`;
+        link.style.animationDelay = `${index * stagger}ms`;
+        link.style.animationDuration = `${duration}ms`;
 
         // Clean up after animation
         setTimeout(() => {
             link.classList.remove('link-animate-in');
             link.style.animationDelay = '';
-        }, 250 + (index * 40));
+            link.style.animationDuration = '';
+        }, duration + (index * stagger));
     });
 }
 
@@ -213,10 +233,16 @@ function animateLinksIn(catKey) {
  */
 function animateItemAdd(element) {
     if (!element) return;
+    if (!isAnimationEnabled('category')) return;
+
+    const duration = getAnimationDuration('category');
     element.classList.add('item-animate-add');
+    element.style.animationDuration = `${duration}ms`;
+
     setTimeout(() => {
         element.classList.remove('item-animate-add');
-    }, 400);
+        element.style.animationDuration = '';
+    }, duration);
 }
 
 /**
@@ -228,10 +254,19 @@ function animateItemDelete(element, callback) {
         return;
     }
 
+    // If animations disabled, just call callback immediately
+    if (!isAnimationEnabled('category')) {
+        if (callback) callback();
+        return;
+    }
+
+    const duration = getAnimationDuration('category');
     element.classList.add('item-animate-delete');
+    element.style.animationDuration = `${duration}ms`;
+
     setTimeout(() => {
         if (callback) callback();
-    }, 300);
+    }, duration);
 }
 
 // ================= STATUS INDICATOR HELPERS =================

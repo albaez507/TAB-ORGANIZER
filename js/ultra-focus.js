@@ -105,6 +105,39 @@ function renderQuickAccessBar() {
 
 // ================= ANIMATION HELPERS =================
 
+/**
+ * Get animation duration for Ultra Focus mode based on settings
+ * Falls back to full speed if settings not available
+ */
+function getUFAnimationDuration() {
+    if (typeof getAnimationDuration === 'function') {
+        return getAnimationDuration('ultrafocus');
+    }
+    return 400; // Default to full
+}
+
+/**
+ * Check if Ultra Focus animations are enabled
+ */
+function isUFAnimationEnabled() {
+    if (typeof isAnimationEnabled === 'function') {
+        return isAnimationEnabled('ultrafocus');
+    }
+    return true; // Default to enabled
+}
+
+/**
+ * Get scaled duration based on animation setting
+ * @param {number} fullDuration - Duration at "full" setting
+ * @returns {number} Scaled duration
+ */
+function scaleDuration(fullDuration) {
+    const setting = getUFAnimationDuration();
+    if (setting === 0) return 0;
+    if (setting === 150) return Math.round(fullDuration * 0.4); // Subtle = 40% of full
+    return fullDuration; // Full
+}
+
 function getIconPosition(libKey) {
     // First try quick-access-icon (if it exists)
     let btn = document.querySelector(`.quick-access-icon[data-lib-key="${libKey}"]`);
@@ -138,7 +171,6 @@ function animateIconToCenter(libKey, lib) {
     const startPos = getIconPosition(libKey);
     if (!startPos) return Promise.resolve();
 
-    const overlay = document.getElementById('ultra-focus-overlay');
     const iconContainer = document.getElementById('ultra-focus-icon-container');
     const icon = document.getElementById('ultra-focus-icon');
 
@@ -153,6 +185,16 @@ function animateIconToCenter(libKey, lib) {
     const deltaX = startPos.x - centerX;
     const deltaY = startPos.y - centerY;
 
+    const duration = scaleDuration(250);
+
+    // If animations disabled, just set final state
+    if (duration === 0) {
+        iconContainer.style.transition = 'none';
+        iconContainer.style.transform = 'translate(0, 0) scale(1)';
+        iconContainer.style.opacity = '1';
+        return Promise.resolve();
+    }
+
     iconContainer.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.5)`;
     iconContainer.style.opacity = '0';
 
@@ -162,11 +204,11 @@ function animateIconToCenter(libKey, lib) {
     // Animate to center
     return new Promise(resolve => {
         requestAnimationFrame(() => {
-            iconContainer.style.transition = 'transform 250ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms ease-out';
+            iconContainer.style.transition = `transform ${duration}ms cubic-bezier(0.16, 1, 0.3, 1), opacity ${scaleDuration(150)}ms ease-out`;
             iconContainer.style.transform = 'translate(0, 0) scale(1)';
             iconContainer.style.opacity = '1';
 
-            setTimeout(resolve, 250);
+            setTimeout(resolve, duration);
         });
     });
 }
@@ -183,43 +225,87 @@ function animateIconBack(libKey) {
     const deltaX = endPos.x - centerX;
     const deltaY = endPos.y - centerY;
 
+    const duration = scaleDuration(200);
+
+    // If animations disabled, just set final state
+    if (duration === 0) {
+        iconContainer.style.transition = 'none';
+        iconContainer.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.5)`;
+        iconContainer.style.opacity = '0';
+        return Promise.resolve();
+    }
+
     return new Promise(resolve => {
-        iconContainer.style.transition = 'transform 200ms cubic-bezier(0.4, 0, 1, 1), opacity 150ms ease-in';
+        iconContainer.style.transition = `transform ${duration}ms cubic-bezier(0.4, 0, 1, 1), opacity ${scaleDuration(150)}ms ease-in`;
         iconContainer.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.5)`;
         iconContainer.style.opacity = '0';
 
-        setTimeout(resolve, 200);
+        setTimeout(resolve, duration);
     });
 }
 
 function animateTextIn(element, delay) {
+    const duration = scaleDuration(200);
+
+    // If animations disabled, just show
+    if (duration === 0) {
+        element.style.transition = 'none';
+        element.style.opacity = '1';
+        element.style.transform = 'translateY(0)';
+        return Promise.resolve();
+    }
+
     element.style.opacity = '0';
     element.style.transform = 'translateY(-20px)';
 
     return new Promise(resolve => {
         setTimeout(() => {
             requestAnimationFrame(() => {
-                element.style.transition = 'opacity 200ms ease-out, transform 200ms cubic-bezier(0.16, 1, 0.3, 1)';
+                element.style.transition = `opacity ${duration}ms ease-out, transform ${duration}ms cubic-bezier(0.16, 1, 0.3, 1)`;
                 element.style.opacity = '1';
                 element.style.transform = 'translateY(0)';
-                setTimeout(resolve, 200);
+                setTimeout(resolve, duration);
             });
-        }, delay);
+        }, scaleDuration(delay));
     });
 }
 
 function animateTextOut(element) {
-    return new Promise(resolve => {
-        element.style.transition = 'opacity 100ms ease-in, transform 100ms ease-in';
+    const duration = scaleDuration(100);
+
+    // If animations disabled, just hide
+    if (duration === 0) {
+        element.style.transition = 'none';
         element.style.opacity = '0';
         element.style.transform = 'translateY(-10px)';
-        setTimeout(resolve, 100);
+        return Promise.resolve();
+    }
+
+    return new Promise(resolve => {
+        element.style.transition = `opacity ${duration}ms ease-in, transform ${duration}ms ease-in`;
+        element.style.opacity = '0';
+        element.style.transform = 'translateY(-10px)';
+        setTimeout(resolve, duration);
     });
 }
 
 function animateCategoriesIn() {
     const container = document.getElementById('ultra-focus-categories');
     const items = container.querySelectorAll('.uf-accordion-item');
+
+    const duration = scaleDuration(200);
+    const transformDuration = scaleDuration(300);
+    const stagger = scaleDuration(50);
+
+    // If animations disabled, just show all
+    if (duration === 0) {
+        items.forEach(item => {
+            item.style.transition = 'none';
+            item.style.opacity = '1';
+            item.style.transform = 'translateY(0)';
+        });
+        return;
+    }
 
     items.forEach((item, index) => {
         item.style.opacity = '0';
@@ -230,11 +316,11 @@ function animateCategoriesIn() {
     items.forEach((item, index) => {
         setTimeout(() => {
             requestAnimationFrame(() => {
-                item.style.transition = 'opacity 200ms ease-out, transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+                item.style.transition = `opacity ${duration}ms ease-out, transform ${transformDuration}ms cubic-bezier(0.34, 1.56, 0.64, 1)`;
                 item.style.opacity = '1';
                 item.style.transform = 'translateY(0)';
             });
-        }, index * 50);
+        }, index * stagger);
     });
 }
 
@@ -242,17 +328,30 @@ function animateCategoriesOut() {
     const container = document.getElementById('ultra-focus-categories');
     const items = Array.from(container.querySelectorAll('.uf-accordion-item'));
 
+    const duration = scaleDuration(100);
+    const stagger = scaleDuration(30);
+
+    // If animations disabled, just hide all
+    if (duration === 0) {
+        items.forEach(item => {
+            item.style.transition = 'none';
+            item.style.opacity = '0';
+            item.style.transform = 'translateY(-20px)';
+        });
+        return Promise.resolve();
+    }
+
     // Reverse staggered animation
     return new Promise(resolve => {
         items.reverse().forEach((item, index) => {
             setTimeout(() => {
-                item.style.transition = 'opacity 100ms ease-in, transform 100ms ease-in';
+                item.style.transition = `opacity ${duration}ms ease-in, transform ${duration}ms ease-in`;
                 item.style.opacity = '0';
                 item.style.transform = 'translateY(-20px)';
-            }, index * 30);
+            }, index * stagger);
         });
 
-        setTimeout(resolve, items.length * 30 + 100);
+        setTimeout(resolve, items.length * stagger + duration);
     });
 }
 
@@ -289,6 +388,17 @@ function expandCategory(catKey) {
     // Render links inside the content
     renderAccordionLinks(catKey);
 
+    const duration = scaleDuration(300);
+
+    // If animations disabled, just show
+    if (duration === 0) {
+        content.style.transition = 'none';
+        content.style.height = 'auto';
+        content.classList.add('expanded');
+        if (arrow) arrow.style.transform = 'rotate(90deg)';
+        return;
+    }
+
     // Get the natural height
     content.style.height = 'auto';
     const targetHeight = content.scrollHeight;
@@ -299,7 +409,7 @@ function expandCategory(catKey) {
 
     // Animate expand
     requestAnimationFrame(() => {
-        content.style.transition = 'height 300ms cubic-bezier(0.4, 0.0, 0.2, 1)';
+        content.style.transition = `height ${duration}ms cubic-bezier(0.4, 0.0, 0.2, 1)`;
         content.style.height = targetHeight + 'px';
         content.classList.add('expanded');
 
@@ -310,14 +420,14 @@ function expandCategory(catKey) {
         // Animate links in with stagger
         setTimeout(() => {
             animateLinksIn(catKey);
-        }, 50);
+        }, scaleDuration(50));
 
         // Reset height to auto after animation for responsive resize
         setTimeout(() => {
             if (content.classList.contains('expanded')) {
                 content.style.height = 'auto';
             }
-        }, 310);
+        }, duration + 10);
     });
 }
 
@@ -326,6 +436,17 @@ function collapseCategory(catKey) {
     const arrow = document.querySelector(`.uf-accordion-header[data-cat-key="${catKey}"] .uf-accordion-arrow`);
 
     if (!content) return;
+
+    const duration = scaleDuration(250);
+
+    // If animations disabled, just hide
+    if (duration === 0) {
+        content.style.transition = 'none';
+        content.style.height = '0px';
+        content.classList.remove('expanded');
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
+        return;
+    }
 
     // Get current height
     const currentHeight = content.scrollHeight;
@@ -340,7 +461,7 @@ function collapseCategory(catKey) {
     // Then collapse
     setTimeout(() => {
         requestAnimationFrame(() => {
-            content.style.transition = 'height 250ms cubic-bezier(0.4, 0.0, 0.2, 1)';
+            content.style.transition = `height ${duration}ms cubic-bezier(0.4, 0.0, 0.2, 1)`;
             content.style.height = '0px';
             content.classList.remove('expanded');
 
@@ -348,7 +469,7 @@ function collapseCategory(catKey) {
                 arrow.style.transform = 'rotate(0deg)';
             }
         });
-    }, 100);
+    }, scaleDuration(100));
 }
 
 function animateLinksIn(catKey) {
@@ -356,17 +477,30 @@ function animateLinksIn(catKey) {
     if (!content) return;
 
     const links = content.querySelectorAll('.uf-link-card');
+    const duration = scaleDuration(200);
+    const stagger = scaleDuration(50);
+
+    // If animations disabled, just show
+    if (duration === 0) {
+        links.forEach(link => {
+            link.style.transition = 'none';
+            link.style.opacity = '1';
+            link.style.transform = 'translateY(0)';
+        });
+        return;
+    }
+
     links.forEach((link, index) => {
         link.style.opacity = '0';
         link.style.transform = 'translateY(-15px)';
 
         setTimeout(() => {
             requestAnimationFrame(() => {
-                link.style.transition = 'opacity 200ms ease-out, transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+                link.style.transition = `opacity ${duration}ms ease-out, transform ${duration}ms cubic-bezier(0.34, 1.56, 0.64, 1)`;
                 link.style.opacity = '1';
                 link.style.transform = 'translateY(0)';
             });
-        }, index * 50);
+        }, index * stagger);
     });
 }
 
@@ -375,8 +509,19 @@ function animateLinksOut(catKey) {
     if (!content) return;
 
     const links = content.querySelectorAll('.uf-link-card');
+    const duration = scaleDuration(80);
+
+    // If animations disabled, just hide
+    if (duration === 0) {
+        links.forEach(link => {
+            link.style.transition = 'none';
+            link.style.opacity = '0';
+        });
+        return;
+    }
+
     links.forEach((link, index) => {
-        link.style.transition = 'opacity 80ms ease-in';
+        link.style.transition = `opacity ${duration}ms ease-in`;
         link.style.opacity = '0';
     });
 }
@@ -431,8 +576,18 @@ function animateViewTransition(oldMode, newMode) {
     const container = document.getElementById('ultra-focus-categories');
     if (!container) return;
 
+    const fadeOutDuration = scaleDuration(150);
+    const fadeInDuration = scaleDuration(200);
+
+    // If animations disabled, just switch
+    if (fadeOutDuration === 0) {
+        renderUltraFocusContent(ultraFocusLibKey);
+        container.style.opacity = '1';
+        return;
+    }
+
     // Fade out current content
-    container.style.transition = 'opacity 150ms ease-out';
+    container.style.transition = `opacity ${fadeOutDuration}ms ease-out`;
     container.style.opacity = '0';
 
     setTimeout(() => {
@@ -441,7 +596,7 @@ function animateViewTransition(oldMode, newMode) {
 
         // Fade in new content
         requestAnimationFrame(() => {
-            container.style.transition = 'opacity 200ms ease-in';
+            container.style.transition = `opacity ${fadeInDuration}ms ease-in`;
             container.style.opacity = '1';
 
             // Animate items in
@@ -451,7 +606,7 @@ function animateViewTransition(oldMode, newMode) {
                 animateGridListIn();
             }
         });
-    }, 150);
+    }, fadeOutDuration);
 }
 
 function renderViewToggle() {
@@ -514,11 +669,22 @@ function renderGridLinksList() {
     const container = document.getElementById('uf-gridlist-links');
     if (!container) return;
 
+    const collapseDuration = scaleDuration(250);
+    const expandDuration = scaleDuration(300);
+    const rowDuration = scaleDuration(200);
+    const rowStagger = scaleDuration(40);
+
     if (!ultraFocusSelectedCatKey) {
         // Collapse the links section
-        container.style.transition = 'height 250ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 150ms ease';
-        container.style.height = '0px';
-        container.style.opacity = '0';
+        if (collapseDuration === 0) {
+            container.style.transition = 'none';
+            container.style.height = '0px';
+            container.style.opacity = '0';
+        } else {
+            container.style.transition = `height ${collapseDuration}ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity ${scaleDuration(150)}ms ease`;
+            container.style.height = '0px';
+            container.style.opacity = '0';
+        }
         return;
     }
 
@@ -544,13 +710,21 @@ function renderGridLinksList() {
         </div>
     `;
 
+    // If animations disabled, just show
+    if (expandDuration === 0) {
+        container.style.transition = 'none';
+        container.style.height = 'auto';
+        container.style.opacity = '1';
+        return;
+    }
+
     // Animate expansion
     const targetHeight = container.scrollHeight;
     container.style.height = '0px';
     container.offsetHeight; // Force reflow
 
     requestAnimationFrame(() => {
-        container.style.transition = 'height 300ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 200ms ease';
+        container.style.transition = `height ${expandDuration}ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity ${rowDuration}ms ease`;
         container.style.height = targetHeight + 'px';
         container.style.opacity = '1';
 
@@ -561,16 +735,16 @@ function renderGridLinksList() {
             row.style.transform = 'translateX(-10px)';
 
             setTimeout(() => {
-                row.style.transition = 'opacity 200ms ease, transform 200ms ease';
+                row.style.transition = `opacity ${rowDuration}ms ease, transform ${rowDuration}ms ease`;
                 row.style.opacity = '1';
                 row.style.transform = 'translateX(0)';
-            }, i * 40);
+            }, i * rowStagger);
         });
 
         // Set height to auto after animation
         setTimeout(() => {
             container.style.height = 'auto';
-        }, 310);
+        }, expandDuration + 10);
     });
 }
 
@@ -667,17 +841,31 @@ function animateGridListIn() {
     const container = document.getElementById('ultra-focus-categories');
     const catCards = container.querySelectorAll('.uf-grid-cat-card');
 
+    const duration = scaleDuration(200);
+    const transformDuration = scaleDuration(250);
+    const stagger = scaleDuration(40);
+
+    // If animations disabled, just show
+    if (duration === 0) {
+        catCards.forEach(card => {
+            card.style.transition = 'none';
+            card.style.opacity = '1';
+            card.style.transform = 'scale(1)';
+        });
+        return;
+    }
+
     catCards.forEach((card, index) => {
         card.style.opacity = '0';
         card.style.transform = 'scale(0.9)';
 
         setTimeout(() => {
             requestAnimationFrame(() => {
-                card.style.transition = 'opacity 200ms ease-out, transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+                card.style.transition = `opacity ${duration}ms ease-out, transform ${transformDuration}ms cubic-bezier(0.34, 1.56, 0.64, 1)`;
                 card.style.opacity = '1';
                 card.style.transform = 'scale(1)';
             });
-        }, index * 40);
+        }, index * stagger);
     });
 }
 
@@ -949,11 +1137,17 @@ async function exitUltraFocus() {
     const description = document.getElementById('ultra-focus-description');
     const libKey = ultraFocusLibKey;
 
+    const collapseDuration = scaleDuration(100);
+
     // Collapse any expanded category first (fast)
     if (ultraFocusExpandedCatKey) {
         const content = document.querySelector(`.uf-accordion-content[data-cat-key="${ultraFocusExpandedCatKey}"]`);
         if (content) {
-            content.style.transition = 'height 100ms ease-in';
+            if (collapseDuration === 0) {
+                content.style.transition = 'none';
+            } else {
+                content.style.transition = `height ${collapseDuration}ms ease-in`;
+            }
             content.style.height = '0px';
         }
     }

@@ -28,51 +28,57 @@ async function initAuth() {
 }
 
 function updateAuthUI(isLoggedIn) {
-    const authBtn = document.getElementById('auth-btn');
-    const userEmail = document.getElementById('user-email');
     const welcomeScreen = document.getElementById('welcome-screen');
+
+    // Header avatar elements
     const avatarImg = document.getElementById('user-avatar-img');
     const avatarInitial = document.getElementById('user-avatar-initial');
+    const avatarPlaceholder = document.getElementById('user-avatar-placeholder');
 
-    // Reset avatars
-    avatarImg.classList.add('hidden');
-    avatarInitial.classList.add('hidden');
+    // Reset header avatars
+    if (avatarImg) avatarImg.classList.add('hidden');
+    if (avatarInitial) avatarInitial.classList.add('hidden');
+    if (avatarPlaceholder) avatarPlaceholder.classList.add('hidden');
 
     if (isLoggedIn && (currentUser || isGuest)) {
-        authBtn.textContent = 'Logout';
-        authBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
-        authBtn.classList.add('bg-red-600', 'hover:bg-red-500');
-
         if (isGuest) {
-            // Guest: mostrar emoji
-            userEmail.textContent = 'Invitado';
-            avatarInitial.textContent = '👤';
-            avatarInitial.classList.remove('hidden');
+            // Guest: show placeholder emoji
+            if (avatarPlaceholder) avatarPlaceholder.classList.remove('hidden');
         } else if (currentUser) {
-            userEmail.textContent = currentUser.email;
-
-            // Verificar si es Google user con avatar
-            const googleAvatar = currentUser.user_metadata?.avatar_url;
+            // Logged in user: show avatar or initial
+            const googleAvatar = currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture;
             if (googleAvatar) {
-                avatarImg.src = googleAvatar;
-                avatarImg.classList.remove('hidden');
+                if (avatarImg) {
+                    avatarImg.src = googleAvatar;
+                    avatarImg.classList.remove('hidden');
+                }
             } else {
-                // Email user: mostrar inicial
-                const initial = currentUser.email.charAt(0).toUpperCase();
-                avatarInitial.textContent = initial;
-                avatarInitial.classList.remove('hidden');
+                // Email user: show initial
+                const initial = (currentUser.email || 'U').charAt(0).toUpperCase();
+                if (avatarInitial) {
+                    avatarInitial.textContent = initial;
+                    avatarInitial.classList.remove('hidden');
+                }
             }
         }
-        userEmail.classList.remove('hidden');
-        welcomeScreen.classList.remove('modal-active');
-        welcomeScreen.classList.add('hidden');
+
+        // Hide welcome screen
+        if (welcomeScreen) {
+            welcomeScreen.classList.remove('modal-active');
+            welcomeScreen.classList.add('hidden');
+        }
     } else {
-        authBtn.textContent = 'Login';
-        authBtn.classList.remove('bg-red-600', 'hover:bg-red-500');
-        authBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
-        userEmail.classList.add('hidden');
-        welcomeScreen.classList.add('modal-active');
-        welcomeScreen.classList.remove('hidden');
+        // Not logged in: show placeholder and welcome screen
+        if (avatarPlaceholder) avatarPlaceholder.classList.remove('hidden');
+        if (welcomeScreen) {
+            welcomeScreen.classList.add('modal-active');
+            welcomeScreen.classList.remove('hidden');
+        }
+    }
+
+    // Update avatar dropdown (defined in ui.js)
+    if (typeof updateAvatarDropdown === 'function') {
+        updateAvatarDropdown();
     }
 }
 
