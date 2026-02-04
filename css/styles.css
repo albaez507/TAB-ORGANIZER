@@ -3669,3 +3669,160 @@ header:hover .tagline {
     background: var(--bg-hover);
     color: var(--text-primary);
 }
+
+/* ========================================
+   DARK MODE - LAYOUT CONSISTENCY WITH LIGHT MODE
+   Light Mode is the reference - Dark Mode matches its structure
+   ======================================== */
+
+/* === 1. HEADER DIVIDER LINE === */
+header {
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 24px;
+}
+
+/* === 2. AVATAR & THEME TOGGLE - ALWAYS VISIBLE BACKGROUNDS === */
+/* Avatar button - visible background always */
+.avatar-btn {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.avatar-btn:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Theme toggle and header icon buttons - visible background always */
+.header-icon-btn {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px;
+}
+
+.header-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Light mode overrides - keep light mode style */
+[data-theme="light"] .avatar-btn {
+    background: var(--bg-hover) !important;
+    border: 1px solid var(--border-subtle) !important;
+}
+
+[data-theme="light"] .avatar-btn:hover {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-medium) !important;
+}
+
+[data-theme="light"] .header-icon-btn {
+    background: var(--bg-hover) !important;
+    border: 1px solid var(--border-subtle) !important;
+}
+
+[data-theme="light"] .header-icon-btn:hover {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-medium) !important;
+}
+
+/* === 3. CATEGORY NOTE TEXTAREA - DIFFERENTIATED BACKGROUND === */
+/* Dark mode - slightly lighter background to stand out */
+.category-note-input,
+input.category-note-input,
+.category-card input[type="text"].category-note-input {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 8px;
+}
+
+.category-note-input:focus,
+input.category-note-input:focus {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(59, 130, 246, 0.5) !important;
+}
+
+/* Light mode - white background with subtle border */
+[data-theme="light"] .category-note-input,
+[data-theme="light"] input.category-note-input,
+[data-theme="light"] .category-card input[type="text"].category-note-input {
+    background: #ffffff !important;
+    border: 1px solid var(--border-subtle) !important;
+}
+
+[data-theme="light"] .category-note-input:focus,
+[data-theme="light"] input.category-note-input:focus {
+    background: #ffffff !important;
+    border-color: var(--accent-primary) !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* === 4. CATEGORY CARD BORDERS - UNIFORM COLOR ALL SIDES === */
+/* Dark mode - uniform subtle gray border on ALL sides */
+.category-card {
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-left-width: 4px !important;
+    border-left-color: rgba(255, 255, 255, 0.15) !important;
+    border-radius: 12px;
+}
+
+.category-card:hover {
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    border-left-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Light mode - uniform warm gray border on ALL sides */
+[data-theme="light"] .category-card {
+    border: 1px solid var(--border-subtle) !important;
+    border-left: 4px solid var(--border-medium) !important;
+}
+
+[data-theme="light"] .category-card:hover {
+    border-color: var(--border-medium) !important;
+    border-left-color: #b8b4aa !important;
+}
+
+/* === 5. LAYOUT CONSISTENCY === */
+/* Ensure same border-radius in both themes */
+.category-card {
+    border-radius: 12px;
+}
+
+.glass-card {
+    border-radius: 12px;
+}
+
+.glass-sidebar {
+    border-radius: 16px;
+}
+
+/* Consistent modal border-radius */
+.modal-content {
+    border-radius: 24px;
+}
+
+/* Ensure consistent spacing */
+#sections-container {
+    gap: 24px;
+}
+
+.category-header {
+    padding: 24px;
+}
+
+/* Link cards consistent border-radius */
+.link-card,
+.compact-link-row,
+.expanded-link-card {
+    border-radius: 12px;
+}
+
+/* Dark mode sidebar - add subtle right separation like light mode */
+.glass-sidebar {
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .glass-sidebar {
+    border-right: 1px solid var(--border-medium);
+}
