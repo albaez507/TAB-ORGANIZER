@@ -65,6 +65,109 @@ function loadTheme() {
     updateThemeToggleIcon(theme);
 }
 
+// ================= ANIMATION SETTINGS SYSTEM =================
+
+const ANIMATION_SETTINGS_KEY = 'tabOrganizer_animationSettings';
+
+// Animation speed values in milliseconds
+const ANIMATION_SPEEDS = {
+    off: 0,
+    subtle: 150,
+    full: 400
+};
+
+// Default animation settings (all full)
+const DEFAULT_ANIMATION_SETTINGS = {
+    library: 'full',
+    category: 'full',
+    ultrafocus: 'full'
+};
+
+// Current animation settings
+let animationSettings = { ...DEFAULT_ANIMATION_SETTINGS };
+
+/**
+ * Load animation settings from localStorage
+ */
+function loadAnimationSettings() {
+    try {
+        const saved = localStorage.getItem(ANIMATION_SETTINGS_KEY);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            animationSettings = { ...DEFAULT_ANIMATION_SETTINGS, ...parsed };
+        }
+    } catch (e) {
+        console.error('Error loading animation settings:', e);
+        animationSettings = { ...DEFAULT_ANIMATION_SETTINGS };
+    }
+    updateAnimationSettingsUI();
+}
+
+/**
+ * Save animation settings to localStorage
+ */
+function saveAnimationSettings() {
+    try {
+        localStorage.setItem(ANIMATION_SETTINGS_KEY, JSON.stringify(animationSettings));
+    } catch (e) {
+        console.error('Error saving animation settings:', e);
+    }
+}
+
+/**
+ * Get animation duration for a specific area
+ * @param {string} area - 'library', 'category', or 'ultrafocus'
+ * @returns {number} Duration in milliseconds
+ */
+function getAnimationDuration(area) {
+    const setting = animationSettings[area] || 'full';
+    return ANIMATION_SPEEDS[setting] || ANIMATION_SPEEDS.full;
+}
+
+/**
+ * Check if animations are enabled for an area
+ * @param {string} area - 'library', 'category', or 'ultrafocus'
+ * @returns {boolean}
+ */
+function isAnimationEnabled(area) {
+    return animationSettings[area] !== 'off';
+}
+
+/**
+ * Set animation setting for an area
+ * @param {string} area - 'library', 'category', or 'ultrafocus'
+ * @param {string} value - 'off', 'subtle', or 'full'
+ */
+function setAnimationSetting(area, value) {
+    if (!['off', 'subtle', 'full'].includes(value)) return;
+    if (!['library', 'category', 'ultrafocus'].includes(area)) return;
+
+    animationSettings[area] = value;
+    saveAnimationSettings();
+    updateAnimationSettingsUI();
+    showToast(`Animation setting updated`);
+}
+
+/**
+ * Update the UI to reflect current animation settings
+ */
+function updateAnimationSettingsUI() {
+    // Update toggle buttons in settings modal
+    Object.keys(animationSettings).forEach(area => {
+        const toggleGroup = document.querySelector(`.settings-toggle-group[data-setting="${area}"]`);
+        if (toggleGroup) {
+            const buttons = toggleGroup.querySelectorAll('.settings-toggle-btn');
+            buttons.forEach(btn => {
+                const isActive = btn.dataset.value === animationSettings[area];
+                btn.classList.toggle('active', isActive);
+            });
+        }
+    });
+}
+
+// Initialize animation settings on DOM ready
+document.addEventListener('DOMContentLoaded', loadAnimationSettings);
+
 // ================= ANIMATION HELPERS =================
 
 /**
@@ -1350,6 +1453,7 @@ function renderLibrarySidebar() {
 
         const div = document.createElement('div');
         div.className = `library-item p-3 rounded-xl border border-transparent ${isActive ? 'active' : ''} ${currentSearchQuery && matchesSearch ? 'search-match' : ''} ${currentSearchQuery && !matchesSearch ? 'search-hidden' : ''}`;
+        div.dataset.libKey = libKey;
 
         // Drop handlers for moving categories to this library
         div.ondragover = (e) => handleLibraryDragOver(e, libKey);
@@ -1357,9 +1461,9 @@ function renderLibrarySidebar() {
         div.ondrop = (e) => handleLibraryDrop(e, libKey);
 
         div.innerHTML = `
-            <div class="flex items-center gap-2" onclick="selectLibrary('${libKey}')">
-                <span class="text-lg">${lib.icon}</span>
-                <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+                <span class="library-icon-btn text-lg" onclick="event.stopPropagation(); triggerUltraFocusFromSidebar('${libKey}')" title="Ultra Focus Mode">${lib.icon}</span>
+                <div class="flex-1 min-w-0 library-name-btn" onclick="selectLibrary('${libKey}')">
                     <p class="text-sm font-medium text-white truncate">${lib.name}</p>
                     <p class="text-[10px] text-slate-500">${catCount} cat.</p>
                 </div>
@@ -1763,30 +1867,97 @@ document.addEventListener('click', (e) => {
 // Update avatar dropdown with user info
 function updateAvatarDropdown() {
     const emailEl = document.getElementById('dropdown-user-email');
+    const nameEl = document.getElementById('dropdown-user-name');
     const authBtn = document.getElementById('dropdown-auth-btn');
+
+    // Header button elements
+    const avatarImg = document.getElementById('user-avatar-img');
+    const avatarInitial = document.getElementById('user-avatar-initial');
     const avatarPlaceholder = document.getElementById('user-avatar-placeholder');
 
+    // Dropdown header elements
+    const dropdownAvatarImg = document.getElementById('dropdown-avatar-img');
+    const dropdownAvatarInitial = document.getElementById('dropdown-avatar-initial');
+    const dropdownAvatarPlaceholder = document.getElementById('dropdown-avatar-placeholder');
+
     if (currentUser) {
-        if (emailEl) emailEl.textContent = currentUser.email || 'Logged in';
+        const userName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || 'User';
+        const userEmail = currentUser.email || 'Logged in';
+        const userAvatar = currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture;
+
+        if (nameEl) nameEl.textContent = userName;
+        if (emailEl) emailEl.textContent = userEmail;
+
         if (authBtn) {
-            authBtn.textContent = '🚪 Logout';
+            authBtn.innerHTML = '🚪 Logout';
             authBtn.onclick = () => { handleAuth(); closeAvatarDropdown(); };
         }
-        if (avatarPlaceholder) avatarPlaceholder.classList.add('hidden');
+
+        // Set avatar image or initial
+        if (userAvatar) {
+            // Show avatar image
+            if (avatarImg) {
+                avatarImg.src = userAvatar;
+                avatarImg.classList.remove('hidden');
+            }
+            if (avatarInitial) avatarInitial.classList.add('hidden');
+            if (avatarPlaceholder) avatarPlaceholder.classList.add('hidden');
+
+            if (dropdownAvatarImg) {
+                dropdownAvatarImg.src = userAvatar;
+                dropdownAvatarImg.classList.remove('hidden');
+            }
+            if (dropdownAvatarInitial) dropdownAvatarInitial.classList.add('hidden');
+            if (dropdownAvatarPlaceholder) dropdownAvatarPlaceholder.classList.add('hidden');
+        } else {
+            // Show initial
+            const initial = userName.charAt(0).toUpperCase();
+            if (avatarImg) avatarImg.classList.add('hidden');
+            if (avatarInitial) {
+                avatarInitial.textContent = initial;
+                avatarInitial.classList.remove('hidden');
+            }
+            if (avatarPlaceholder) avatarPlaceholder.classList.add('hidden');
+
+            if (dropdownAvatarImg) dropdownAvatarImg.classList.add('hidden');
+            if (dropdownAvatarInitial) {
+                dropdownAvatarInitial.textContent = initial;
+                dropdownAvatarInitial.classList.remove('hidden');
+            }
+            if (dropdownAvatarPlaceholder) dropdownAvatarPlaceholder.classList.add('hidden');
+        }
     } else if (isGuest) {
-        if (emailEl) emailEl.textContent = 'Guest Mode';
+        if (nameEl) nameEl.textContent = 'Guest User';
+        if (emailEl) emailEl.textContent = 'Local storage only';
         if (authBtn) {
-            authBtn.textContent = '🔑 Login';
+            authBtn.innerHTML = '🔑 Login';
             authBtn.onclick = () => { handleAuth(); closeAvatarDropdown(); };
         }
+
+        // Show placeholder
+        if (avatarImg) avatarImg.classList.add('hidden');
+        if (avatarInitial) avatarInitial.classList.add('hidden');
         if (avatarPlaceholder) avatarPlaceholder.classList.remove('hidden');
+
+        if (dropdownAvatarImg) dropdownAvatarImg.classList.add('hidden');
+        if (dropdownAvatarInitial) dropdownAvatarInitial.classList.add('hidden');
+        if (dropdownAvatarPlaceholder) dropdownAvatarPlaceholder.classList.remove('hidden');
     } else {
-        if (emailEl) emailEl.textContent = 'Not logged in';
+        if (nameEl) nameEl.textContent = 'Not logged in';
+        if (emailEl) emailEl.textContent = '';
         if (authBtn) {
-            authBtn.textContent = '🔑 Login';
+            authBtn.innerHTML = '🔑 Login';
             authBtn.onclick = () => { handleAuth(); closeAvatarDropdown(); };
         }
+
+        // Show placeholder
+        if (avatarImg) avatarImg.classList.add('hidden');
+        if (avatarInitial) avatarInitial.classList.add('hidden');
         if (avatarPlaceholder) avatarPlaceholder.classList.remove('hidden');
+
+        if (dropdownAvatarImg) dropdownAvatarImg.classList.add('hidden');
+        if (dropdownAvatarInitial) dropdownAvatarInitial.classList.add('hidden');
+        if (dropdownAvatarPlaceholder) dropdownAvatarPlaceholder.classList.remove('hidden');
     }
 }
 
@@ -1828,16 +1999,8 @@ function closeSettingsModal() {
 }
 
 function renderSettingsContent() {
-    // Theme selection
-    const currentTheme = appSettings.theme || 'auto';
-    const themeButtons = document.querySelectorAll('.settings-theme-btn');
-    themeButtons.forEach(btn => {
-        const theme = btn.dataset.theme;
-        btn.classList.toggle('active', theme === currentTheme);
-    });
-
-    // Quick Access Libraries
-    renderQuickAccessSettings();
+    // Animation settings UI
+    updateAnimationSettingsUI();
 }
 
 function setThemeMode(mode) {
@@ -2015,5 +2178,24 @@ function toggleSectionDisplay(catKey) {
                 animateLinksIn(catKey);
             });
         });
+    }
+}
+
+// ================= SIDEBAR ULTRA FOCUS TRIGGER =================
+
+/**
+ * Trigger Ultra Focus mode from sidebar icon click
+ * @param {string} libKey - Library key to focus
+ */
+function triggerUltraFocusFromSidebar(libKey) {
+    // Check if Ultra Focus is available
+    if (typeof enterUltraFocus === 'function') {
+        enterUltraFocus(libKey);
+    } else if (typeof toggleUltraFocus === 'function') {
+        toggleUltraFocus(libKey);
+    } else {
+        // Fallback: just select the library
+        selectLibrary(libKey);
+        showToast('Ultra Focus mode not available');
     }
 }

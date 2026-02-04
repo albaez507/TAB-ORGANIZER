@@ -26,14 +26,9 @@
 <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
     <div>
         <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-            <span class="bg-blue-600/20 p-2 rounded-xl border border-blue-500/20">📑</span> Tab Organizer
+            <span class="app-logo-btn bg-blue-600/20 p-2 rounded-xl border border-blue-500/20" onclick="openSettingsModal()" title="Settings">📑</span> Tab Organizer
         </h1>
-        <!-- Quick Access Bar -->
-        <div id="quick-access-bar" class="flex items-center gap-2 mt-3">
-            <div id="quick-access-icons" class="flex items-center gap-2">
-                <!-- Dynamically populated with first 4 libraries -->
-            </div>
-        </div>
+        <p class="tagline text-xs text-slate-500 mt-1 ml-1">Tu centro de mando digital para organizar todo</p>
     </div>
     <div class="flex items-center gap-2 md:gap-3">
         <!-- Sync Status (hidden by default, shown when syncing) -->
@@ -51,23 +46,20 @@
                 <img id="user-avatar-img" class="hidden w-7 h-7 rounded-full border border-slate-600 object-cover" />
                 <div id="user-avatar-initial" class="hidden w-7 h-7 rounded-full border border-slate-600 bg-slate-700 flex items-center justify-center text-xs font-bold text-white"></div>
                 <span id="user-avatar-placeholder" class="w-7 h-7 rounded-full bg-slate-700 flex items-center justify-center text-xs">👤</span>
-                <span class="text-slate-400 text-xs">▼</span>
             </button>
             <div class="avatar-dropdown bg-slate-800 border border-slate-700 rounded-xl shadow-xl" id="avatar-dropdown">
-                <div class="avatar-dropdown-email px-3 py-2 text-xs text-slate-400 border-b border-slate-700">
-                    <span id="dropdown-user-email">Not logged in</span>
+                <div class="avatar-dropdown-header px-4 py-3 border-b border-slate-700">
+                    <div class="flex items-center gap-3">
+                        <img id="dropdown-avatar-img" class="hidden w-10 h-10 rounded-full border border-slate-600 object-cover" />
+                        <div id="dropdown-avatar-initial" class="hidden w-10 h-10 rounded-full border border-slate-600 bg-slate-700 flex items-center justify-center text-sm font-bold text-white"></div>
+                        <span id="dropdown-avatar-placeholder" class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-lg">👤</span>
+                        <div class="flex flex-col min-w-0">
+                            <span id="dropdown-user-name" class="text-sm font-medium text-white truncate">Guest User</span>
+                            <span id="dropdown-user-email" class="text-xs text-slate-400 truncate">Not logged in</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="p-1">
-                    <button onclick="save(); closeAvatarDropdown();" class="avatar-dropdown-item w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg transition">
-                        🔄 Sync Now
-                    </button>
-                    <button onclick="openExportModal(); closeAvatarDropdown();" class="avatar-dropdown-item w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg transition">
-                        📤 Export Data
-                    </button>
-                    <button onclick="openImportModal(); closeAvatarDropdown();" class="avatar-dropdown-item w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg transition">
-                        📥 Import Data
-                    </button>
-                    <div class="avatar-dropdown-divider h-px bg-slate-700 my-1"></div>
                     <button id="dropdown-auth-btn" onclick="handleAuth(); closeAvatarDropdown();" class="avatar-dropdown-item danger w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition">
                         🚪 Login
                     </button>
@@ -75,13 +67,12 @@
             </div>
         </div>
 
-        <!-- Dark mode only buttons (hidden in light mode redesign) -->
-        <div class="dark-mode-buttons flex items-center gap-2">
-            <button id="theme-toggle" onclick="toggleTheme()" title="Cambiar tema" class="theme-toggle p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition text-lg">🌙</button>
-            <button id="manageBtn" onclick="toggleManageCategories()" class="px-3 md:px-4 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 transition text-sm font-medium">Gestionar</button>
-            <button onclick="openCategoryModal()" class="px-3 md:px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-lg transition text-sm font-medium">+ Categoria</button>
-            <button id="auth-btn" onclick="handleAuth()" class="px-3 md:px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg transition text-sm font-medium hidden">Login</button>
-        </div>
+        <!-- Theme Toggle -->
+        <button id="theme-toggle" onclick="toggleTheme()" title="Cambiar tema" class="header-icon-btn theme-toggle p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition text-lg">🌙</button>
+
+        <!-- Action Buttons -->
+        <button id="manageBtn" onclick="toggleManageCategories()" class="px-3 md:px-4 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 transition text-sm font-medium">Gestionar</button>
+        <button onclick="openCategoryModal()" class="px-3 md:px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-lg transition text-sm font-medium">+ Categoria</button>
     </div>
 </header>
 
@@ -441,37 +432,9 @@
             <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white transition text-xl">✕</button>
         </div>
 
-        <!-- Theme Section -->
+        <!-- Data Section -->
         <div class="settings-section">
-            <h4 class="settings-section-title">Theme</h4>
-            <div class="settings-theme-group">
-                <button class="settings-theme-btn" data-theme="dark" onclick="setThemeMode('dark')">
-                    <span class="settings-theme-icon">🌙</span>
-                    <span class="settings-theme-label">Dark</span>
-                </button>
-                <button class="settings-theme-btn" data-theme="light" onclick="setThemeMode('light')">
-                    <span class="settings-theme-icon">☀️</span>
-                    <span class="settings-theme-label">Light</span>
-                </button>
-                <button class="settings-theme-btn" data-theme="auto" onclick="setThemeMode('auto')">
-                    <span class="settings-theme-icon">💻</span>
-                    <span class="settings-theme-label">Auto</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Quick Access Section -->
-        <div class="settings-section">
-            <h4 class="settings-section-title">Quick Access Libraries</h4>
-            <p class="text-xs text-slate-500 mb-3">Toggle and drag to reorder the first 4 libraries shown in the quick access bar.</p>
-            <div id="settings-qa-list" class="settings-qa-list">
-                <!-- Dynamically populated -->
-            </div>
-        </div>
-
-        <!-- Actions Section -->
-        <div class="settings-section">
-            <h4 class="settings-section-title">Data</h4>
+            <h4 class="settings-section-title">DATA</h4>
             <div class="settings-actions">
                 <button class="settings-action-btn" onclick="closeSettingsModal(); openExportModal();">
                     <span>📤</span>
@@ -481,6 +444,40 @@
                     <span>📥</span>
                     <span>Import</span>
                 </button>
+            </div>
+        </div>
+
+        <div class="settings-divider"></div>
+
+        <!-- Animations Section -->
+        <div class="settings-section">
+            <h4 class="settings-section-title">ANIMATIONS</h4>
+
+            <div class="settings-animation-group">
+                <label class="settings-animation-label">Library transition</label>
+                <div class="settings-toggle-group" data-setting="library">
+                    <button class="settings-toggle-btn" data-value="off" onclick="setAnimationSetting('library', 'off')">Off</button>
+                    <button class="settings-toggle-btn" data-value="subtle" onclick="setAnimationSetting('library', 'subtle')">Subtle</button>
+                    <button class="settings-toggle-btn" data-value="full" onclick="setAnimationSetting('library', 'full')">Full</button>
+                </div>
+            </div>
+
+            <div class="settings-animation-group">
+                <label class="settings-animation-label">Category → Links</label>
+                <div class="settings-toggle-group" data-setting="category">
+                    <button class="settings-toggle-btn" data-value="off" onclick="setAnimationSetting('category', 'off')">Off</button>
+                    <button class="settings-toggle-btn" data-value="subtle" onclick="setAnimationSetting('category', 'subtle')">Subtle</button>
+                    <button class="settings-toggle-btn" data-value="full" onclick="setAnimationSetting('category', 'full')">Full</button>
+                </div>
+            </div>
+
+            <div class="settings-animation-group">
+                <label class="settings-animation-label">Ultra Focus</label>
+                <div class="settings-toggle-group" data-setting="ultrafocus">
+                    <button class="settings-toggle-btn" data-value="off" onclick="setAnimationSetting('ultrafocus', 'off')">Off</button>
+                    <button class="settings-toggle-btn" data-value="subtle" onclick="setAnimationSetting('ultrafocus', 'subtle')">Subtle</button>
+                    <button class="settings-toggle-btn" data-value="full" onclick="setAnimationSetting('ultrafocus', 'full')">Full</button>
+                </div>
             </div>
         </div>
 

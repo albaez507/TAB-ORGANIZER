@@ -106,8 +106,25 @@ function renderQuickAccessBar() {
 // ================= ANIMATION HELPERS =================
 
 function getIconPosition(libKey) {
-    const btn = document.querySelector(`.quick-access-icon[data-lib-key="${libKey}"]`);
-    if (!btn) return null;
+    // First try quick-access-icon (if it exists)
+    let btn = document.querySelector(`.quick-access-icon[data-lib-key="${libKey}"]`);
+
+    // Fallback to sidebar library icon
+    if (!btn) {
+        const sidebarItem = document.querySelector(`.library-item[data-lib-key="${libKey}"] .library-icon-btn`);
+        if (sidebarItem) btn = sidebarItem;
+    }
+
+    // If still not found, return a default centered start position
+    if (!btn) {
+        return {
+            x: window.innerWidth / 2,
+            y: 100,
+            width: 44,
+            height: 44
+        };
+    }
+
     const rect = btn.getBoundingClientRect();
     return {
         x: rect.left + rect.width / 2,

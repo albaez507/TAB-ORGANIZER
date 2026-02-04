@@ -3237,8 +3237,6 @@ input:checked + .slider:before { transform: translateX(14px); }
 .settings-actions {
     display: flex;
     gap: 12px;
-    padding-top: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .settings-action-btn {
@@ -3328,4 +3326,183 @@ input:checked + .slider:before { transform: translateX(14px); }
         animation: none !important;
         transition: none !important;
     }
+}
+
+/* ========================================
+   APP LOGO BUTTON (Settings trigger)
+   ======================================== */
+
+.app-logo-btn {
+    cursor: pointer;
+    transition: transform 200ms ease, opacity 200ms ease;
+}
+
+.app-logo-btn:hover {
+    transform: scale(1.08);
+    opacity: 0.85;
+}
+
+.app-logo-btn:active {
+    transform: scale(0.95);
+}
+
+/* Header tagline */
+.tagline {
+    opacity: 0.7;
+    transition: opacity 200ms ease;
+}
+
+header:hover .tagline {
+    opacity: 1;
+}
+
+/* ========================================
+   SIDEBAR LIBRARY ICON/NAME SEPARATION
+   ======================================== */
+
+.library-icon-btn {
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 8px;
+    transition: all 200ms ease;
+    flex-shrink: 0;
+}
+
+.library-icon-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+    transform: scale(1.15);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+}
+
+.library-name-btn {
+    cursor: pointer;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Light mode */
+[data-theme="light"] .library-icon-btn:hover {
+    background: rgba(59, 130, 246, 0.15);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+}
+
+/* ========================================
+   SETTINGS MODAL - ANIMATION CONTROLS
+   ======================================== */
+
+.settings-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 24px 0;
+}
+
+[data-theme="light"] .settings-divider {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.settings-animation-group {
+    margin-bottom: 16px;
+}
+
+.settings-animation-group:last-child {
+    margin-bottom: 0;
+}
+
+.settings-animation-label {
+    display: block;
+    font-size: 0.8125rem;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+
+[data-theme="light"] .settings-animation-label {
+    color: #64748b;
+}
+
+.settings-toggle-group {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .settings-toggle-group {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.settings-toggle-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #64748b;
+    transition: all 150ms ease;
+}
+
+.settings-toggle-btn:hover {
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.settings-toggle-btn.active {
+    color: white;
+    background: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="light"] .settings-toggle-btn {
+    color: #64748b;
+}
+
+[data-theme="light"] .settings-toggle-btn:hover {
+    color: #475569;
+    background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .settings-toggle-btn.active {
+    color: #2563eb;
+    background: rgba(59, 130, 246, 0.2);
+}
+
+/* ========================================
+   AVATAR DROPDOWN - ENHANCED
+   ======================================== */
+
+.avatar-dropdown-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .avatar-dropdown-header {
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+#dropdown-user-name {
+    max-width: 140px;
+}
+
+#dropdown-user-email {
+    max-width: 140px;
+}
+
+/* Hide down arrow caret on avatar button */
+.avatar-btn .text-slate-400.text-xs {
+    display: none;
+}
+
+/* ========================================
+   LIGHT MODE - HEADER ADJUSTMENTS
+   ======================================== */
+
+[data-theme="light"] .app-logo-btn {
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+[data-theme="light"] .app-logo-btn:hover {
+    background: rgba(59, 130, 246, 0.15) !important;
 }
