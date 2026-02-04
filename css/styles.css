@@ -502,18 +502,18 @@ input:checked + .slider:before { transform: translateX(14px); }
 [data-theme="light"] {
     /* Backgrounds */
     --bg-primary: #faf9f7;
-    --bg-secondary: #f3f2ef;
+    --bg-secondary: #f0ede8;
     --bg-card: #ffffff;
-    --bg-hover: #f0efeb;
+    --bg-hover: #eae7e2;
 
-    /* Text */
+    /* Text - IMPROVED CONTRAST */
     --text-primary: #1a1a1a;
-    --text-secondary: #6b6b6b;
-    --text-muted: #9b9b9b;
+    --text-secondary: #4a4a4a;
+    --text-muted: #5a5a5a;
 
-    /* Borders & Dividers */
-    --border-subtle: #e8e7e4;
-    --border-medium: #d4d3d0;
+    /* Borders & Dividers - WARM TONES */
+    --border-subtle: #e5e2dc;
+    --border-medium: #d4d0c8;
 
     /* Accent (use sparingly) */
     --accent-primary: #2563eb;
@@ -547,8 +547,9 @@ input:checked + .slider:before { transform: translateX(14px); }
 [data-theme="light"] .glass-sidebar {
     background: var(--bg-secondary);
     backdrop-filter: none;
-    border: none;
-    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-subtle);
+    border-right: 1px solid var(--border-medium);
+    box-shadow: 2px 0 8px rgba(0,0,0,0.04);
     border-radius: 16px;
 }
 
@@ -1325,13 +1326,15 @@ input:checked + .slider:before { transform: translateX(14px); }
 [data-theme="light"] .category-card {
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
-    border-left-width: 4px;
+    border-left: 4px solid var(--border-medium) !important;
     box-shadow: var(--shadow-sm);
     border-radius: 12px;
     transition: all 200ms ease;
 }
 
 [data-theme="light"] .category-card:hover {
+    border-color: var(--border-medium);
+    border-left-color: #b8b4aa !important;
     box-shadow: var(--shadow-md);
     transform: translateY(-1px);
 }
@@ -3451,7 +3454,7 @@ header:hover .tagline {
 }
 
 .settings-toggle-btn.active {
-    color: white;
+    color: rgb(212, 76, 76);
     background: rgba(59, 130, 246, 0.3);
 }
 
@@ -3505,4 +3508,164 @@ header:hover .tagline {
 
 [data-theme="light"] .app-logo-btn:hover {
     background: rgba(59, 130, 246, 0.15) !important;
+}
+
+/* ========================================
+   COLLAPSIBLE SEARCH
+   ======================================== */
+
+.search-toggle-btn {
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 150ms ease;
+    font-size: 14px;
+    opacity: 0.6;
+}
+
+.search-toggle-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.search-toggle-btn.active {
+    opacity: 1;
+    color: #3b82f6;
+}
+
+[data-theme="light"] .search-toggle-btn:hover {
+    background: var(--bg-hover);
+}
+
+[data-theme="light"] .search-toggle-btn.active {
+    color: var(--accent-primary);
+}
+
+/* Collapsible search container */
+.search-container-collapsible {
+    overflow: hidden;
+    transition: height 200ms ease, opacity 200ms ease, margin 200ms ease;
+}
+
+.search-container-collapsible.collapsed {
+    height: 0 !important;
+    opacity: 0;
+    margin-bottom: 0 !important;
+    pointer-events: none;
+}
+
+.search-container-collapsible.expanded {
+    opacity: 1;
+}
+
+/* Animation disabled state */
+.search-container-collapsible.no-animation {
+    transition: none !important;
+}
+
+/* ========================================
+   AVATAR WITH USERNAME
+   ======================================== */
+
+.avatar-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.avatar-username {
+    font-size: 13px;
+    font-weight: 500;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.avatar-caret {
+    font-size: 10px;
+    opacity: 0.5;
+    margin-left: -4px;
+}
+
+/* Larger avatar in header */
+.avatar-btn .user-avatar {
+    width: 36px !important;
+    height: 36px !important;
+}
+
+/* Light mode avatar username */
+[data-theme="light"] .avatar-username {
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .avatar-caret {
+    color: var(--text-muted);
+}
+
+/* ========================================
+   DARK MODE - CATEGORY CARDS (Simplified)
+   ======================================== */
+
+/* Dark mode categories - neutral colors */
+.category-card {
+    border-left-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.category-card:hover {
+    border-left-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* ========================================
+   LIGHT MODE - ADDITIONAL CONTRAST FIXES
+   ======================================== */
+
+/* Ensure description text in categories is readable */
+[data-theme="light"] .category-header p.text-slate-500,
+[data-theme="light"] .category-header .text-slate-500 {
+    color: var(--text-muted) !important;
+}
+
+/* Ensure library count text is readable */
+[data-theme="light"] .library-item .text-slate-500,
+[data-theme="light"] .library-item p {
+    color: var(--text-muted) !important;
+}
+
+/* Tagline text */
+[data-theme="light"] .tagline {
+    color: var(--text-muted) !important;
+}
+
+/* Search placeholder */
+[data-theme="light"] .search-input::placeholder {
+    color: var(--text-muted) !important;
+}
+
+/* Sidebar header text */
+[data-theme="light"] .glass-sidebar h3 {
+    color: var(--text-secondary) !important;
+}
+
+/* Link description text */
+[data-theme="light"] .link-card .text-slate-500,
+[data-theme="light"] .compact-link-row .text-slate-500,
+[data-theme="light"] .expanded-link-card .text-slate-500 {
+    color: var(--text-muted) !important;
+}
+
+/* Empty state text */
+[data-theme="light"] .empty-state p {
+    color: var(--text-muted) !important;
+}
+
+/* Button text in header */
+[data-theme="light"] #manageBtn {
+    color: var(--text-secondary);
+    border-color: var(--border-medium);
+}
+
+[data-theme="light"] #manageBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
 }

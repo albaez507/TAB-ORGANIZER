@@ -65,6 +65,82 @@ function loadTheme() {
     updateThemeToggleIcon(theme);
 }
 
+// ================= COLLAPSIBLE SEARCH =================
+
+let sidebarSearchVisible = false;
+
+/**
+ * Toggle sidebar search visibility
+ */
+function toggleSidebarSearch() {
+    sidebarSearchVisible = !sidebarSearchVisible;
+    const container = document.getElementById('sidebar-search-container');
+    const toggleBtn = document.getElementById('search-toggle-btn');
+    const searchInput = document.getElementById('search-input');
+
+    if (!container) return;
+
+    // Check if animations are enabled
+    const animationsEnabled = isAnimationEnabled('category');
+
+    if (!animationsEnabled) {
+        container.classList.add('no-animation');
+    } else {
+        container.classList.remove('no-animation');
+    }
+
+    if (sidebarSearchVisible) {
+        container.classList.remove('collapsed');
+        container.classList.add('expanded');
+        if (toggleBtn) toggleBtn.classList.add('active');
+
+        // Auto-focus the search input
+        setTimeout(() => {
+            if (searchInput) searchInput.focus();
+        }, animationsEnabled ? 200 : 0);
+    } else {
+        container.classList.add('collapsed');
+        container.classList.remove('expanded');
+        if (toggleBtn) toggleBtn.classList.remove('active');
+
+        // Clear search when hiding
+        if (searchInput) searchInput.value = '';
+        clearSearch();
+    }
+}
+
+/**
+ * Handle keydown in search input (ESC to close)
+ */
+function handleSearchKeydown(event) {
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        if (sidebarSearchVisible) {
+            toggleSidebarSearch();
+        }
+    }
+}
+
+/**
+ * Focus search - opens sidebar search if closed
+ */
+function focusSearch() {
+    if (!sidebarSearchVisible) {
+        toggleSidebarSearch();
+    } else {
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) searchInput.focus();
+    }
+}
+
+// Keyboard shortcut: Ctrl+K to toggle search
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        focusSearch();
+    }
+});
+
 // ================= ANIMATION SETTINGS SYSTEM =================
 
 const ANIMATION_SETTINGS_KEY = 'tabOrganizer_animationSettings';
@@ -1904,6 +1980,7 @@ function updateAvatarDropdown() {
     const emailEl = document.getElementById('dropdown-user-email');
     const nameEl = document.getElementById('dropdown-user-name');
     const authBtn = document.getElementById('dropdown-auth-btn');
+    const headerUsername = document.getElementById('header-username');
 
     // Header button elements
     const avatarImg = document.getElementById('user-avatar-img');
@@ -1915,13 +1992,58 @@ function updateAvatarDropdown() {
     const dropdownAvatarInitial = document.getElementById('dropdown-avatar-initial');
     const dropdownAvatarPlaceholder = document.getElementById('dropdown-avatar-placeholder');
 
+    /**
+     * Get display name from user data
+     * Priority: full_name > name > given_name > email prefix
+     */
+    function getDisplayName(user) {
+        if (!user) return 'User';
+        const meta = user.user_metadata || {};
+        if (meta.full_name) return meta.full_name;
+        if (meta.name) return meta.name;
+        if (meta.given_name) return meta.given_name;
+        // Fallback to email prefix
+        if (user.email) {
+            const prefix = user.email.split('@')[0];
+            // Capitalize first letter
+            return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+        }
+        return 'User';
+    }
+
+    /**
+     * Get first name for header display (shorter)
+     */
+    function getFirstName(user) {
+        if (!user) return 'User';
+        const meta = user.user_metadata || {};
+        // Try given_name first (most reliable for first name)
+        if (meta.given_name) return meta.given_name;
+        // If full_name, take first word
+        if (meta.full_name) return meta.full_name.split(' ')[0];
+        if (meta.name) return meta.name.split(' ')[0];
+        // Fallback to email prefix
+        if (user.email) {
+            const prefix = user.email.split('@')[0];
+            return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+        }
+        return 'User';
+    }
+
     if (currentUser) {
-        const userName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || 'User';
+        const userName = getDisplayName(currentUser);
+        const firstName = getFirstName(currentUser);
         const userEmail = currentUser.email || 'Logged in';
         const userAvatar = currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture;
 
         if (nameEl) nameEl.textContent = userName;
         if (emailEl) emailEl.textContent = userEmail;
+
+        // Show username in header
+        if (headerUsername) {
+            headerUsername.textContent = firstName;
+            headerUsername.classList.remove('hidden');
+        }
 
         if (authBtn) {
             authBtn.innerHTML = '🚪 Logout';
@@ -1964,6 +2086,13 @@ function updateAvatarDropdown() {
     } else if (isGuest) {
         if (nameEl) nameEl.textContent = 'Guest User';
         if (emailEl) emailEl.textContent = 'Local storage only';
+
+        // Show "Guest" in header
+        if (headerUsername) {
+            headerUsername.textContent = 'Guest';
+            headerUsername.classList.remove('hidden');
+        }
+
         if (authBtn) {
             authBtn.innerHTML = '🔑 Login';
             authBtn.onclick = () => { handleAuth(); closeAvatarDropdown(); };
@@ -1980,6 +2109,12 @@ function updateAvatarDropdown() {
     } else {
         if (nameEl) nameEl.textContent = 'Not logged in';
         if (emailEl) emailEl.textContent = '';
+
+        // Hide username in header when not logged in
+        if (headerUsername) {
+            headerUsername.classList.add('hidden');
+        }
+
         if (authBtn) {
             authBtn.innerHTML = '🔑 Login';
             authBtn.onclick = () => { handleAuth(); closeAvatarDropdown(); };

@@ -34,15 +34,14 @@
         <!-- Sync Status (hidden by default, shown when syncing) -->
         <span id="cloud-status" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest hidden">Iniciando...</span>
 
-        <!-- Search Button (opens search or focuses sidebar search) -->
-        <button onclick="focusSearch()" title="Search (Ctrl+K)" class="header-icon-btn p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition text-lg">🔍</button>
-
         <!-- Avatar Dropdown -->
         <div class="avatar-dropdown-wrapper" id="avatar-dropdown-wrapper">
             <button class="avatar-btn flex items-center gap-2 p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition" onclick="toggleAvatarDropdown()">
-                <img id="user-avatar-img" class="hidden w-7 h-7 rounded-full border border-slate-600 object-cover" />
-                <div id="user-avatar-initial" class="hidden w-7 h-7 rounded-full border border-slate-600 bg-slate-700 flex items-center justify-center text-xs font-bold text-white"></div>
-                <span id="user-avatar-placeholder" class="w-7 h-7 rounded-full bg-slate-700 flex items-center justify-center text-xs">👤</span>
+                <img id="user-avatar-img" class="user-avatar hidden w-9 h-9 rounded-full border border-slate-600 object-cover" />
+                <div id="user-avatar-initial" class="user-avatar hidden w-9 h-9 rounded-full border border-slate-600 bg-slate-700 flex items-center justify-center text-sm font-bold text-white"></div>
+                <span id="user-avatar-placeholder" class="user-avatar w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-base">👤</span>
+                <span id="header-username" class="avatar-username hidden">User</span>
+                <span class="avatar-caret">▼</span>
             </button>
             <div class="avatar-dropdown bg-slate-800 border border-slate-700 rounded-xl shadow-xl" id="avatar-dropdown">
                 <div class="avatar-dropdown-header px-4 py-3 border-b border-slate-700">
@@ -90,16 +89,20 @@
     <!-- Library Sidebar (Desktop) -->
     <aside id="library-sidebar" class="hidden md:block w-[180px] flex-shrink-0">
         <div class="glass-sidebar rounded-2xl p-4 sticky top-6">
-            <!-- Search Input -->
-            <div class="search-container">
-                <input type="text" id="search-input" class="search-input" placeholder="Search links..." oninput="handleSearch(this.value)" />
-                <span class="search-icon">🔍</span>
-                <span class="search-clear" onclick="clearSearch()">✕</span>
-            </div>
-
+            <!-- Sidebar Header with Search Toggle -->
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Librerias</h3>
-                <button onclick="openLibraryModal()" class="text-blue-400 hover:text-blue-300 transition text-lg" title="Nueva Libreria">+</button>
+                <div class="flex items-center gap-1">
+                    <button onclick="openLibraryModal()" class="text-blue-400 hover:text-blue-300 transition text-lg" title="Nueva Libreria">+</button>
+                    <button id="search-toggle-btn" onclick="toggleSidebarSearch()" class="search-toggle-btn" title="Toggle Search (Ctrl+K)">🔍</button>
+                </div>
+            </div>
+
+            <!-- Collapsible Search Input -->
+            <div id="sidebar-search-container" class="search-container-collapsible search-container collapsed mb-4">
+                <input type="text" id="search-input" class="search-input" placeholder="Search links..." oninput="handleSearch(this.value)" onkeydown="handleSearchKeydown(event)" />
+                <span class="search-icon">🔍</span>
+                <span class="search-clear" onclick="clearSearch()">✕</span>
             </div>
             <div id="library-list" class="space-y-1">
                 <!-- Libraries rendered here -->
