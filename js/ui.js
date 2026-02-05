@@ -141,6 +141,77 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// ================= ACCENT COLOR SYSTEM =================
+
+const ACCENT_COLOR_KEY = 'tabOrganizer_accentColor';
+const DEFAULT_ACCENT = 'warm'; // Warm gold/mustard is the new default
+
+let currentAccentColor = DEFAULT_ACCENT;
+
+/**
+ * Load accent color from localStorage
+ */
+function loadAccentColor() {
+    try {
+        const saved = localStorage.getItem(ACCENT_COLOR_KEY);
+        if (saved && ['warm', 'blue', 'neutral'].includes(saved)) {
+            currentAccentColor = saved;
+        }
+    } catch (e) {
+        console.error('Error loading accent color:', e);
+        currentAccentColor = DEFAULT_ACCENT;
+    }
+    applyAccentColor(currentAccentColor);
+    updateAccentColorUI();
+}
+
+/**
+ * Save accent color to localStorage
+ */
+function saveAccentColor() {
+    try {
+        localStorage.setItem(ACCENT_COLOR_KEY, currentAccentColor);
+    } catch (e) {
+        console.error('Error saving accent color:', e);
+    }
+}
+
+/**
+ * Apply accent color to the document
+ * @param {string} color - 'warm', 'blue', or 'neutral'
+ */
+function applyAccentColor(color) {
+    document.documentElement.setAttribute('data-accent', color);
+}
+
+/**
+ * Set accent color from Settings
+ * @param {string} color - 'warm', 'blue', or 'neutral'
+ */
+function setAccentColor(color) {
+    if (!['warm', 'blue', 'neutral'].includes(color)) return;
+
+    currentAccentColor = color;
+    applyAccentColor(color);
+    saveAccentColor();
+    updateAccentColorUI();
+    showToast(`Accent color changed to ${color}`);
+}
+
+/**
+ * Update the UI to reflect current accent color
+ */
+function updateAccentColorUI() {
+    // Update radio buttons in settings modal
+    const radios = document.querySelectorAll('input[name="accent-color"]');
+    radios.forEach(radio => {
+        radio.checked = radio.value === currentAccentColor;
+    });
+}
+
+// Initialize accent color on DOM ready
+document.addEventListener('DOMContentLoaded', loadAccentColor);
+
 // ================= ANIMATION SETTINGS SYSTEM =================
 
 const ANIMATION_SETTINGS_KEY = 'tabOrganizer_animationSettings';
@@ -2171,6 +2242,8 @@ function closeSettingsModal() {
 function renderSettingsContent() {
     // Animation settings UI
     updateAnimationSettingsUI();
+    // Accent color UI
+    updateAccentColorUI();
 }
 
 function setThemeMode(mode) {

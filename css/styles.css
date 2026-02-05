@@ -498,6 +498,38 @@ input:checked + .slider:before { transform: translateX(14px); }
    Using [data-theme="light"] attribute on <html>
    ======================================== */
 
+/* === CSS CUSTOM PROPERTIES - ACCENT COLOR SYSTEM === */
+/* These are set dynamically by JavaScript based on user preference */
+:root {
+    /* Default accent: Warm (gold/mustard) */
+    --accent-primary: #8B6914;
+    --accent-hover: #6B5210;
+    --accent-light: #F5E6C8;
+    --accent-subtle: #EDE4D3;
+}
+
+/* Accent color presets - applied via data-accent attribute */
+[data-accent="warm"] {
+    --accent-primary: #8B6914;
+    --accent-hover: #6B5210;
+    --accent-light: #F5E6C8;
+    --accent-subtle: #EDE4D3;
+}
+
+[data-accent="blue"] {
+    --accent-primary: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-light: #dbeafe;
+    --accent-subtle: #eff6ff;
+}
+
+[data-accent="neutral"] {
+    --accent-primary: #6b7280;
+    --accent-hover: #4b5563;
+    --accent-light: #f3f4f6;
+    --accent-subtle: #f9fafb;
+}
+
 /* === CSS CUSTOM PROPERTIES - LIGHT MODE PALETTE === */
 [data-theme="light"] {
     /* Backgrounds */
@@ -514,10 +546,6 @@ input:checked + .slider:before { transform: translateX(14px); }
     /* Borders & Dividers - WARM TONES */
     --border-subtle: #e5e2dc;
     --border-medium: #d4d0c8;
-
-    /* Accent (use sparingly) */
-    --accent-primary: #2563eb;
-    --accent-subtle: #dbeafe;
 
     /* Status colors */
     --status-pending: #f59e0b;
@@ -665,13 +693,13 @@ input:checked + .slider:before { transform: translateX(14px); }
     color: var(--text-secondary) !important;
 }
 
-/* === ACCENT COLOR - USE SPARINGLY === */
+/* === ACCENT COLOR - USES CSS VARIABLES === */
 [data-theme="light"] .text-blue-400 {
     color: var(--accent-primary) !important;
 }
 
 [data-theme="light"] .hover\:text-blue-300:hover {
-    color: #1d4ed8 !important;
+    color: var(--accent-hover) !important;
 }
 
 [data-theme="light"] .bg-blue-600 {
@@ -679,19 +707,20 @@ input:checked + .slider:before { transform: translateX(14px); }
 }
 
 [data-theme="light"] .hover\:bg-blue-500:hover {
-    background-color: #1d4ed8 !important;
+    background-color: var(--accent-hover) !important;
 }
 
 [data-theme="light"] .bg-blue-600\/20 {
-    background-color: var(--accent-subtle) !important;
+    background-color: var(--accent-light) !important;
 }
 
 [data-theme="light"] .border-blue-500\/20 {
-    border-color: rgba(37, 99, 235, 0.2) !important;
+    border-color: var(--accent-primary) !important;
+    opacity: 0.2;
 }
 
 [data-theme="light"] .bg-blue-400\/10 {
-    background-color: var(--accent-subtle) !important;
+    background-color: var(--accent-light) !important;
 }
 
 [data-theme="light"] .hover\:bg-blue-400\/20:hover {
@@ -699,11 +728,12 @@ input:checked + .slider:before { transform: translateX(14px); }
 }
 
 [data-theme="light"] .bg-blue-500\/20 {
-    background-color: var(--accent-subtle) !important;
+    background-color: var(--accent-light) !important;
 }
 
 [data-theme="light"] .border-blue-500\/30 {
-    border-color: rgba(37, 99, 235, 0.25) !important;
+    border-color: var(--accent-primary) !important;
+    opacity: 0.3;
 }
 
 /* === BORDER OVERRIDES - WARM === */
@@ -3825,4 +3855,238 @@ input.category-note-input:focus {
 
 [data-theme="light"] .glass-sidebar {
     border-right: 1px solid var(--border-medium);
+}
+
+/* ========================================
+   ACCENT COLOR SELECTOR IN SETTINGS
+   ======================================== */
+
+.settings-accent-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.settings-accent-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 150ms ease;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.settings-accent-option:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.settings-accent-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-primary);
+}
+
+.accent-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.accent-swatch.accent-warm {
+    background: linear-gradient(135deg, #8B6914 0%, #F5E6C8 100%);
+}
+
+.accent-swatch.accent-blue {
+    background: linear-gradient(135deg, #2563eb 0%, #dbeafe 100%);
+}
+
+.accent-swatch.accent-neutral {
+    background: linear-gradient(135deg, #6b7280 0%, #f3f4f6 100%);
+}
+
+.accent-label {
+    font-size: 14px;
+    color: #e2e8f0;
+}
+
+[data-theme="light"] .settings-accent-option {
+    background: var(--bg-hover);
+    border-color: var(--border-subtle);
+}
+
+[data-theme="light"] .settings-accent-option:hover {
+    background: var(--bg-secondary);
+    border-color: var(--border-medium);
+}
+
+[data-theme="light"] .accent-label {
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .accent-swatch {
+    border-color: var(--border-medium);
+}
+
+/* ========================================
+   HEADER ACTION BUTTONS - NEUTRAL STYLE
+   ======================================== */
+
+.header-action-btn {
+    color: #94a3b8;
+}
+
+.header-action-btn:hover {
+    color: #e2e8f0;
+}
+
+[data-theme="light"] .header-action-btn {
+    color: var(--text-secondary);
+    border-color: var(--border-medium) !important;
+    background: transparent !important;
+}
+
+[data-theme="light"] .header-action-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover) !important;
+}
+
+/* ========================================
+   AVATAR & THEME TOGGLE - SAME HEIGHT, ALWAYS VISIBLE
+   ======================================== */
+
+/* Ensure same height for avatar button and theme toggle */
+.avatar-btn,
+.header-icon-btn,
+#theme-toggle {
+    height: 44px !important;
+    min-height: 44px !important;
+}
+
+/* Make theme toggle same visual style as avatar */
+#theme-toggle {
+    width: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* ========================================
+   CATEGORY NOTE CONTAINER - WHITE/LIGHT BACKGROUND
+   ======================================== */
+
+/* Note section container */
+.category-note-section {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-top: 12px;
+}
+
+[data-theme="light"] .category-note-section {
+    background: #ffffff;
+    border: 1px solid var(--border-subtle);
+}
+
+/* Note input within the section */
+.category-note-section .category-note-input {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.category-note-section .category-note-input:focus {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* ========================================
+   VER PREVIEW BUTTON - ALWAYS GRAY BACKGROUND
+   ======================================== */
+
+.preview-toggle-btn,
+button[onclick*="togglePreview"] {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.preview-toggle-btn:hover,
+button[onclick*="togglePreview"]:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+[data-theme="light"] .preview-toggle-btn,
+[data-theme="light"] button[onclick*="togglePreview"] {
+    background: #f0f0f0 !important;
+    border: 1px solid var(--border-subtle) !important;
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="light"] .preview-toggle-btn:hover,
+[data-theme="light"] button[onclick*="togglePreview"]:hover {
+    background: #e5e5e5 !important;
+    border-color: var(--border-medium) !important;
+}
+
+/* ========================================
+   TEXT SELECTION & HIGHLIGHTS - WARM ACCENT
+   ======================================== */
+
+[data-theme="light"] ::selection {
+    background: var(--accent-light);
+    color: var(--text-primary);
+}
+
+[data-theme="light"] ::-moz-selection {
+    background: var(--accent-light);
+    color: var(--text-primary);
+}
+
+/* Search highlight */
+[data-theme="light"] .smart-highlight {
+    background: var(--accent-light) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Active library item uses accent */
+[data-theme="light"] .library-item.active {
+    background: var(--accent-light) !important;
+    border-left: 3px solid var(--accent-primary) !important;
+}
+
+/* Focus ring uses accent */
+[data-theme="light"] input:focus,
+[data-theme="light"] textarea:focus,
+[data-theme="light"] select:focus {
+    border-color: var(--accent-primary) !important;
+    box-shadow: 0 0 0 3px var(--accent-subtle) !important;
+}
+
+/* ========================================
+   ADDITIONAL LIGHT MODE REFINEMENTS
+   ======================================== */
+
+/* App logo button in light mode */
+[data-theme="light"] .app-logo-btn {
+    background: var(--accent-light) !important;
+    border-color: var(--accent-subtle) !important;
+}
+
+[data-theme="light"] .app-logo-btn:hover {
+    background: var(--accent-subtle) !important;
+}
+
+/* Badges use accent or neutral */
+[data-theme="light"] .badge-watching,
+[data-theme="light"] .badge-watched,
+[data-theme="light"] .badge-understood,
+[data-theme="light"] .badge-applied {
+    border-color: var(--border-medium) !important;
 }
