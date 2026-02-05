@@ -1020,9 +1020,38 @@ input:checked + .slider:before { transform: translateX(14px); }
     box-shadow: var(--shadow-lg);
 }
 
-/* === WELCOME SCREEN === */
+/* === WELCOME SCREEN - FULL LIGHT MODE === */
 [data-theme="light"] #welcome-screen {
-    background-color: rgba(250, 249, 247, 0.98) !important;
+    background: var(--bg-primary) !important;
+}
+
+[data-theme="light"] #welcome-screen .glass,
+[data-theme="light"] #welcome-screen .modal-content {
+    background: var(--bg-card) !important;
+    border-color: var(--border-subtle) !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+
+[data-theme="light"] #welcome-screen h1,
+[data-theme="light"] #welcome-screen h2,
+[data-theme="light"] #welcome-screen h3 {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="light"] #welcome-screen p,
+[data-theme="light"] #welcome-screen span,
+[data-theme="light"] #welcome-screen label {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="light"] #welcome-screen input {
+    background: var(--bg-card) !important;
+    border-color: var(--border-subtle) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="light"] #welcome-screen input::placeholder {
+    color: var(--text-muted) !important;
 }
 
 /* Fix welcome screen separator lines */
@@ -1039,6 +1068,21 @@ input:checked + .slider:before { transform: translateX(14px); }
 
 [data-theme="light"] #welcome-screen button.bg-white:hover {
     background-color: var(--bg-hover) !important;
+}
+
+/* Other welcome screen buttons */
+[data-theme="light"] #welcome-screen button {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="light"] #welcome-screen button.bg-blue-600 {
+    background-color: var(--accent-primary) !important;
+    color: white !important;
+}
+
+[data-theme="light"] #welcome-screen button.bg-slate-700 {
+    background-color: var(--bg-hover) !important;
+    border-color: var(--border-subtle) !important;
 }
 
 /* === KEEP FOCUS MODAL DARK (CINEMA MODE) === */
@@ -4201,11 +4245,152 @@ button[onclick*="togglePreview"]:hover {
 /* ========================================
    CUSTOM COLOR OVERRIDES
    ======================================== */
-.category-note-section { background: var(--custom-note-bg, rgba(255, 255, 255, 0.12)); border-color: var(--custom-card-border, rgba(255, 255, 255, 0.18)); }
-[data-theme="light"] .category-note-section { background: var(--custom-note-bg, #ffffff); border-color: var(--custom-card-border, var(--border-medium)); }
-.category-note-editable { color: var(--custom-note-text, white); }
-[data-theme="light"] .category-note-editable { color: var(--custom-note-text, var(--text-primary)); }
+.category-note-compact { background: var(--custom-note-bg, rgba(255, 255, 255, 0.06)); border-color: var(--custom-card-border, rgba(255, 255, 255, 0.1)); }
+[data-theme="light"] .category-note-compact { background: var(--custom-note-bg, var(--bg-card)); border-color: var(--custom-card-border, var(--border-subtle)); }
+.category-note-editable { color: var(--custom-note-text, rgba(255, 255, 255, 0.8)); }
+[data-theme="light"] .category-note-editable { color: var(--custom-note-text, var(--text-secondary)); }
 .glass-sidebar { background: var(--custom-sidebar-bg, rgba(30, 41, 59, 0.85)); }
 [data-theme="light"] .glass-sidebar { background: var(--custom-sidebar-bg, var(--bg-secondary)); }
 .smart-highlight { background: var(--custom-link-highlight, rgba(59, 130, 246, 0.12)) !important; }
 [data-theme="light"] .smart-highlight { background: var(--custom-link-highlight, var(--accent-light)) !important; }
+
+/* ========================================
+   COMPACT CATEGORY NOTE
+   ======================================== */
+
+.category-note-compact {
+    margin-top: 8px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    transition: border-color 150ms ease;
+}
+
+.category-note-compact:focus-within {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Toolbar: hidden by default, shows on hover/focus */
+.note-toolbar-compact {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    padding: 0 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 200ms ease, max-height 200ms ease, padding 200ms ease;
+}
+
+.category-note-compact:hover .note-toolbar-compact,
+.category-note-compact:focus-within .note-toolbar-compact {
+    opacity: 1;
+    max-height: 36px;
+    padding: 4px 8px;
+}
+
+.note-tb-btn {
+    width: 26px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 100ms ease;
+}
+
+.note-tb-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.note-tb-sep {
+    width: 1px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 0 3px;
+}
+
+/* Editable area - compact */
+.category-note-compact .category-note-editable {
+    min-height: 32px;
+    max-height: 160px;
+    overflow-y: auto;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+    outline: none;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.category-note-compact .category-note-editable:empty::before {
+    content: attr(data-placeholder);
+    color: rgba(255, 255, 255, 0.25);
+    pointer-events: none;
+    font-style: italic;
+}
+
+.category-note-compact .category-note-editable:focus {
+    color: white;
+}
+
+/* Save indicator in compact toolbar */
+.note-toolbar-compact .note-save-indicator {
+    font-size: 12px;
+    color: #10b981;
+    opacity: 0;
+    transition: opacity 200ms ease;
+}
+
+.note-toolbar-compact .note-save-indicator.visible {
+    opacity: 1;
+}
+
+/* ---- Light mode compact note ---- */
+[data-theme="light"] .category-note-compact {
+    background: var(--bg-card);
+    border-color: var(--border-subtle);
+}
+
+[data-theme="light"] .category-note-compact:focus-within {
+    border-color: var(--border-medium);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .note-toolbar-compact {
+    border-bottom-color: var(--border-subtle);
+}
+
+[data-theme="light"] .note-tb-btn {
+    color: var(--text-muted);
+}
+
+[data-theme="light"] .note-tb-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .note-tb-sep {
+    background: var(--border-subtle);
+}
+
+[data-theme="light"] .category-note-compact .category-note-editable {
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] .category-note-compact .category-note-editable:empty::before {
+    color: var(--text-muted);
+}
+
+[data-theme="light"] .category-note-compact .category-note-editable:focus {
+    color: var(--text-primary);
+}

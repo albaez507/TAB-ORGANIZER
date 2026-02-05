@@ -1917,30 +1917,22 @@ function renderCategories() {
             </div>
 
             <div class="${isOpen ? '' : 'hidden'} p-6 pt-0 bg-black/10 border-t border-white/5 transition-all">
-                <div class="mb-6 rounded-2xl mt-6 category-note-section" onclick="event.stopPropagation()">
-                    <div class="flex items-center gap-4 mb-2 px-4 pt-3">
-                        <div class="w-1.5 h-10 rounded-full" style="background:${s.color}"></div>
-                        <div class="flex-1">
-                            <div class="flex items-center justify-between">
-                                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest note-label">Nota de categoria</p>
-                                <span class="note-save-indicator" id="note-save-${catKey}">Guardado ✓</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="note-toolbar">
-                        <button type="button" class="note-toolbar-btn" onclick="execNoteCommand('bold')" title="Bold"><b>B</b></button>
-                        <button type="button" class="note-toolbar-btn" onclick="execNoteCommand('italic')" title="Italic"><i>I</i></button>
-                        <button type="button" class="note-toolbar-btn" onclick="execNoteCommand('underline')" title="Underline"><u>U</u></button>
-                        <span class="note-toolbar-sep"></span>
-                        <button type="button" class="note-toolbar-btn" onclick="execNoteCommand('justifyLeft')" title="Left">≡←</button>
-                        <button type="button" class="note-toolbar-btn" onclick="execNoteCommand('justifyCenter')" title="Center">≡</button>
-                        <button type="button" class="note-toolbar-btn" onclick="execNoteCommand('justifyRight')" title="Right">≡→</button>
-                        <button type="button" class="note-toolbar-btn" onclick="execNoteCommand('justifyFull')" title="Justify">≡↔</button>
+                <div class="category-note-compact" onclick="event.stopPropagation()">
+                    <div class="note-toolbar-compact" id="note-toolbar-${catKey}">
+                        <button type="button" class="note-tb-btn" onclick="execNoteCommand('bold')" title="Bold"><b>B</b></button>
+                        <button type="button" class="note-tb-btn" onclick="execNoteCommand('italic')" title="Italic"><i>I</i></button>
+                        <button type="button" class="note-tb-btn" onclick="execNoteCommand('underline')" title="Underline"><u>U</u></button>
+                        <span class="note-tb-sep"></span>
+                        <button type="button" class="note-tb-btn" onclick="execNoteCommand('justifyLeft')" title="Left">≡</button>
+                        <button type="button" class="note-tb-btn" onclick="execNoteCommand('justifyCenter')" title="Center">⫞</button>
+                        <button type="button" class="note-tb-btn" onclick="execNoteCommand('justifyRight')" title="Right">⫟</button>
+                        <button type="button" class="note-tb-btn" onclick="execNoteCommand('justifyFull')" title="Justify">☰</button>
+                        <span class="note-save-indicator ml-auto" id="note-save-${catKey}">✓</span>
                     </div>
                     <div class="category-note-editable"
                          contenteditable="true"
                          id="cat-note-${catKey}"
-                         data-placeholder="Nota general de esta categoria..."
+                         data-placeholder="Notas..."
                          oninput="debounceSaveCategoryNote('${libKey}', '${catKey}')"
                          onblur="saveCategoryNoteQuiet('${libKey}', '${catKey}')">${s.task || ''}</div>
                 </div>
