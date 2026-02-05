@@ -626,6 +626,58 @@ function handleNoteKeydown(event, noteId) {
     }
 }
 
+// ================= CATEGORY NOTE HELPERS =================
+
+/**
+ * Handle keydown on category note input
+ * Enter saves with feedback, Shift+Enter does nothing (it's an input, not textarea)
+ */
+function handleCategoryNoteKeydown(event, libKey, catKey, input) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        saveCategoryNoteWithFeedback(libKey, catKey, input.value);
+        input.blur();
+    }
+}
+
+/**
+ * Save category note quietly (on blur, no visual feedback)
+ */
+function saveCategoryNoteQuiet(libKey, catKey, value) {
+    if (DATA.libraries[libKey]?.categories[catKey]) {
+        const currentValue = DATA.libraries[libKey].categories[catKey].task || '';
+        // Only save if value actually changed
+        if (currentValue !== value) {
+            DATA.libraries[libKey].categories[catKey].task = value;
+            save();
+        }
+    }
+}
+
+/**
+ * Save category note with visual feedback
+ */
+function saveCategoryNoteWithFeedback(libKey, catKey, value) {
+    if (DATA.libraries[libKey]?.categories[catKey]) {
+        DATA.libraries[libKey].categories[catKey].task = value;
+        save();
+        showCategoryNoteSaved(catKey);
+    }
+}
+
+/**
+ * Show "Saved" indicator for category note
+ */
+function showCategoryNoteSaved(catKey) {
+    const indicator = document.getElementById(`note-save-${catKey}`);
+    if (indicator) {
+        indicator.classList.add('visible');
+        setTimeout(() => {
+            indicator.classList.remove('visible');
+        }, 2000);
+    }
+}
+
 // ================= STATUS BADGE HELPER =================
 function getStatusBadge(status) {
     if (!status) return '';
@@ -1770,14 +1822,17 @@ function renderCategories() {
             </div>
 
             <div class="${isOpen ? '' : 'hidden'} p-6 pt-0 bg-black/10 border-t border-white/5 transition-all">
-                <div class="mb-6 p-5 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center gap-4 mt-6 group" onclick="event.stopPropagation()">
+                <div class="mb-6 p-5 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center gap-4 mt-6 group category-note-section" onclick="event.stopPropagation()">
                     <div class="w-1.5 h-10 rounded-full" style="background:${s.color}"></div>
                     <div class="flex-1">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nota de categoria</p>
+                        <div class="flex items-center justify-between">
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest note-label">Nota de categoria</p>
+                            <span class="note-save-indicator" id="note-save-${catKey}">Guardado ✓</span>
+                        </div>
                         <input class="w-full bg-transparent text-sm font-medium text-white outline-none focus:text-blue-400 transition category-note-input"
-                               value="${escapeHtmlAttribute(s.task || '')}" placeholder="Nota general de esta categoria..."
-                               onkeydown="if(event.key==='Enter') { saveTask('${libKey}', '${catKey}', this.value); this.blur(); }"
-                               onblur="saveTask('${libKey}', '${catKey}', this.value)">
+                               value="${escapeHtmlAttribute(s.task || '')}" placeholder="Nota general de esta categoria... (Enter para guardar)"
+                               onkeydown="handleCategoryNoteKeydown(event, '${libKey}', '${catKey}', this)"
+                               onblur="saveCategoryNoteQuiet('${libKey}', '${catKey}', this.value)">
                     </div>
                 </div>
 

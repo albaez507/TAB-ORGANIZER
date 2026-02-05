@@ -248,9 +248,14 @@ input:checked + .slider:before { transform: translateX(14px); }
 
 /* Search match highlighting */
 .search-highlight {
-    background: rgba(251, 191, 36, 0.3);
+    background: rgba(139, 115, 85, 0.25);
     border-radius: 2px;
     padding: 0 1px;
+}
+
+/* Light mode search highlight */
+[data-theme="light"] .search-highlight {
+    background: rgba(139, 115, 85, 0.2);
 }
 
 /* Video Focus Mode */
@@ -501,19 +506,23 @@ input:checked + .slider:before { transform: translateX(14px); }
 /* === CSS CUSTOM PROPERTIES - ACCENT COLOR SYSTEM === */
 /* These are set dynamically by JavaScript based on user preference */
 :root {
-    /* Default accent: Warm (gold/mustard) */
-    --accent-primary: #8B6914;
-    --accent-hover: #6B5210;
-    --accent-light: #F5E6C8;
-    --accent-subtle: #EDE4D3;
+    /* Default accent: Warm Neutral (brown/cream) - NO YELLOW */
+    --accent-primary: #8B7355;
+    --accent-hover: #6B5A45;
+    --accent-light: #EDE4D3;
+    --accent-subtle: #F5F2EC;
+
+    /* Warm borders */
+    --border-warm: #D4CFC4;
+    --border-warm-light: #E8E4DC;
 }
 
 /* Accent color presets - applied via data-accent attribute */
 [data-accent="warm"] {
-    --accent-primary: #8B6914;
-    --accent-hover: #6B5210;
-    --accent-light: #F5E6C8;
-    --accent-subtle: #EDE4D3;
+    --accent-primary: #8B7355;
+    --accent-hover: #6B5A45;
+    --accent-light: #EDE4D3;
+    --accent-subtle: #F5F2EC;
 }
 
 [data-accent="blue"] {
@@ -530,30 +539,30 @@ input:checked + .slider:before { transform: translateX(14px); }
     --accent-subtle: #f9fafb;
 }
 
-/* === CSS CUSTOM PROPERTIES - LIGHT MODE PALETTE === */
+/* === CSS CUSTOM PROPERTIES - LIGHT MODE PALETTE (Meetful-inspired) === */
 [data-theme="light"] {
-    /* Backgrounds */
-    --bg-primary: #faf9f7;
-    --bg-secondary: #f0ede8;
+    /* Backgrounds - Warm cream tones */
+    --bg-primary: #F5F2EC;
+    --bg-secondary: #EDE9E1;
     --bg-card: #ffffff;
-    --bg-hover: #eae7e2;
+    --bg-hover: #EDE4D3;
 
-    /* Text - IMPROVED CONTRAST */
+    /* Text - Good contrast */
     --text-primary: #1a1a1a;
     --text-secondary: #4a4a4a;
     --text-muted: #5a5a5a;
 
-    /* Borders & Dividers - WARM TONES */
-    --border-subtle: #e5e2dc;
-    --border-medium: #d4d0c8;
+    /* Borders & Dividers - Warm gray tones */
+    --border-subtle: #E8E4DC;
+    --border-medium: #D4CFC4;
 
     /* Status colors */
     --status-pending: #f59e0b;
     --status-progress: #3b82f6;
     --status-complete: #10b981;
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    /* Shadows - Subtle, soft */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
     --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
     --shadow-lg: 0 4px 16px rgba(0,0,0,0.08);
 }
@@ -788,25 +797,30 @@ input:checked + .slider:before { transform: translateX(14px); }
     background: var(--bg-hover);
 }
 
-/* === LIBRARY SIDEBAR - WARM REDESIGN === */
+/* === LIBRARY SIDEBAR - CARD-LIKE ITEMS (Meetful style) === */
 [data-theme="light"] .library-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
     border-radius: 8px;
+    margin-bottom: 6px;
     transition: all 150ms ease;
 }
 
 [data-theme="light"] .library-item:hover {
     background: var(--bg-hover);
+    border-color: var(--border-medium);
 }
 
 [data-theme="light"] .library-item.active {
     background: var(--bg-card);
-    border-color: transparent;
+    border: 1px solid var(--border-medium);
     border-left: 3px solid var(--accent-primary);
     box-shadow: var(--shadow-sm);
 }
 
 [data-theme="light"] .library-item.search-match {
-    background: var(--accent-subtle);
+    background: var(--accent-light);
+    border-color: var(--accent-primary);
 }
 
 /* === SCROLLBAR - LIGHT MODE - SUBTLE === */
@@ -3898,7 +3912,7 @@ input.category-note-input:focus {
 }
 
 .accent-swatch.accent-warm {
-    background: linear-gradient(135deg, #8B6914 0%, #F5E6C8 100%);
+    background: linear-gradient(135deg, #8B7355 0%, #EDE4D3 100%);
 }
 
 .accent-swatch.accent-blue {
@@ -3979,18 +3993,33 @@ input.category-note-input:focus {
    CATEGORY NOTE CONTAINER - WHITE/LIGHT BACKGROUND
    ======================================== */
 
-/* Note section container */
+/* Note section container - FULL BACKGROUND */
 .category-note-section {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 10px;
-    padding: 12px 16px;
+    padding: 16px;
     margin-top: 12px;
 }
 
 [data-theme="light"] .category-note-section {
     background: #ffffff;
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-medium);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Note label within section */
+.category-note-section .note-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="light"] .category-note-section .note-label {
+    color: var(--text-muted);
 }
 
 /* Note input within the section */
@@ -3998,12 +4027,26 @@ input.category-note-input:focus {
     background: transparent !important;
     border: none !important;
     padding: 0 !important;
+    width: 100%;
 }
 
 .category-note-section .category-note-input:focus {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Save indicator */
+.note-save-indicator {
+    font-size: 11px;
+    color: #10b981;
+    opacity: 0;
+    transition: opacity 200ms ease;
+}
+
+.note-save-indicator.visible {
+    opacity: 1;
 }
 
 /* ========================================
