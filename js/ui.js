@@ -195,6 +195,8 @@ function setAccentColor(color) {
     applyAccentColor(color);
     saveAccentColor();
     updateAccentColorUI();
+    applyCustomColors();
+    renderCustomColorGrid();
     showToast(`Accent color changed to ${color}`);
 }
 
@@ -211,6 +213,95 @@ function updateAccentColorUI() {
 
 // Initialize accent color on DOM ready
 document.addEventListener('DOMContentLoaded', loadAccentColor);
+
+// ================= CUSTOM COLOR SYSTEM =================
+const CUSTOM_COLORS_KEY = 'tabOrganizer_customColors';
+
+const COLOR_PROPERTIES = [
+    { key: 'accent', label: 'Accent (buttons)', cssVar: '--custom-accent' },
+    { key: 'noteBg', label: 'Note background', cssVar: '--custom-note-bg' },
+    { key: 'noteText', label: 'Note text color', cssVar: '--custom-note-text' },
+    { key: 'cardBorder', label: 'Card borders', cssVar: '--custom-card-border' },
+    { key: 'sidebarBg', label: 'Sidebar background', cssVar: '--custom-sidebar-bg' },
+    { key: 'libraryItemBg', label: 'Library item bg', cssVar: '--custom-lib-item-bg' },
+    { key: 'linkHighlight', label: 'Link highlight', cssVar: '--custom-link-highlight' },
+    { key: 'mainBg', label: 'Main background', cssVar: '--custom-main-bg' }
+];
+
+let customColors = {};
+
+function loadCustomColors() {
+    try {
+        const saved = localStorage.getItem(CUSTOM_COLORS_KEY);
+        if (saved) customColors = JSON.parse(saved);
+    } catch(e) { customColors = {}; }
+    applyCustomColors();
+}
+
+function saveCustomColors() {
+    localStorage.setItem(CUSTOM_COLORS_KEY, JSON.stringify(customColors));
+}
+
+function setCustomColor(key, value) {
+    const preset = currentAccentColor;
+    if (!customColors[preset]) customColors[preset] = {};
+    customColors[preset][key] = value;
+    saveCustomColors();
+    applyCustomColors();
+    // Update swatch next to input
+    if (event && event.target) {
+        const row = event.target.closest('.settings-color-row');
+        if (row) row.querySelector('.settings-color-swatch').style.background = value;
+    }
+}
+
+function resetCustomColors() {
+    delete customColors[currentAccentColor];
+    saveCustomColors();
+    applyCustomColors();
+    renderCustomColorGrid();
+    showToast('Colors reset to preset defaults');
+}
+
+function applyCustomColors() {
+    const overrides = customColors[currentAccentColor] || {};
+    const root = document.documentElement;
+    COLOR_PROPERTIES.forEach(prop => {
+        if (overrides[prop.key]) {
+            root.style.setProperty(prop.cssVar, overrides[prop.key]);
+        } else {
+            root.style.removeProperty(prop.cssVar);
+        }
+    });
+}
+
+function renderCustomColorGrid() {
+    const container = document.getElementById('custom-color-grid');
+    if (!container) return;
+    const overrides = customColors[currentAccentColor] || {};
+
+    const defaultMap = {
+        accent: '#8B7355', noteBg: '#ffffff', noteText: '#1a1a1a',
+        cardBorder: '#E8E4DC', sidebarBg: '#EDE9E1', libraryItemBg: '#F5F2EC',
+        linkHighlight: '#EDE4D3', mainBg: '#F5F2EC'
+    };
+
+    container.innerHTML = COLOR_PROPERTIES.map(prop => {
+        const val = overrides[prop.key] || defaultMap[prop.key] || '#888888';
+        return `
+            <div class="settings-color-row flex items-center justify-between p-2 px-3 rounded-lg bg-white/[0.03] border border-white/5">
+                <span class="text-xs text-slate-400">${prop.label}</span>
+                <div class="flex items-center gap-2 cursor-pointer">
+                    <div class="settings-color-swatch w-7 h-7 rounded-md border-2 border-white/10" style="background:${val}"></div>
+                    <input type="color" class="w-8 h-7 border-none bg-transparent cursor-pointer p-0" value="${val.startsWith('#') ? val : '#888888'}"
+                           onchange="setCustomColor('${prop.key}', this.value)">
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', loadCustomColors);
 
 // ================= ANIMATION SETTINGS SYSTEM =================
 
@@ -629,39 +720,43 @@ function handleNoteKeydown(event, noteId) {
 // ================= CATEGORY NOTE HELPERS =================
 
 /**
- * Handle keydown on category note input
- * Enter saves with feedback, Shift+Enter does nothing (it's an input, not textarea)
+ * Execute formatting command on contenteditable
  */
-function handleCategoryNoteKeydown(event, libKey, catKey, input) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault();
-        saveCategoryNoteWithFeedback(libKey, catKey, input.value);
-        input.blur();
-    }
+function execNoteCommand(command) {
+    document.execCommand(command, false, null);
+}
+
+let categoryNoteDebounceTimer = null;
+
+/**
+ * Debounced save for category note (auto-save on typing)
+ */
+function debounceSaveCategoryNote(libKey, catKey) {
+    clearTimeout(categoryNoteDebounceTimer);
+    categoryNoteDebounceTimer = setTimeout(() => {
+        const el = document.getElementById(`cat-note-${catKey}`);
+        if (!el || !DATA.libraries[libKey]?.categories[catKey]) return;
+        DATA.libraries[libKey].categories[catKey].task = el.innerHTML;
+        save();
+        showCategoryNoteSaved(catKey);
+    }, 1500);
 }
 
 /**
  * Save category note quietly (on blur, no visual feedback)
+ * Supports both input value and contenteditable
  */
 function saveCategoryNoteQuiet(libKey, catKey, value) {
+    if (value === undefined) {
+        const el = document.getElementById(`cat-note-${catKey}`);
+        if (el) value = el.innerHTML;
+    }
     if (DATA.libraries[libKey]?.categories[catKey]) {
         const currentValue = DATA.libraries[libKey].categories[catKey].task || '';
-        // Only save if value actually changed
         if (currentValue !== value) {
             DATA.libraries[libKey].categories[catKey].task = value;
             save();
         }
-    }
-}
-
-/**
- * Save category note with visual feedback
- */
-function saveCategoryNoteWithFeedback(libKey, catKey, value) {
-    if (DATA.libraries[libKey]?.categories[catKey]) {
-        DATA.libraries[libKey].categories[catKey].task = value;
-        save();
-        showCategoryNoteSaved(catKey);
     }
 }
 
@@ -1822,18 +1917,32 @@ function renderCategories() {
             </div>
 
             <div class="${isOpen ? '' : 'hidden'} p-6 pt-0 bg-black/10 border-t border-white/5 transition-all">
-                <div class="mb-6 p-5 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center gap-4 mt-6 group category-note-section" onclick="event.stopPropagation()">
-                    <div class="w-1.5 h-10 rounded-full" style="background:${s.color}"></div>
-                    <div class="flex-1">
-                        <div class="flex items-center justify-between">
-                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest note-label">Nota de categoria</p>
-                            <span class="note-save-indicator" id="note-save-${catKey}">Guardado ✓</span>
+                <div class="mb-6 rounded-2xl mt-6 category-note-section" onclick="event.stopPropagation()">
+                    <div class="flex items-center gap-4 mb-2 px-4 pt-3">
+                        <div class="w-1.5 h-10 rounded-full" style="background:${s.color}"></div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest note-label">Nota de categoria</p>
+                                <span class="note-save-indicator" id="note-save-${catKey}">Guardado ✓</span>
+                            </div>
                         </div>
-                        <input class="w-full bg-transparent text-sm font-medium text-white outline-none focus:text-blue-400 transition category-note-input"
-                               value="${escapeHtmlAttribute(s.task || '')}" placeholder="Nota general de esta categoria... (Enter para guardar)"
-                               onkeydown="handleCategoryNoteKeydown(event, '${libKey}', '${catKey}', this)"
-                               onblur="saveCategoryNoteQuiet('${libKey}', '${catKey}', this.value)">
                     </div>
+                    <div class="note-toolbar">
+                        <button type="button" class="note-toolbar-btn" onclick="execNoteCommand('bold')" title="Bold"><b>B</b></button>
+                        <button type="button" class="note-toolbar-btn" onclick="execNoteCommand('italic')" title="Italic"><i>I</i></button>
+                        <button type="button" class="note-toolbar-btn" onclick="execNoteCommand('underline')" title="Underline"><u>U</u></button>
+                        <span class="note-toolbar-sep"></span>
+                        <button type="button" class="note-toolbar-btn" onclick="execNoteCommand('justifyLeft')" title="Left">≡←</button>
+                        <button type="button" class="note-toolbar-btn" onclick="execNoteCommand('justifyCenter')" title="Center">≡</button>
+                        <button type="button" class="note-toolbar-btn" onclick="execNoteCommand('justifyRight')" title="Right">≡→</button>
+                        <button type="button" class="note-toolbar-btn" onclick="execNoteCommand('justifyFull')" title="Justify">≡↔</button>
+                    </div>
+                    <div class="category-note-editable"
+                         contenteditable="true"
+                         id="cat-note-${catKey}"
+                         data-placeholder="Nota general de esta categoria..."
+                         oninput="debounceSaveCategoryNote('${libKey}', '${catKey}')"
+                         onblur="saveCategoryNoteQuiet('${libKey}', '${catKey}')">${s.task || ''}</div>
                 </div>
 
                 <!-- Organize Mode Controls with Layout Toggle -->
@@ -2299,6 +2408,8 @@ function renderSettingsContent() {
     updateAnimationSettingsUI();
     // Accent color UI
     updateAccentColorUI();
+    // Custom colors grid
+    renderCustomColorGrid();
 }
 
 function setThemeMode(mode) {
