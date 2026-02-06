@@ -2102,7 +2102,9 @@ function renderLinks(libKey, catKey) {
                                 <iframe class="w-full h-full" src="${embed.src}" allowfullscreen></iframe>
                             </div>
                             <button class="mt-3 px-4 py-2 rounded-lg bg-purple-500/20 text-xs font-bold text-purple-400 hover:bg-purple-500/30 transition" onclick="openVideoFocusModal('${libKey}', '${catKey}', ${i}, '${embed.type}', '${embed.src}')">🎬 Focus Mode</button>
-                        ` : ''}
+                        ` : `
+                            <button class="mt-3 px-4 py-2 rounded-lg bg-emerald-500/20 text-xs font-bold text-emerald-400 hover:bg-emerald-500/30 transition" onclick="openReadingFocus('${libKey}', '${catKey}', ${i})">📖 Reading Focus</button>
+                        `}
                         ${renderExpandableNote(libKey, catKey, i, l)}
                     </div>
                 </div>
@@ -2165,7 +2167,12 @@ function renderLinks(libKey, catKey) {
                     <button class="px-3 py-1.5 rounded-lg bg-purple-500/20 text-[9px] font-bold text-purple-400 uppercase hover:bg-purple-500/30 transition" onclick="openVideoFocusModal('${libKey}', '${catKey}', ${i}, '${embed.type}', '${embed.src}')">🎬 Focus</button>
                 </div>
                 <div id="preview-${pid}"></div>
-            ` : renderExpandableNote(libKey, catKey, i, l)}
+            ` : `
+                <div class="flex gap-2">
+                    <button class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-[9px] font-bold text-emerald-400 uppercase hover:bg-emerald-500/30 transition flex-1" onclick="openReadingFocus('${libKey}', '${catKey}', ${i})">📖 Reading Focus</button>
+                </div>
+                ${renderExpandableNote(libKey, catKey, i, l)}
+            `}
         </div>`;
     }).join('');
 }

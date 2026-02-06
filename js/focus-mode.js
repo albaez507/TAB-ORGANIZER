@@ -8,20 +8,13 @@
 
 function focusNoteCmd(command) {
     document.execCommand(command, false, null);
-    // Keep focus on the editor
     document.getElementById('focus-full-note').focus();
 }
 
-function focusNoteHighlight() {
-    // Toggle yellow highlight on selected text
-    const selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        const selectedText = range.toString();
-        if (selectedText) {
-            document.execCommand('hiliteColor', false, '#fbbf24');
-        }
-    }
+function focusNoteFontColor(color) {
+    document.execCommand('foreColor', false, color);
+    const indicator = document.getElementById('fn-color-indicator');
+    if (indicator) indicator.style.background = color;
     document.getElementById('focus-full-note').focus();
 }
 
@@ -225,5 +218,160 @@ function showFocusSaveIndicator() {
     setTimeout(() => {
         const el = document.getElementById('focus-save-status');
         if (el) el.textContent = '';
+    }, 2000);
+}
+
+// ========================================
+// READING FOCUS MODE (non-video links)
+// ========================================
+
+let readingFocusLibKey = null;
+let readingFocusCatKey = null;
+let readingFocusLinkIndex = null;
+let readingNoteDebounceTimer = null;
+
+function readingNoteCmd(command) {
+    document.execCommand(command, false, null);
+    document.getElementById('rf-note-editor').focus();
+}
+
+function readingNoteFontColor(color) {
+    document.execCommand('foreColor', false, color);
+    const indicator = document.getElementById('rf-color-indicator');
+    if (indicator) indicator.style.background = color;
+    document.getElementById('rf-note-editor').focus();
+}
+
+function openReadingFocus(libKey, catKey, linkIndex) {
+    const link = DATA.libraries[libKey]?.categories[catKey]?.links[linkIndex];
+    if (!link) return;
+
+    const lib = DATA.libraries[libKey];
+    const cat = lib?.categories[catKey];
+
+    readingFocusLibKey = libKey;
+    readingFocusCatKey = catKey;
+    readingFocusLinkIndex = linkIndex;
+
+    // Set header info
+    document.getElementById('rf-lib-icon').textContent = lib?.icon || '📚';
+    document.getElementById('rf-lib-name').textContent = lib?.name || 'Library';
+    document.getElementById('rf-cat-name').textContent = cat?.name || 'Category';
+
+    // Set link info
+    document.getElementById('rf-favicon').src = link.icon || 'https://www.google.com/s2/favicons?sz=64&domain=' + link.url;
+    document.getElementById('rf-link-title').textContent = link.title || 'Untitled';
+    document.getElementById('rf-link-title').href = link.url;
+    document.getElementById('rf-link-desc').textContent = link.description || '';
+    document.getElementById('rf-link-url').textContent = new URL(link.url).hostname;
+    document.getElementById('rf-link-url').href = link.url;
+    document.getElementById('rf-open-btn').href = link.url;
+
+    // Set status — reuse same 4 states (reading=watching, read=watched, understood, applied)
+    if (!link.status) link.status = { watching: false, watched: false, understood: false, applied: false };
+    document.getElementById('rf-reading').checked = link.status.watching || false;
+    document.getElementById('rf-read').checked = link.status.watched || false;
+    document.getElementById('rf-understood').checked = link.status.understood || false;
+    document.getElementById('rf-applied').checked = link.status.applied || false;
+
+    // Load notes (use fullNote field, same as video — enables switching between modes)
+    const editor = document.getElementById('rf-note-editor');
+    editor.innerHTML = link.fullNote || link.linkNotes || '';
+    document.getElementById('rf-save-status').textContent = '';
+
+    // Show modal
+    const modal = document.getElementById('reading-focus-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('modal-active');
+    document.body.style.overflow = 'hidden';
+
+    // ESC to close
+    document.addEventListener('keydown', handleReadingFocusEsc);
+}
+
+function closeReadingFocus() {
+    saveReadingFocusState();
+
+    const modal = document.getElementById('reading-focus-modal');
+    modal.classList.remove('modal-active');
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+    document.removeEventListener('keydown', handleReadingFocusEsc);
+
+    readingFocusLibKey = null;
+    readingFocusCatKey = null;
+    readingFocusLinkIndex = null;
+
+    render();
+}
+
+function handleReadingFocusEsc(e) {
+    if (e.key === 'Escape') closeReadingFocus();
+}
+
+function updateReadingFocusStatus() {
+    if (readingFocusLibKey === null) return;
+
+    const link = DATA.libraries[readingFocusLibKey]?.categories[readingFocusCatKey]?.links[readingFocusLinkIndex];
+    if (!link) return;
+
+    if (!link.status) link.status = { watching: false, watched: false, understood: false, applied: false };
+    link.status.watching = document.getElementById('rf-reading').checked;
+    link.status.watched = document.getElementById('rf-read').checked;
+    link.status.understood = document.getElementById('rf-understood').checked;
+    link.status.applied = document.getElementById('rf-applied').checked;
+
+    save();
+    document.getElementById('rf-save-status').textContent = '💾 Saved';
+    setTimeout(() => {
+        const el = document.getElementById('rf-save-status');
+        if (el) el.textContent = '';
+    }, 2000);
+}
+
+function saveReadingFocusState() {
+    if (readingFocusLibKey === null) return;
+
+    const link = DATA.libraries[readingFocusLibKey]?.categories[readingFocusCatKey]?.links[readingFocusLinkIndex];
+    if (!link) return;
+
+    if (!link.status) link.status = { watching: false, watched: false, understood: false, applied: false };
+    link.status.watching = document.getElementById('rf-reading').checked;
+    link.status.watched = document.getElementById('rf-read').checked;
+    link.status.understood = document.getElementById('rf-understood').checked;
+    link.status.applied = document.getElementById('rf-applied').checked;
+
+    const editor = document.getElementById('rf-note-editor');
+    if (editor) {
+        link.fullNote = editor.innerHTML;
+        link.quickNote = editor.innerText.substring(0, 100);
+        // Also update linkNotes for backwards compatibility
+        link.linkNotes = editor.innerText.substring(0, 500);
+    }
+
+    save();
+}
+
+function debounceSaveReadingNote() {
+    const editor = document.getElementById('rf-note-editor');
+    document.getElementById('rf-save-status').textContent = '⏳ Saving...';
+
+    clearTimeout(readingNoteDebounceTimer);
+    readingNoteDebounceTimer = setTimeout(() => {
+        if (readingFocusLibKey === null) return;
+
+        const link = DATA.libraries[readingFocusLibKey]?.categories[readingFocusCatKey]?.links[readingFocusLinkIndex];
+        if (!link) return;
+
+        link.fullNote = editor.innerHTML;
+        link.quickNote = editor.innerText.substring(0, 100);
+        link.linkNotes = editor.innerText.substring(0, 500);
+        save();
+
+        document.getElementById('rf-save-status').textContent = '💾 Saved';
+        setTimeout(() => {
+            const el = document.getElementById('rf-save-status');
+            if (el) el.textContent = '';
+        }, 2000);
     }, 2000);
 }

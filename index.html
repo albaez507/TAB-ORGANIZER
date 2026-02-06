@@ -253,52 +253,52 @@
                 <!-- Rich Text Notes Section -->
                 <div class="focus-notes-container mt-4">
                     <div class="focus-notes-header">
-                        <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Notes</span>
-                        <span id="focus-save-status" class="text-xs"></span>
+                        <span class="focus-notes-label">Notes</span>
+                        <span id="focus-save-status" class="focus-notes-save-status"></span>
                     </div>
 
                     <!-- Formatting Toolbar -->
                     <div class="focus-notes-toolbar">
-                        <!-- Text Style -->
-                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('bold')" title="Bold"><b>B</b></button>
-                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('italic')" title="Italic"><i>I</i></button>
-                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('underline')" title="Underline"><u>U</u></button>
-                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('strikeThrough')" title="Strikethrough"><s>S</s></button>
+                        <button type="button" class="fn-tb" onclick="focusNoteCmd('bold')" title="Bold"><b>B</b></button>
+                        <button type="button" class="fn-tb" onclick="focusNoteCmd('italic')" title="Italic"><i>I</i></button>
+                        <button type="button" class="fn-tb" onclick="focusNoteCmd('underline')" title="Underline"><u>U</u></button>
+                        <button type="button" class="fn-tb" onclick="focusNoteCmd('strikeThrough')" title="Strikethrough"><s>S</s></button>
 
-                        <span class="fn-toolbar-sep"></span>
+                        <span class="fn-sep"></span>
 
-                        <!-- Lists -->
-                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('insertUnorderedList')" title="Bullet list">•≡</button>
-                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('insertOrderedList')" title="Numbered list">1.</button>
+                        <button type="button" class="fn-tb" onclick="focusNoteCmd('insertUnorderedList')" title="Bullet list">•≡</button>
+                        <button type="button" class="fn-tb" onclick="focusNoteCmd('insertOrderedList')" title="Numbered list">1.</button>
 
-                        <span class="fn-toolbar-sep"></span>
+                        <span class="fn-sep"></span>
 
-                        <!-- Alignment -->
-                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('justifyLeft')" title="Left">⫷</button>
-                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('justifyCenter')" title="Center">⫿</button>
-                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('justifyRight')" title="Right">⫸</button>
+                        <button type="button" class="fn-tb" onclick="focusNoteCmd('justifyLeft')" title="Align left">⫷</button>
+                        <button type="button" class="fn-tb" onclick="focusNoteCmd('justifyCenter')" title="Center">⫿</button>
+                        <button type="button" class="fn-tb" onclick="focusNoteCmd('justifyRight')" title="Align right">⫸</button>
 
-                        <span class="fn-toolbar-sep"></span>
+                        <span class="fn-sep"></span>
 
-                        <!-- Highlight -->
-                        <button type="button" class="fn-toolbar-btn fn-highlight-btn" onclick="focusNoteHighlight()" title="Highlight text">
-                            <span style="background: #fbbf24; color: #000; padding: 0 3px; border-radius: 2px; font-size: 11px;">A</span>
-                        </button>
+                        <!-- Font Color Picker -->
+                        <span class="fn-color-wrap">
+                            <button type="button" class="fn-tb fn-color-btn" title="Text color">
+                                <span class="fn-color-letter">A</span>
+                                <span class="fn-color-bar" id="fn-color-indicator" style="background:#e53e3e;"></span>
+                            </button>
+                            <input type="color" class="fn-color-input" value="#e53e3e" onchange="focusNoteFontColor(this.value)" title="Choose text color">
+                        </span>
 
-                        <!-- Clear formatting -->
-                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('removeFormat')" title="Clear formatting">⊘</button>
+                        <button type="button" class="fn-tb" onclick="focusNoteCmd('removeFormat')" title="Clear formatting">✕</button>
                     </div>
 
-                    <!-- Editable Notes Area -->
+                    <!-- Editable Notes Area — WHITE BG, BLACK TEXT -->
                     <div id="focus-full-note"
                          class="focus-note-editable"
                          contenteditable="true"
-                         data-placeholder="Write your notes here... Use the toolbar above for formatting."
+                         data-placeholder="Write your notes here..."
                          oninput="debounceSaveFullNote()"></div>
 
                     <div class="focus-notes-footer">
-                        <span id="full-note-char-count" class="text-[10px] text-slate-600">0</span>
-                        <span class="text-[10px] text-slate-600">chars</span>
+                        <span id="full-note-char-count" class="focus-notes-charcount">0</span>
+                        <span class="focus-notes-charcount"> chars</span>
                     </div>
                 </div>
             </div>
@@ -354,6 +354,94 @@
                     <a id="focus-link-url" href="#" target="_blank" class="text-blue-400 hover:text-blue-300 text-xs truncate block">Abrir en nueva pestana →</a>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ READING FOCUS MODAL ============ -->
+<div id="reading-focus-modal" class="fixed inset-0 z-[60] hidden">
+    <div class="reading-focus-overlay" onclick="closeReadingFocus()"></div>
+    <div class="reading-focus-container">
+        <!-- Header -->
+        <div class="rf-header">
+            <div class="rf-header-left">
+                <span id="rf-lib-icon" class="text-xl">📚</span>
+                <div>
+                    <span id="rf-lib-name" class="rf-breadcrumb"></span>
+                    <span class="rf-breadcrumb-sep">›</span>
+                    <span id="rf-cat-name" class="rf-breadcrumb"></span>
+                </div>
+            </div>
+            <button class="rf-close-btn" onclick="closeReadingFocus()" title="Close (ESC)">✕</button>
+        </div>
+
+        <!-- Link Info -->
+        <div class="rf-link-info">
+            <img id="rf-favicon" class="rf-favicon" src="" onerror="this.src='https://www.google.com/s2/favicons?sz=64&domain=example.com'">
+            <div class="rf-link-meta">
+                <a id="rf-link-title" href="#" target="_blank" class="rf-title"></a>
+                <p id="rf-link-desc" class="rf-description"></p>
+                <a id="rf-link-url" href="#" target="_blank" class="rf-url"></a>
+            </div>
+        </div>
+
+        <!-- Status Checkboxes -->
+        <div class="rf-status-bar">
+            <label class="rf-status-item">
+                <input type="checkbox" id="rf-reading" onchange="updateReadingFocusStatus()">
+                <span class="rf-status-label">📖 Reading</span>
+            </label>
+            <label class="rf-status-item">
+                <input type="checkbox" id="rf-read" onchange="updateReadingFocusStatus()">
+                <span class="rf-status-label">✅ Read</span>
+            </label>
+            <label class="rf-status-item">
+                <input type="checkbox" id="rf-understood" onchange="updateReadingFocusStatus()">
+                <span class="rf-status-label">🧠 Understood</span>
+            </label>
+            <label class="rf-status-item">
+                <input type="checkbox" id="rf-applied" onchange="updateReadingFocusStatus()">
+                <span class="rf-status-label">⭐ Applied</span>
+            </label>
+        </div>
+
+        <!-- Rich Text Notes (main content area) -->
+        <div class="rf-notes-container">
+            <div class="rf-notes-toolbar">
+                <button type="button" class="fn-tb" onclick="readingNoteCmd('bold')" title="Bold"><b>B</b></button>
+                <button type="button" class="fn-tb" onclick="readingNoteCmd('italic')" title="Italic"><i>I</i></button>
+                <button type="button" class="fn-tb" onclick="readingNoteCmd('underline')" title="Underline"><u>U</u></button>
+                <button type="button" class="fn-tb" onclick="readingNoteCmd('strikeThrough')" title="Strikethrough"><s>S</s></button>
+                <span class="fn-sep"></span>
+                <button type="button" class="fn-tb" onclick="readingNoteCmd('insertUnorderedList')" title="Bullet list">•≡</button>
+                <button type="button" class="fn-tb" onclick="readingNoteCmd('insertOrderedList')" title="Numbered list">1.</button>
+                <span class="fn-sep"></span>
+                <button type="button" class="fn-tb" onclick="readingNoteCmd('justifyLeft')" title="Left">⫷</button>
+                <button type="button" class="fn-tb" onclick="readingNoteCmd('justifyCenter')" title="Center">⫿</button>
+                <button type="button" class="fn-tb" onclick="readingNoteCmd('justifyRight')" title="Right">⫸</button>
+                <span class="fn-sep"></span>
+                <span class="fn-color-wrap">
+                    <button type="button" class="fn-tb fn-color-btn" title="Text color">
+                        <span class="fn-color-letter">A</span>
+                        <span class="fn-color-bar" id="rf-color-indicator" style="background:#e53e3e;"></span>
+                    </button>
+                    <input type="color" class="fn-color-input" value="#e53e3e" onchange="readingNoteFontColor(this.value)" title="Choose text color">
+                </span>
+                <button type="button" class="fn-tb" onclick="readingNoteCmd('removeFormat')" title="Clear formatting">✕</button>
+                <span class="rf-save-status ml-auto" id="rf-save-status"></span>
+            </div>
+            <div id="rf-note-editor"
+                 class="rf-note-editable"
+                 contenteditable="true"
+                 data-placeholder="Write your notes about this resource..."
+                 oninput="debounceSaveReadingNote()"></div>
+        </div>
+
+        <!-- Open Website Button -->
+        <div class="rf-footer">
+            <a id="rf-open-btn" href="#" target="_blank" class="rf-open-website-btn">
+                🌐 Open Website in New Tab
+            </a>
         </div>
     </div>
 </div>
