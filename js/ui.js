@@ -24,12 +24,18 @@ function toggleTheme() {
     const currentTheme = document.documentElement.getAttribute('data-theme');
     const newTheme = currentTheme === 'light' ? 'dark' : 'light';
 
-    document.documentElement.setAttribute('data-theme', newTheme === 'light' ? 'light' : '');
-    if (newTheme === 'dark') {
+    if (newTheme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+    } else {
         document.documentElement.removeAttribute('data-theme');
     }
 
+    // Single source of truth: localStorage key
     localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    // Keep appSettings in sync
+    appSettings.theme = newTheme;
+    saveAppSettings();
+
     updateThemeToggleIcon(newTheme);
 
     // Re-apply custom colors for the new theme
@@ -52,7 +58,8 @@ function updateThemeToggleIcon(theme) {
 
 function loadTheme() {
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-    let theme = savedTheme || 'dark';
+    // Only 'light' is light — everything else (null, 'dark', 'auto', etc.) defaults to dark
+    const theme = (savedTheme === 'light') ? 'light' : 'dark';
 
     if (theme === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
@@ -60,6 +67,8 @@ function loadTheme() {
         document.documentElement.removeAttribute('data-theme');
     }
 
+    // Ensure stored value is clean
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
     updateThemeToggleIcon(theme);
 }
 
@@ -2420,37 +2429,32 @@ function renderSettingsContent() {
 }
 
 function setThemeMode(mode) {
-    appSettings.theme = mode;
+    // Only accept 'dark' or 'light'
+    const theme = (mode === 'light') ? 'light' : 'dark';
+    appSettings.theme = theme;
     saveAppSettings();
 
     // Update theme buttons
     document.querySelectorAll('.settings-theme-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.theme === mode);
+        btn.classList.toggle('active', btn.dataset.theme === theme);
     });
 
     // Apply theme
-    applyTheme(mode);
+    applyTheme(theme);
 }
 
 function applyTheme(mode) {
-    if (mode === 'auto') {
-        // Check system preference
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const theme = prefersDark ? 'dark' : 'light';
-        if (theme === 'light') {
-            document.documentElement.setAttribute('data-theme', 'light');
-        } else {
-            document.documentElement.removeAttribute('data-theme');
-        }
-        localStorage.setItem(THEME_STORAGE_KEY, 'auto');
-    } else if (mode === 'light') {
+    // Only 'dark' or 'light' — no 'auto', no system preference
+    const theme = (mode === 'light') ? 'light' : 'dark';
+
+    if (theme === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
-        localStorage.setItem(THEME_STORAGE_KEY, 'light');
     } else {
         document.documentElement.removeAttribute('data-theme');
-        localStorage.setItem(THEME_STORAGE_KEY, 'dark');
     }
-    updateThemeToggleIcon(mode === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : mode);
+
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    updateThemeToggleIcon(theme);
 
     // Re-apply custom colors for the new theme
     if (typeof applyCustomColors === 'function') applyCustomColors();
@@ -2556,10 +2560,11 @@ document.addEventListener('DOMContentLoaded', () => {
         saveAppSettings();
     }
 
-    // Apply saved theme
-    if (appSettings.theme) {
-        applyTheme(appSettings.theme);
-    }
+    // Sync appSettings.theme with the single source of truth (THEME_STORAGE_KEY)
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    const resolvedTheme = (savedTheme === 'light') ? 'light' : 'dark';
+    appSettings.theme = resolvedTheme;
+    applyTheme(resolvedTheme);
 });
 
 // ================= ANIMATION TRIGGERS =================

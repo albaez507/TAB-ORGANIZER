@@ -72,7 +72,7 @@ const SETTINGS_STORAGE_KEY = 'tab-organizer-settings';
 const QUICK_ACCESS_KEY = 'tab-organizer-quick-access';
 
 let appSettings = {
-    theme: 'auto', // 'dark', 'light', 'auto'
+    theme: 'dark', // 'dark' or 'light' only
     quickAccessLibraries: [] // Array of libKeys (max 4)
 };
 
@@ -81,6 +81,10 @@ function loadAppSettings() {
         const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
         if (saved) {
             appSettings = { ...appSettings, ...JSON.parse(saved) };
+        }
+        // Migrate 'auto' theme to 'dark' (auto is removed)
+        if (appSettings.theme === 'auto' || !appSettings.theme) {
+            appSettings.theme = 'dark';
         }
         const quickAccess = localStorage.getItem(QUICK_ACCESS_KEY);
         if (quickAccess) {

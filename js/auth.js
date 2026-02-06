@@ -160,11 +160,14 @@ async function logout() {
     currentUser = null;
     DATA = { libraries: {}, currentLibrary: null };
 
+    // Preserve theme preference before clearing
+    const savedTheme = localStorage.getItem('tab-organizer-theme') || 'dark';
+
     // Limpiar localStorage completamente para evitar datos residuales
     localStorage.clear();
 
-    // Default to dark mode after logout
-    localStorage.setItem('tab-organizer-theme', 'dark');
+    // Restore theme preference (persists across logout/login)
+    localStorage.setItem('tab-organizer-theme', savedTheme);
 
     // Recargar pagina para estado limpio
     location.reload();
