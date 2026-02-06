@@ -52,13 +52,7 @@ function updateThemeToggleIcon(theme) {
 
 function loadTheme() {
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-    let theme = 'dark'; // default
-
-    if (savedTheme) {
-        theme = savedTheme;
-    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-        theme = 'light';
-    }
+    let theme = savedTheme || 'dark';
 
     if (theme === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');

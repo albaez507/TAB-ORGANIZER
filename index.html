@@ -17,8 +17,6 @@
     const savedTheme = localStorage.getItem('tab-organizer-theme');
     if (savedTheme === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
-    } else if (!savedTheme && window.matchMedia('(prefers-color-scheme: light)').matches) {
-        document.documentElement.setAttribute('data-theme', 'light');
     }
 })();
 </script>
