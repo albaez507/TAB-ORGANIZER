@@ -362,52 +362,60 @@
 <div id="reading-focus-modal" class="fixed inset-0 z-[60] hidden">
     <div class="reading-focus-overlay" onclick="closeReadingFocus()"></div>
     <div class="reading-focus-container">
-        <!-- Header -->
-        <div class="rf-header">
-            <div class="rf-header-left">
-                <span id="rf-lib-icon" class="text-xl">📚</span>
-                <div>
-                    <span id="rf-lib-name" class="rf-breadcrumb"></span>
-                    <span class="rf-breadcrumb-sep">›</span>
-                    <span id="rf-cat-name" class="rf-breadcrumb"></span>
+
+        <!-- Top Bar: breadcrumb + close -->
+        <div class="rf-topbar">
+            <div class="rf-breadcrumbs">
+                <span id="rf-lib-icon" class="text-lg">📚</span>
+                <span id="rf-lib-name" class="rf-crumb"></span>
+                <span class="rf-crumb-sep">›</span>
+                <span id="rf-cat-name" class="rf-crumb"></span>
+            </div>
+            <button class="rf-close" onclick="closeReadingFocus()" title="Close (ESC)">✕</button>
+        </div>
+
+        <!-- Hero: big favicon + title + url + open button -->
+        <div class="rf-hero">
+            <img id="rf-favicon" class="rf-hero-icon" src="">
+            <div class="rf-hero-info">
+                <a id="rf-link-title" href="#" target="_blank" class="rf-hero-title"></a>
+                <p id="rf-link-desc" class="rf-hero-desc"></p>
+                <div class="rf-hero-actions">
+                    <a id="rf-open-btn" href="#" target="_blank" class="rf-visit-btn">🌐 Visit Website</a>
+                    <a id="rf-link-url" href="#" target="_blank" class="rf-hero-url"></a>
                 </div>
             </div>
-            <button class="rf-close-btn" onclick="closeReadingFocus()" title="Close (ESC)">✕</button>
         </div>
 
-        <!-- Link Info -->
-        <div class="rf-link-info">
-            <img id="rf-favicon" class="rf-favicon" src="" onerror="this.src='https://www.google.com/s2/favicons?sz=64&domain=example.com'">
-            <div class="rf-link-meta">
-                <a id="rf-link-title" href="#" target="_blank" class="rf-title"></a>
-                <p id="rf-link-desc" class="rf-description"></p>
-                <a id="rf-link-url" href="#" target="_blank" class="rf-url"></a>
-            </div>
-        </div>
-
-        <!-- Status Checkboxes -->
-        <div class="rf-status-bar">
-            <label class="rf-status-item">
+        <!-- Status row: horizontal pills -->
+        <div class="rf-status-row">
+            <label class="rf-pill">
                 <input type="checkbox" id="rf-reading" onchange="updateReadingFocusStatus()">
-                <span class="rf-status-label">📖 Reading</span>
+                <span>📖 Reading</span>
             </label>
-            <label class="rf-status-item">
+            <label class="rf-pill">
                 <input type="checkbox" id="rf-read" onchange="updateReadingFocusStatus()">
-                <span class="rf-status-label">✅ Read</span>
+                <span>✅ Read</span>
             </label>
-            <label class="rf-status-item">
+            <label class="rf-pill">
                 <input type="checkbox" id="rf-understood" onchange="updateReadingFocusStatus()">
-                <span class="rf-status-label">🧠 Understood</span>
+                <span>🧠 Understood</span>
             </label>
-            <label class="rf-status-item">
+            <label class="rf-pill">
                 <input type="checkbox" id="rf-applied" onchange="updateReadingFocusStatus()">
-                <span class="rf-status-label">⭐ Applied</span>
+                <span>⭐ Applied</span>
             </label>
         </div>
 
-        <!-- Rich Text Notes (main content area) -->
-        <div class="rf-notes-container">
-            <div class="rf-notes-toolbar">
+        <!-- Divider with label -->
+        <div class="rf-notes-divider">
+            <span class="rf-notes-divider-text">My Notes</span>
+            <span id="rf-save-status" class="rf-notes-divider-status"></span>
+        </div>
+
+        <!-- Notes: toolbar + white editor -->
+        <div class="rf-notes-section">
+            <div class="rf-toolbar">
                 <button type="button" class="fn-tb" onclick="readingNoteCmd('bold')" title="Bold"><b>B</b></button>
                 <button type="button" class="fn-tb" onclick="readingNoteCmd('italic')" title="Italic"><i>I</i></button>
                 <button type="button" class="fn-tb" onclick="readingNoteCmd('underline')" title="Underline"><u>U</u></button>
@@ -425,24 +433,17 @@
                         <span class="fn-color-letter">A</span>
                         <span class="fn-color-bar" id="rf-color-indicator" style="background:#e53e3e;"></span>
                     </button>
-                    <input type="color" class="fn-color-input" value="#e53e3e" onchange="readingNoteFontColor(this.value)" title="Choose text color">
+                    <input type="color" class="fn-color-input" value="#e53e3e" onchange="readingNoteFontColor(this.value)">
                 </span>
                 <button type="button" class="fn-tb" onclick="readingNoteCmd('removeFormat')" title="Clear formatting">✕</button>
-                <span class="rf-save-status ml-auto" id="rf-save-status"></span>
             </div>
             <div id="rf-note-editor"
-                 class="rf-note-editable"
+                 class="rf-editor"
                  contenteditable="true"
-                 data-placeholder="Write your notes about this resource..."
+                 data-placeholder="Start taking notes... or just track your progress above."
                  oninput="debounceSaveReadingNote()"></div>
         </div>
 
-        <!-- Open Website Button -->
-        <div class="rf-footer">
-            <a id="rf-open-btn" href="#" target="_blank" class="rf-open-website-btn">
-                🌐 Open Website in New Tab
-            </a>
-        </div>
     </div>
 </div>
 

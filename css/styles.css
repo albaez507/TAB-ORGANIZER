@@ -4586,12 +4586,28 @@ button[onclick*="togglePreview"]:hover {
 /* Lists inside editor */
 .focus-note-editable ul,
 .focus-note-editable ol {
-    padding-left: 20px;
-    margin: 4px 0;
+    padding-left: 22px;
+    margin: 6px 0;
+}
+
+.focus-note-editable ul {
+    list-style-type: disc;
+}
+
+.focus-note-editable ol {
+    list-style-type: decimal;
+}
+
+.focus-note-editable ul ul {
+    list-style-type: circle;
+}
+
+.focus-note-editable ul ul ul {
+    list-style-type: square;
 }
 
 .focus-note-editable li {
-    margin: 2px 0;
+    margin: 3px 0;
 }
 
 .focus-note-editable b,
@@ -4652,7 +4668,7 @@ button[onclick*="togglePreview"]:hover {
 /* Editor stays white/black in both themes — no light mode override needed */
 
 /* ========================================
-   READING FOCUS MODE
+   READING FOCUS MODE — Study Card Layout
    ======================================== */
 
 #reading-focus-modal {
@@ -4668,319 +4684,415 @@ button[onclick*="togglePreview"]:hover {
 .reading-focus-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
 }
 
 .reading-focus-container {
     position: relative;
     z-index: 1;
-    width: 90%;
-    max-width: 700px;
-    max-height: 90vh;
+    width: 92%;
+    max-width: 640px;
+    max-height: 88vh;
     display: flex;
     flex-direction: column;
-    background: #1a1f2e;
+    background: #181c28;
     border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
     overflow: hidden;
 }
 
-/* Header */
-.rf-header {
+/* Top bar */
+.rf-topbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 14px 20px;
 }
 
-.rf-header-left {
+.rf-breadcrumbs {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
-.rf-breadcrumb {
+.rf-crumb {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.4);
 }
 
-.rf-breadcrumb-sep {
+.rf-crumb-sep {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.2);
-    margin: 0 4px;
+    color: rgba(255, 255, 255, 0.15);
 }
 
-.rf-close-btn {
-    width: 32px;
-    height: 32px;
+.rf-close {
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
+    background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 16px;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 15px;
     cursor: pointer;
-    transition: all 150ms ease;
+    transition: all 150ms;
 }
 
-.rf-close-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+.rf-close:hover {
+    background: rgba(255, 255, 255, 0.08);
     color: white;
 }
 
-/* Link Info */
-.rf-link-info {
+/* Hero section — the protagonist */
+.rf-hero {
     display: flex;
     align-items: flex-start;
-    gap: 14px;
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    gap: 16px;
+    padding: 4px 24px 20px;
 }
 
-.rf-favicon {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.05);
+.rf-hero-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
     object-fit: contain;
-    padding: 4px;
+    padding: 6px;
     flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.rf-link-meta {
+.rf-hero-info {
     flex: 1;
     min-width: 0;
 }
 
-.rf-title {
-    font-size: 16px;
+.rf-hero-title {
+    font-size: 18px;
     font-weight: 700;
-    color: #60a5fa;
+    color: white;
     text-decoration: none;
     display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.3;
 }
 
-.rf-title:hover {
-    text-decoration: underline;
+.rf-hero-title:hover {
+    color: #93c5fd;
 }
 
-.rf-description {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.45);
-    margin-top: 2px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.rf-url {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.25);
-    text-decoration: none;
+.rf-hero-desc {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.4);
     margin-top: 4px;
-    display: block;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
-.rf-url:hover {
+.rf-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.rf-visit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    background: rgba(96, 165, 250, 0.12);
+    color: #93c5fd;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 150ms;
+}
+
+.rf-visit-btn:hover {
+    background: rgba(96, 165, 250, 0.22);
+    color: white;
+}
+
+.rf-hero-url {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.2);
+    text-decoration: none;
+}
+
+.rf-hero-url:hover {
     color: rgba(255, 255, 255, 0.5);
 }
 
-/* Status Bar */
-.rf-status-bar {
+/* Status pills */
+.rf-status-row {
     display: flex;
-    gap: 12px;
-    padding: 12px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    gap: 8px;
+    padding: 0 24px 16px;
     flex-wrap: wrap;
 }
 
-.rf-status-item {
+.rf-pill {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     cursor: pointer;
+    transition: all 150ms;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
 }
 
-.rf-status-item input[type="checkbox"] {
-    width: 14px;
-    height: 14px;
+.rf-pill:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.rf-pill:has(input:checked) {
+    background: rgba(96, 165, 250, 0.1);
+    border-color: rgba(96, 165, 250, 0.25);
+    color: #93c5fd;
+}
+
+.rf-pill input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
     accent-color: #60a5fa;
 }
 
-.rf-status-label {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.6);
+/* Notes divider */
+.rf-notes-divider {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    margin-bottom: 0;
 }
 
-/* Notes container (reuses .fn-tb, .fn-sep, .fn-color-* from Task 1) */
-.rf-notes-container {
+.rf-notes-divider-text {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.rf-notes-divider-status {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+/* Notes section */
+.rf-notes-section {
     flex: 1;
     display: flex;
     flex-direction: column;
     min-height: 0;
+    margin: 8px 16px 16px;
+    border-radius: 12px;
     overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.rf-notes-toolbar {
+.rf-toolbar {
     display: flex;
     align-items: center;
     gap: 2px;
-    padding: 8px 16px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     flex-wrap: wrap;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.rf-save-status {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
-}
-
-/* Editor: white bg, black text — same as video focus */
-.rf-note-editable {
+/* Editor: white bg, black text */
+.rf-editor {
     flex: 1;
-    min-height: 200px;
+    min-height: 140px;
     overflow-y: auto;
-    padding: 16px 20px;
+    padding: 14px 16px;
     font-size: 14px;
-    line-height: 1.65;
+    line-height: 1.7;
     word-wrap: break-word;
     outline: none;
     background: #ffffff;
     color: #1a1a1a;
 }
 
-.rf-note-editable:focus {
-    color: #000000;
+.rf-editor:focus {
+    color: #000;
 }
 
-.rf-note-editable:empty::before {
+.rf-editor:empty::before {
     content: attr(data-placeholder);
-    color: #999;
+    color: #aaa;
     pointer-events: none;
     font-style: italic;
 }
 
-.rf-note-editable ul,
-.rf-note-editable ol {
-    padding-left: 20px;
-    margin: 4px 0;
-}
-
-.rf-note-editable li {
-    margin: 2px 0;
-}
-
-.rf-note-editable b,
-.rf-note-editable strong {
+.rf-editor b,
+.rf-editor strong {
     font-weight: 700;
     color: #000;
 }
 
-/* Footer */
-.rf-footer {
-    padding: 12px 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    text-align: center;
+.rf-editor ul,
+.rf-editor ol {
+    padding-left: 22px;
+    margin: 6px 0;
 }
 
-.rf-open-website-btn {
-    display: inline-block;
-    padding: 8px 20px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 150ms ease;
+.rf-editor ul {
+    list-style-type: disc;
 }
 
-.rf-open-website-btn:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: white;
+.rf-editor ol {
+    list-style-type: decimal;
 }
 
-/* ---- Light mode ---- */
+.rf-editor ul ul {
+    list-style-type: circle;
+}
+
+.rf-editor li {
+    margin: 3px 0;
+}
+
+/* ---- Light Mode ---- */
 [data-theme="light"] .reading-focus-overlay {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.25);
 }
 
 [data-theme="light"] .reading-focus-container {
     background: var(--bg-primary, #F5F2EC);
     border-color: var(--border-subtle);
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.12);
 }
 
-[data-theme="light"] .rf-header {
-    border-bottom-color: var(--border-subtle);
-}
-
-[data-theme="light"] .rf-breadcrumb {
+[data-theme="light"] .rf-crumb {
     color: var(--text-muted);
 }
 
-[data-theme="light"] .rf-close-btn {
-    background: var(--bg-hover);
-    color: var(--text-secondary);
+[data-theme="light"] .rf-close {
+    color: var(--text-muted);
 }
 
-[data-theme="light"] .rf-close-btn:hover {
-    background: var(--border-medium);
+[data-theme="light"] .rf-close:hover {
+    background: var(--bg-hover);
     color: var(--text-primary);
 }
 
-[data-theme="light"] .rf-link-info {
-    border-bottom-color: var(--border-subtle);
+[data-theme="light"] .rf-hero-title {
+    color: var(--text-primary);
 }
 
-[data-theme="light"] .rf-title {
+[data-theme="light"] .rf-hero-title:hover {
     color: #2563eb;
 }
 
-[data-theme="light"] .rf-description {
+[data-theme="light"] .rf-hero-desc {
     color: var(--text-muted);
 }
 
-[data-theme="light"] .rf-url {
+[data-theme="light"] .rf-visit-btn {
+    background: rgba(37, 99, 235, 0.08);
+    color: #2563eb;
+}
+
+[data-theme="light"] .rf-visit-btn:hover {
+    background: rgba(37, 99, 235, 0.15);
+    color: #1d4ed8;
+}
+
+[data-theme="light"] .rf-hero-url {
     color: var(--text-muted);
 }
 
-[data-theme="light"] .rf-status-bar {
-    border-bottom-color: var(--border-subtle);
-}
-
-[data-theme="light"] .rf-status-label {
+[data-theme="light"] .rf-pill {
+    background: var(--bg-card);
+    border-color: var(--border-subtle);
     color: var(--text-secondary);
 }
 
-[data-theme="light"] .rf-notes-toolbar {
-    border-bottom-color: var(--border-subtle);
-}
-
-[data-theme="light"] .rf-save-status {
-    color: var(--text-muted);
-}
-
-[data-theme="light"] .rf-footer {
-    border-top-color: var(--border-subtle);
-}
-
-[data-theme="light"] .rf-open-website-btn {
+[data-theme="light"] .rf-pill:hover {
     background: var(--bg-hover);
-    color: var(--text-secondary);
+    border-color: var(--border-medium);
 }
 
-[data-theme="light"] .rf-open-website-btn:hover {
-    background: var(--border-medium);
-    color: var(--text-primary);
+[data-theme="light"] .rf-pill:has(input:checked) {
+    background: rgba(37, 99, 235, 0.06);
+    border-color: rgba(37, 99, 235, 0.2);
+    color: #2563eb;
 }
 
-/* Editor stays white/black in both themes */
+[data-theme="light"] .rf-notes-divider-text {
+    color: var(--text-muted);
+}
+
+[data-theme="light"] .rf-notes-divider-status {
+    color: var(--text-muted);
+}
+
+[data-theme="light"] .rf-notes-section {
+    border-color: var(--border-subtle);
+}
+
+[data-theme="light"] .rf-toolbar {
+    background: var(--bg-secondary);
+    border-bottom-color: var(--border-subtle);
+}
+
+/* .rf-editor stays white in both themes */
+
+/* ========================================
+   GLOBAL: Rich Text Editor List Styles
+   Applies to all contenteditable editors
+   ======================================== */
+
+.focus-note-editable ul,
+.rf-editor ul,
+.category-note-editable ul {
+    list-style-type: disc;
+    padding-left: 22px;
+    margin: 6px 0;
+}
+
+.focus-note-editable ol,
+.rf-editor ol,
+.category-note-editable ol {
+    list-style-type: decimal;
+    padding-left: 22px;
+    margin: 6px 0;
+}
+
+.focus-note-editable ul ul,
+.rf-editor ul ul,
+.category-note-editable ul ul {
+    list-style-type: circle;
+}
+
+.focus-note-editable ul ul ul,
+.rf-editor ul ul ul,
+.category-note-editable ul ul ul {
+    list-style-type: square;
+}
+
+.focus-note-editable li,
+.rf-editor li,
+.category-note-editable li {
+    margin: 3px 0;
+}
+
+/* Tailwind reset override — ensure bullets always show */
+[contenteditable="true"] ul { list-style-type: disc !important; }
+[contenteditable="true"] ol { list-style-type: decimal !important; }
+[contenteditable="true"] ul, [contenteditable="true"] ol { padding-left: 22px !important; }

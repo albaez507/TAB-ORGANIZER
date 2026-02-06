@@ -2055,6 +2055,7 @@ function renderLinks(libKey, catKey) {
     if (layout === 'compact') {
         return filteredLinks.map(({ link: l, index: i, matches }) => {
             const hiddenClass = !matches ? 'search-hidden' : '';
+            const embed = getEmbedInfo(l.url);
             if (!l.status) l.status = { watching: false, watched: false, understood: false, applied: false };
 
             return `
@@ -2063,7 +2064,7 @@ function renderLinks(libKey, catKey) {
                 <div class="compact-link-info">
                     <a href="${l.url}" target="_blank" class="compact-link-title" onclick="event.stopPropagation()">${l.title || 'Sin titulo'}</a>
                 </div>
-                ${renderStatusIndicator(libKey, catKey, i, l.status)}
+                ${embed ? renderStatusIndicator(libKey, catKey, i, l.status) : ''}
                 <div class="compact-link-actions">
                     <button class="text-blue-400/60 hover:text-blue-400 transition text-sm" onclick="editLink('${libKey}', '${catKey}', ${i})" title="Editar">✏️</button>
                     <button class="text-red-500/40 hover:text-red-500 transition text-sm" onclick="deleteLinkAnimated('${libKey}', '${catKey}', ${i}, this)" title="Eliminar">🗑️</button>
@@ -2088,7 +2089,7 @@ function renderLinks(libKey, catKey) {
                         <a href="${l.url}" target="_blank" class="compact-link-title" onclick="event.stopPropagation()">${l.title || 'Sin titulo'}</a>
                         <p class="text-[10px] text-slate-500 truncate">${l.description || ''}</p>
                     </div>
-                    ${renderStatusIndicator(libKey, catKey, i, l.status)}
+                    ${embed ? renderStatusIndicator(libKey, catKey, i, l.status) : ''}
                     <div class="compact-link-actions" style="opacity: 1;">
                         <button class="text-blue-400/60 hover:text-blue-400 transition text-sm" onclick="event.stopPropagation(); editLink('${libKey}', '${catKey}', ${i})" title="Editar">✏️</button>
                         <button class="text-red-500/40 hover:text-red-500 transition text-sm" onclick="event.stopPropagation(); deleteLinkAnimated('${libKey}', '${catKey}', ${i}, this)" title="Eliminar">🗑️</button>
@@ -2105,7 +2106,7 @@ function renderLinks(libKey, catKey) {
                         ` : `
                             <button class="mt-3 px-4 py-2 rounded-lg bg-emerald-500/20 text-xs font-bold text-emerald-400 hover:bg-emerald-500/30 transition" onclick="openReadingFocus('${libKey}', '${catKey}', ${i})">📖 Reading Focus</button>
                         `}
-                        ${renderExpandableNote(libKey, catKey, i, l)}
+                        ${embed ? renderExpandableNote(libKey, catKey, i, l) : ''}
                     </div>
                 </div>
             </div>`;
@@ -2149,10 +2150,9 @@ function renderLinks(libKey, catKey) {
                         </div>
                         <p class="text-[10px] text-slate-500 truncate mt-0.5">${l.description || 'Sin detalles'}</p>
 
-                        <!-- Status Indicator with Hover -->
+                        <!-- Status Indicator (video links only) -->
                         <div class="flex items-center gap-3 mt-2">
-                            ${renderStatusIndicator(libKey, catKey, i, l.status)}
-                            ${l.quickNote ? `<span class="text-[10px] text-slate-400 italic truncate">📝 ${l.quickNote}</span>` : ''}
+                            ${embed ? renderStatusIndicator(libKey, catKey, i, l.status) : ''}
                         </div>
                     </div>
                 </div>
@@ -2171,7 +2171,6 @@ function renderLinks(libKey, catKey) {
                 <div class="flex gap-2">
                     <button class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-[9px] font-bold text-emerald-400 uppercase hover:bg-emerald-500/30 transition flex-1" onclick="openReadingFocus('${libKey}', '${catKey}', ${i})">📖 Reading Focus</button>
                 </div>
-                ${renderExpandableNote(libKey, catKey, i, l)}
             `}
         </div>`;
     }).join('');
