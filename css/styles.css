@@ -1802,7 +1802,7 @@ input:checked + .slider:before { transform: translateX(14px); }
 .ultra-focus-overlay {
     position: fixed;
     inset: 0;
-    background: radial-gradient(circle at top center, #1e293b, #0f172a);
+    background: radial-gradient(circle at top left, #1e293b, #0f172a);
     z-index: 45;
     opacity: 0;
     visibility: hidden;
@@ -2100,7 +2100,8 @@ input:checked + .slider:before { transform: translateX(14px); }
 }
 
 [data-theme="light"] .ultra-focus-overlay {
-    background: linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%);
+    background: var(--bg-primary, #F5F2EC);
+    color: var(--text-primary);
 }
 
 [data-theme="light"] .ultra-focus-icon-container {
@@ -2109,22 +2110,30 @@ input:checked + .slider:before { transform: translateX(14px); }
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-[data-theme="light"] .ultra-focus-title {
-    color: #0f172a;
+[data-theme="light"] #ultra-focus-icon {
+    filter: none;
 }
 
+[data-theme="light"] #ultra-focus-title,
+[data-theme="light"] .ultra-focus-title {
+    color: var(--text-primary);
+}
+
+[data-theme="light"] #ultra-focus-description,
 [data-theme="light"] .ultra-focus-description {
-    color: #475569;
+    color: var(--text-secondary);
 }
 
 /* === ACCORDION LIGHT MODE === */
 [data-theme="light"] .uf-accordion-header {
-    background: rgba(255, 255, 255, 0.8);
-    border-color: rgba(0, 0, 0, 0.08);
+    background: var(--bg-card);
+    border-color: var(--border-subtle);
+    color: var(--text-primary);
 }
 
 [data-theme="light"] .uf-accordion-header:hover {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--bg-hover);
+    border-color: var(--border-medium);
 }
 
 [data-theme="light"] .uf-accordion-header.expanded {
@@ -2133,50 +2142,88 @@ input:checked + .slider:before { transform: translateX(14px); }
 }
 
 [data-theme="light"] .uf-accordion-arrow {
-    color: #64748b;
+    color: var(--text-muted);
 }
 
-[data-theme="light"] .uf-accordion-name {
-    color: #0f172a;
+[data-theme="light"] .uf-accordion-name,
+[data-theme="light"] .uf-category-name {
+    color: var(--text-primary);
 }
 
 [data-theme="light"] .uf-accordion-line {
     background: rgba(0, 0, 0, 0.1);
 }
 
-[data-theme="light"] .uf-accordion-count {
-    color: #64748b;
+[data-theme="light"] .uf-accordion-count,
+[data-theme="light"] .uf-category-count {
+    color: var(--text-muted);
+}
+
+[data-theme="light"] .uf-accordion-content {
+    background: var(--bg-card);
+    border-color: var(--border-subtle);
 }
 
 [data-theme="light"] .uf-link-card {
-    background: rgba(255, 255, 255, 0.8);
-    border-color: rgba(0, 0, 0, 0.08);
+    background: var(--bg-card);
+    border-color: var(--border-subtle);
 }
 
 [data-theme="light"] .uf-link-card:hover {
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+    background: var(--bg-hover);
+    border-color: var(--border-medium);
 }
 
 [data-theme="light"] .uf-link-title {
-    color: #2563eb;
+    color: var(--text-primary);
 }
 
 [data-theme="light"] .uf-link-desc {
-    color: #64748b;
+    color: var(--text-secondary);
 }
 
 [data-theme="light"] .uf-empty-message {
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 [data-theme="light"] .ultra-focus-exit-hint {
     background: rgba(255, 255, 255, 0.8);
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 [data-theme="light"] .ultra-focus-exit-hint kbd {
     background: rgba(0, 0, 0, 0.08);
+}
+
+/* View toggle in light mode */
+[data-theme="light"] .uf-view-toggle-btn {
+    background: var(--bg-card);
+    border-color: var(--border-subtle);
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] .uf-view-toggle-btn.active,
+[data-theme="light"] .uf-view-toggle-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-medium);
+    color: var(--text-primary);
+}
+
+/* Grid+list view light mode */
+[data-theme="light"] .uf-grid-category-card {
+    background: var(--bg-card);
+    border-color: var(--border-subtle);
+}
+
+[data-theme="light"] .uf-grid-category-card:hover,
+[data-theme="light"] .uf-grid-category-card.selected {
+    background: var(--bg-hover);
+    border-color: var(--border-medium);
+}
+
+[data-theme="light"] .uf-list-panel {
+    background: var(--bg-card);
+    border-color: var(--border-subtle);
 }
 
 /* === RESPONSIVE === */

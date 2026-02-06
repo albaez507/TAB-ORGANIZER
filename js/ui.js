@@ -31,6 +31,10 @@ function toggleTheme() {
 
     localStorage.setItem(THEME_STORAGE_KEY, newTheme);
     updateThemeToggleIcon(newTheme);
+
+    // Re-apply custom colors for the new theme
+    if (typeof applyCustomColors === 'function') applyCustomColors();
+    if (typeof renderCustomColorGrid === 'function') renderCustomColorGrid();
 }
 
 function updateThemeToggleIcon(theme) {
@@ -230,6 +234,11 @@ const COLOR_PROPERTIES = [
 
 let customColors = {};
 
+function getCurrentThemeKey() {
+    const theme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    return `${currentAccentColor}_${theme}`;
+}
+
 function loadCustomColors() {
     try {
         const saved = localStorage.getItem(CUSTOM_COLORS_KEY);
@@ -243,9 +252,9 @@ function saveCustomColors() {
 }
 
 function setCustomColor(key, value) {
-    const preset = currentAccentColor;
-    if (!customColors[preset]) customColors[preset] = {};
-    customColors[preset][key] = value;
+    const storageKey = getCurrentThemeKey();
+    if (!customColors[storageKey]) customColors[storageKey] = {};
+    customColors[storageKey][key] = value;
     saveCustomColors();
     applyCustomColors();
     // Update swatch next to input
@@ -256,7 +265,8 @@ function setCustomColor(key, value) {
 }
 
 function resetCustomColors() {
-    delete customColors[currentAccentColor];
+    const storageKey = getCurrentThemeKey();
+    delete customColors[storageKey];
     saveCustomColors();
     applyCustomColors();
     renderCustomColorGrid();
@@ -264,7 +274,8 @@ function resetCustomColors() {
 }
 
 function applyCustomColors() {
-    const overrides = customColors[currentAccentColor] || {};
+    const storageKey = getCurrentThemeKey();
+    const overrides = customColors[storageKey] || {};
     const root = document.documentElement;
     COLOR_PROPERTIES.forEach(prop => {
         if (overrides[prop.key]) {
@@ -278,16 +289,26 @@ function applyCustomColors() {
 function renderCustomColorGrid() {
     const container = document.getElementById('custom-color-grid');
     if (!container) return;
-    const overrides = customColors[currentAccentColor] || {};
 
-    const defaultMap = {
+    const storageKey = getCurrentThemeKey();
+    const overrides = customColors[storageKey] || {};
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+
+    const lightDefaults = {
         accent: '#8B7355', noteBg: '#ffffff', noteText: '#1a1a1a',
         cardBorder: '#E8E4DC', sidebarBg: '#EDE9E1', libraryItemBg: '#F5F2EC',
         linkHighlight: '#EDE4D3', mainBg: '#F5F2EC'
     };
+    const darkDefaults = {
+        accent: '#3b82f6', noteBg: '#1e293b', noteText: '#e2e8f0',
+        cardBorder: '#334155', sidebarBg: '#1e293b', libraryItemBg: '#0f172a',
+        linkHighlight: '#1e3a5f', mainBg: '#0f172a'
+    };
+
+    const defaults = isLight ? lightDefaults : darkDefaults;
 
     container.innerHTML = COLOR_PROPERTIES.map(prop => {
-        const val = overrides[prop.key] || defaultMap[prop.key] || '#888888';
+        const val = overrides[prop.key] || defaults[prop.key] || '#888888';
         return `
             <div class="settings-color-row flex items-center justify-between p-2 px-3 rounded-lg bg-white/[0.03] border border-white/5">
                 <span class="text-xs text-slate-400">${prop.label}</span>
@@ -2436,6 +2457,10 @@ function applyTheme(mode) {
         localStorage.setItem(THEME_STORAGE_KEY, 'dark');
     }
     updateThemeToggleIcon(mode === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : mode);
+
+    // Re-apply custom colors for the new theme
+    if (typeof applyCustomColors === 'function') applyCustomColors();
+    if (typeof renderCustomColorGrid === 'function') renderCustomColorGrid();
 }
 
 function renderQuickAccessSettings() {
@@ -2589,13 +2614,11 @@ function toggleSectionDisplay(catKey) {
  * @param {string} libKey - Library key to focus
  */
 function triggerUltraFocusFromSidebar(libKey) {
-    // Check if Ultra Focus is available
-    if (typeof enterUltraFocus === 'function') {
-        enterUltraFocus(libKey);
-    } else if (typeof toggleUltraFocus === 'function') {
+    if (typeof toggleUltraFocus === 'function') {
         toggleUltraFocus(libKey);
+    } else if (typeof enterUltraFocus === 'function') {
+        enterUltraFocus(libKey);
     } else {
-        // Fallback: just select the library
         selectLibrary(libKey);
         showToast('Ultra Focus mode not available');
     }
