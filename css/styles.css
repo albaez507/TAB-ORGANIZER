@@ -4441,3 +4441,160 @@ button[onclick*="togglePreview"]:hover {
 [data-theme="light"] .category-note-compact .category-note-editable:focus {
     color: var(--text-primary);
 }
+
+/* ========================================
+   VIDEO FOCUS MODE - RICH TEXT NOTES
+   ======================================== */
+
+.focus-notes-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+.focus-notes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px 0;
+}
+
+.focus-notes-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-wrap: wrap;
+}
+
+.fn-toolbar-btn {
+    width: 28px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 120ms ease;
+    flex-shrink: 0;
+}
+
+.fn-toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.fn-toolbar-btn:active {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(0.95);
+}
+
+.fn-toolbar-sep {
+    width: 1px;
+    height: 16px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+/* Editable note area */
+.focus-note-editable {
+    flex: 1;
+    min-height: 120px;
+    overflow-y: auto;
+    padding: 12px 14px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.85);
+    outline: none;
+    line-height: 1.65;
+    word-wrap: break-word;
+}
+
+.focus-note-editable:empty::before {
+    content: attr(data-placeholder);
+    color: rgba(255, 255, 255, 0.25);
+    pointer-events: none;
+    font-style: italic;
+}
+
+.focus-note-editable:focus {
+    color: white;
+}
+
+/* Formatting styles inside the editor */
+.focus-note-editable ul,
+.focus-note-editable ol {
+    padding-left: 20px;
+    margin: 4px 0;
+}
+
+.focus-note-editable li {
+    margin: 2px 0;
+}
+
+.focus-note-editable b, .focus-note-editable strong {
+    font-weight: 700;
+    color: white;
+}
+
+.focus-notes-footer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ---- Light mode ---- */
+[data-theme="light"] .focus-notes-container {
+    background: var(--bg-card);
+    border-color: var(--border-subtle);
+}
+
+[data-theme="light"] .focus-notes-toolbar {
+    border-bottom-color: var(--border-subtle);
+}
+
+[data-theme="light"] .fn-toolbar-btn {
+    color: var(--text-muted);
+}
+
+[data-theme="light"] .fn-toolbar-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .fn-toolbar-sep {
+    background: var(--border-subtle);
+}
+
+[data-theme="light"] .focus-note-editable {
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] .focus-note-editable:empty::before {
+    color: var(--text-muted);
+}
+
+[data-theme="light"] .focus-note-editable:focus {
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .focus-note-editable b,
+[data-theme="light"] .focus-note-editable strong {
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .focus-notes-footer {
+    border-top-color: var(--border-subtle);
+}

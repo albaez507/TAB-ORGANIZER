@@ -250,14 +250,56 @@
                     <!-- Video iframe/player inserted here -->
                 </div>
 
-                <!-- Notes Section (below video) -->
-                <div class="mt-4 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Notas completas</p>
-                        <span id="focus-save-status" class="text-[10px] text-slate-500"></span>
+                <!-- Rich Text Notes Section -->
+                <div class="focus-notes-container mt-4">
+                    <div class="focus-notes-header">
+                        <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Notes</span>
+                        <span id="focus-save-status" class="text-xs"></span>
                     </div>
-                    <textarea id="focus-full-note" placeholder="Tus notas completas sobre este video (max 500 caracteres)..." maxlength="500" rows="4" class="w-full quick-note-input p-4 rounded-xl text-white text-sm resize-none" oninput="debounceSaveFullNote()"></textarea>
-                    <p class="text-[10px] text-slate-600 text-right"><span id="full-note-char-count">0</span>/500</p>
+
+                    <!-- Formatting Toolbar -->
+                    <div class="focus-notes-toolbar">
+                        <!-- Text Style -->
+                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('bold')" title="Bold"><b>B</b></button>
+                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('italic')" title="Italic"><i>I</i></button>
+                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('underline')" title="Underline"><u>U</u></button>
+                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('strikeThrough')" title="Strikethrough"><s>S</s></button>
+
+                        <span class="fn-toolbar-sep"></span>
+
+                        <!-- Lists -->
+                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('insertUnorderedList')" title="Bullet list">•≡</button>
+                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('insertOrderedList')" title="Numbered list">1.</button>
+
+                        <span class="fn-toolbar-sep"></span>
+
+                        <!-- Alignment -->
+                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('justifyLeft')" title="Left">⫷</button>
+                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('justifyCenter')" title="Center">⫿</button>
+                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('justifyRight')" title="Right">⫸</button>
+
+                        <span class="fn-toolbar-sep"></span>
+
+                        <!-- Highlight -->
+                        <button type="button" class="fn-toolbar-btn fn-highlight-btn" onclick="focusNoteHighlight()" title="Highlight text">
+                            <span style="background: #fbbf24; color: #000; padding: 0 3px; border-radius: 2px; font-size: 11px;">A</span>
+                        </button>
+
+                        <!-- Clear formatting -->
+                        <button type="button" class="fn-toolbar-btn" onclick="focusNoteCmd('removeFormat')" title="Clear formatting">⊘</button>
+                    </div>
+
+                    <!-- Editable Notes Area -->
+                    <div id="focus-full-note"
+                         class="focus-note-editable"
+                         contenteditable="true"
+                         data-placeholder="Write your notes here... Use the toolbar above for formatting."
+                         oninput="debounceSaveFullNote()"></div>
+
+                    <div class="focus-notes-footer">
+                        <span id="full-note-char-count" class="text-[10px] text-slate-600">0</span>
+                        <span class="text-[10px] text-slate-600">chars</span>
+                    </div>
                 </div>
             </div>
 

@@ -4,6 +4,29 @@
 // Dependencies: data.js, storage.js, links.js, ui.js
 // ========================================
 
+// ================= RICH TEXT NOTE COMMANDS =================
+
+function focusNoteCmd(command) {
+    document.execCommand(command, false, null);
+    // Keep focus on the editor
+    document.getElementById('focus-full-note').focus();
+}
+
+function focusNoteHighlight() {
+    // Toggle yellow highlight on selected text
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const selectedText = range.toString();
+        if (selectedText) {
+            document.execCommand('hiliteColor', false, '#fbbf24');
+        }
+    }
+    document.getElementById('focus-full-note').focus();
+}
+
+// ================= FOCUS MODE =================
+
 function openVideoFocusModal(libKey, catKey, linkIndex, type, src) {
     focusLibrary = libKey;
     focusCategory2 = catKey;
@@ -45,10 +68,10 @@ function loadVideoInFocusMode(libKey, catKey, linkIndex, type, src) {
     document.getElementById('focus-understood').checked = link.status.understood || false;
     document.getElementById('focus-applied').checked = link.status.applied || false;
 
-    // Set full note
+    // Set full note (rich text)
     const fullNoteEl = document.getElementById('focus-full-note');
-    fullNoteEl.value = link.fullNote || '';
-    document.getElementById('full-note-char-count').textContent = (link.fullNote || '').length;
+    fullNoteEl.innerHTML = link.fullNote || '';
+    document.getElementById('full-note-char-count').textContent = fullNoteEl.innerText.length;
     document.getElementById('focus-save-status').textContent = '';
 
     // Set link URL
@@ -132,8 +155,12 @@ function saveCurrentFocusState() {
     link.status.understood = document.getElementById('focus-understood').checked;
     link.status.applied = document.getElementById('focus-applied').checked;
 
-    // Save full note
-    link.fullNote = document.getElementById('focus-full-note').value.substring(0, 500);
+    // Save rich text note
+    const noteEl = document.getElementById('focus-full-note');
+    if (noteEl) {
+        link.fullNote = noteEl.innerHTML;
+        link.quickNote = noteEl.innerText.substring(0, 100);
+    }
 
     save();
 }
@@ -175,8 +202,8 @@ function updateFocusStatus() {
 
 function debounceSaveFullNote() {
     const noteEl = document.getElementById('focus-full-note');
-    document.getElementById('full-note-char-count').textContent = noteEl.value.length;
-    document.getElementById('focus-save-status').textContent = '⏳ Guardando...';
+    document.getElementById('full-note-char-count').textContent = noteEl.innerText.length;
+    document.getElementById('focus-save-status').textContent = '⏳ Saving...';
 
     clearTimeout(fullNoteDebounceTimer);
     fullNoteDebounceTimer = setTimeout(() => {
@@ -185,9 +212,9 @@ function debounceSaveFullNote() {
         const link = DATA.libraries[focusLibrary]?.categories[focusCategory2]?.links[focusLinkIndex];
         if (!link) return;
 
-        link.fullNote = noteEl.value.substring(0, 500);
-        // Also save as quickNote (first 100 chars) for display in cards
-        link.quickNote = noteEl.value.substring(0, 100);
+        link.fullNote = noteEl.innerHTML;
+        // Also save first 100 chars of plain text as quickNote for card preview
+        link.quickNote = noteEl.innerText.substring(0, 100);
         save();
         showFocusSaveIndicator();
     }, 2000);
