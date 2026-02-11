@@ -1788,6 +1788,11 @@ function render() {
     // Update avatar dropdown with user info
     updateAvatarDropdown();
 
+    // Update share button visibility
+    if (typeof updateShareButtonVisibility === 'function') {
+        updateShareButtonVisibility();
+    }
+
     // Trigger library change animation
     triggerLibraryChangeAnimation();
 }

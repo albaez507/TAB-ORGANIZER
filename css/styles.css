@@ -4060,6 +4060,8 @@ input.category-note-input:focus {
     background: var(--bg-hover) !important;
 }
 
+#share-library-btn svg { flex-shrink: 0; }
+
 /* ========================================
    AVATAR & THEME TOGGLE - SAME HEIGHT, ALWAYS VISIBLE
    ======================================== */
