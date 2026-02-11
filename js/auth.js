@@ -10,7 +10,9 @@ async function initAuth() {
             currentUser = session.user;
             updateAuthUI(true);
             load();
+            if (typeof initNotifications === 'function') initNotifications();
         } else {
+            if (typeof cleanupNotifications === 'function') cleanupNotifications();
             currentUser = null;
             updateAuthUI(false);
         }
@@ -21,6 +23,7 @@ async function initAuth() {
         currentUser = session.user;
         updateAuthUI(true);
         load();
+        if (typeof initNotifications === 'function') initNotifications();
     } else {
         updateAuthUI(false);
         loadFromLocalStorage();
@@ -152,6 +155,7 @@ function enterGuestMode() {
 }
 
 async function logout() {
+    if (typeof cleanupNotifications === 'function') cleanupNotifications();
     if (!isGuest) {
         const { error } = await _supabase.auth.signOut();
         if (error) console.error('Error de logout:', error);

@@ -1793,6 +1793,11 @@ function render() {
         updateShareButtonVisibility();
     }
 
+    // Update notification bell visibility
+    if (typeof updateNotificationBellVisibility === 'function') {
+        updateNotificationBellVisibility();
+    }
+
     // Trigger library change animation
     triggerLibraryChangeAnimation();
 }
