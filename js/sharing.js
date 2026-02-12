@@ -291,17 +291,32 @@ async function sendSharedLibrary() {
     }
 
     try {
-        const { error } = await _supabase.from('shared_libraries').insert({
-            sender_id: currentUser.id,
-            sender_email: currentUser.email,
-            recipient_email: email,
-            library_name: lib.name,
-            library_icon: lib.icon || '📁',
-            library_data: snapshot,
-            status: 'pending'
+        // 1. Insert share record
+        const { data: shareData, error: insertError } = await _supabase
+            .from('shared_libraries')
+            .insert({
+                sender_id: currentUser.id,
+                sender_email: currentUser.email,
+                recipient_email: email,
+                library_name: lib.name,
+                library_icon: lib.icon || '📁',
+                library_data: snapshot,
+                status: 'pending'
+            })
+            .select()
+            .single();
+
+        if (insertError) throw insertError;
+
+        // 2. Call Edge Function to send email
+        const { error: functionError } = await _supabase.functions.invoke('send-share-email', {
+            body: { record: shareData }
         });
 
-        if (error) throw error;
+        if (functionError) {
+            console.error('Error calling send-share-email function:', functionError);
+            // Don't throw - share was created, email just failed
+        }
 
         closeShareModal();
         showToast(`Libreria compartida con ${email}`);
