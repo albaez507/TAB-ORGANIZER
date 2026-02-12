@@ -211,24 +211,8 @@ function renderNotificationList() {
 // ===== ACTIONS =====
 
 async function viewSharedLibrary(shareId) {
-    try {
-        // Mark as seen
-        await _supabase
-            .from('shared_libraries')
-            .update({ seen_at: new Date().toISOString() })
-            .eq('id', shareId);
-
-        const share = pendingShares.find(s => s.id === shareId);
-        if (share) {
-            share.seen_at = new Date().toISOString();
-            showToast(`Libreria "${share.library_name}" marcada como vista`);
-        }
-
-        // Re-render to reflect seen state
-        if (notificationPanelOpen) renderNotificationList();
-    } catch (err) {
-        console.error('Error marking share as seen:', err);
-        showToast('Error al marcar como vista', true);
+    if (typeof openSharePreview === 'function') {
+        openSharePreview(shareId);
     }
 }
 
