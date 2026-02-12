@@ -45,7 +45,7 @@ function subscribeToNotifications() {
             event: '*',
             schema: 'public',
             table: 'shared_libraries',
-            filter: `recipient_email=eq.${currentUser.email}`
+            filter: `recipient_email=eq.${currentUser.email.toLowerCase()}`
         }, (payload) => {
             handleNotificationChange(payload);
         })
@@ -56,14 +56,14 @@ function handleNotificationChange(payload) {
     const { eventType, new: newRow, old: oldRow } = payload;
 
     if (eventType === 'INSERT') {
-        if (newRow && newRow.status === 'pending') {
+        if (newRow && newRow.status === 'sent') {
             pendingShares.unshift(newRow);
         }
     } else if (eventType === 'UPDATE') {
-        if (newRow && newRow.status !== 'pending') {
-            // Removed from pending (declined, accepted, etc.)
+        if (newRow && newRow.status !== 'sent') {
+            // Removed from sent (declined, accepted, etc.)
             pendingShares = pendingShares.filter(s => s.id !== newRow.id);
-        } else if (newRow && newRow.status === 'pending') {
+        } else if (newRow && newRow.status === 'sent') {
             // Updated but still pending (e.g. seen_at changed)
             const idx = pendingShares.findIndex(s => s.id === newRow.id);
             if (idx >= 0) {
@@ -95,7 +95,7 @@ async function fetchPendingShares() {
             .from('shared_libraries')
             .select('id, sender_email, library_name, library_icon, library_data, created_at, seen_at, status')
             .eq('recipient_email', currentUser.email)
-            .eq('status', 'pending')
+            .eq('status', 'sent')
             .order('created_at', { ascending: false });
 
         if (error) throw error;
