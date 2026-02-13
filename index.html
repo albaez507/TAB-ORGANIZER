@@ -732,6 +732,30 @@
     </div>
 </div>
 
+<!-- Import/Export Category Modal -->
+<div id="import-export-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="glass modal-content p-6 rounded-2xl max-w-sm w-full shadow-2xl">
+        <div class="flex items-center justify-between mb-5">
+            <h3 id="import-export-modal-title" class="text-lg font-bold text-white">Importar/Exportar</h3>
+            <button onclick="closeImportExportModal()" class="text-slate-400 hover:text-white text-2xl leading-none transition">&times;</button>
+        </div>
+        <button onclick="handleImportClick()" class="import-export-option">
+            <span style="font-size: 24px;">📥</span>
+            <div>
+                <div style="font-weight: 600;">Importar Links</div>
+                <div class="text-xs text-slate-400 mt-0.5">Cargar links desde archivo JSON</div>
+            </div>
+        </button>
+        <button onclick="handleExportClick()" class="import-export-option">
+            <span style="font-size: 24px;">📤</span>
+            <div>
+                <div style="font-weight: 600;">Exportar Categoria</div>
+                <div class="text-xs text-slate-400 mt-0.5">Descargar categoria como JSON</div>
+            </div>
+        </button>
+    </div>
+</div>
+
 <!-- Share Library Modal - Enhanced with Tree View -->
 <div id="share-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="glass modal-content p-6 rounded-2xl max-w-lg w-full shadow-2xl max-h-[85vh] flex flex-col">

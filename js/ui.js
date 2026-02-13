@@ -843,55 +843,20 @@ function saveOrganizeOrder(libKey, catKey) {
 }
 
 // ========================================
-// CATEGORY CONTEXT MENU (three-dot menu)
+// CATEGORY ACTION BUTTONS
 // ========================================
 
-function toggleCategoryMenu(catKey) {
-    const menu = document.getElementById(`category-menu-${catKey}`);
-    if (!menu) return;
-
-    // Close all other menus first
-    document.querySelectorAll('.category-menu-dropdown').forEach(m => {
-        if (m.id !== `category-menu-${catKey}`) {
-            m.classList.add('hidden');
-        }
-    });
-
-    menu.classList.toggle('hidden');
-}
-
-function closeCategoryMenus() {
-    document.querySelectorAll('.category-menu-dropdown').forEach(m => {
-        m.classList.add('hidden');
-    });
-}
-
-// Close menu when clicking outside
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.category-menu-btn') && !e.target.closest('.category-menu-dropdown')) {
-        document.querySelectorAll('.category-menu-dropdown').forEach(m => {
-            m.classList.add('hidden');
-        });
-    }
-});
-
 function shareCategoryQuick(libKey, catKey) {
-    // Close menu
-    document.getElementById(`category-menu-${catKey}`)?.classList.add('hidden');
-
-    // Open share modal
     if (typeof openShareModal === 'function') {
         openShareModal();
 
         // Pre-select only this category
         setTimeout(() => {
-            // Uncheck all first
             document.querySelectorAll('.share-cat-cb').forEach(cb => {
                 cb.checked = false;
                 toggleShareCategory(cb.dataset.catKey, false);
             });
 
-            // Check only this category
             const targetCb = document.querySelector(`.share-cat-cb[data-cat-key="${catKey}"]`);
             if (targetCb) {
                 targetCb.checked = true;
@@ -905,20 +870,64 @@ function shareCategoryQuick(libKey, catKey) {
     }
 }
 
-function exportCategory(libKey, catKey) {
-    // Close menu
-    document.getElementById(`category-menu-${catKey}`)?.classList.add('hidden');
+// ===== IMPORT / EXPORT =====
 
+let currentImportExportLibKey = null;
+let currentImportExportCatKey = null;
+
+function openImportExportModal(libKey, catKey) {
+    currentImportExportLibKey = libKey;
+    currentImportExportCatKey = catKey;
     const lib = DATA.libraries[libKey];
-    if (!lib || !lib.categories || !lib.categories[catKey]) return;
+    const category = lib?.categories?.[catKey];
+
+    document.getElementById('import-export-modal-title').textContent =
+        `Importar/Exportar "${category?.name || 'Categoria'}"`;
+    document.getElementById('import-export-modal').classList.remove('hidden');
+    document.getElementById('import-export-modal').classList.add('flex');
+}
+
+function closeImportExportModal() {
+    document.getElementById('import-export-modal').classList.add('hidden');
+    document.getElementById('import-export-modal').classList.remove('flex');
+    currentImportExportLibKey = null;
+    currentImportExportCatKey = null;
+}
+
+function handleImportClick() {
+    const libKey = currentImportExportLibKey;
+    const catKey = currentImportExportCatKey;
+    closeImportExportModal();
+    if (libKey && catKey) {
+        importToCategory(libKey, catKey);
+    }
+}
+
+function handleExportClick() {
+    const libKey = currentImportExportLibKey;
+    const catKey = currentImportExportCatKey;
+    closeImportExportModal();
+    if (libKey && catKey) {
+        exportCategory(libKey, catKey);
+    }
+}
+
+function exportCategory(libKey, catKey) {
+    const lib = DATA.libraries[libKey];
+    if (!lib || !lib.categories || !lib.categories[catKey]) {
+        showToast('Categoria no encontrada', true);
+        return;
+    }
 
     const category = lib.categories[catKey];
 
     const exportData = {
         name: category.name || 'Categoria',
         icon: category.icon || '📁',
-        links: category.links || [],
+        color: category.color || '',
+        description: category.description || '',
         notes: category.task || '',
+        links: category.links || [],
         exported_at: new Date().toISOString(),
         exported_from: 'Tab Organizer'
     };
@@ -932,6 +941,71 @@ function exportCategory(libKey, catKey) {
     URL.revokeObjectURL(url);
 
     showToast(`Categoria "${category.name}" exportada`);
+}
+
+function importToCategory(libKey, catKey) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+
+            const lib = DATA.libraries[libKey];
+            if (!lib || !lib.categories || !lib.categories[catKey]) {
+                showToast('Categoria no encontrada', true);
+                return;
+            }
+
+            const category = lib.categories[catKey];
+            const existingUrls = new Set((category.links || []).map(l => l.url));
+
+            let importedCount = 0;
+            const linksToImport = data.links || [];
+
+            linksToImport.forEach(link => {
+                if (link.url && existingUrls.has(link.url)) return;
+
+                if (!category.links) category.links = [];
+                category.links.push({
+                    url: link.url || '',
+                    title: link.title || 'Sin titulo',
+                    description: link.description || '',
+                    icon: link.icon || link.thumbnail || '',
+                    status: link.status || {
+                        watching: false,
+                        watched: false,
+                        understood: false,
+                        applied: false
+                    },
+                    quickNote: link.quickNote || link.notes || '',
+                    fullNote: link.fullNote || '',
+                    linkNotes: link.linkNotes || ''
+                });
+
+                importedCount++;
+            });
+
+            if (importedCount > 0) {
+                save();
+                render();
+                showToast(`${importedCount} link${importedCount !== 1 ? 's' : ''} importado${importedCount !== 1 ? 's' : ''}`);
+            } else {
+                showToast('No se encontraron links nuevos para importar');
+            }
+
+        } catch (err) {
+            console.error('Import error:', err);
+            showToast('Error al importar. Verifica que sea un JSON valido.', true);
+        }
+    };
+
+    input.click();
 }
 
 // ========================================
@@ -2039,13 +2113,10 @@ function renderCategories() {
                         <button class="px-3 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 transition" onclick="openCategoryModal('${libKey}', '${catKey}')">EDIT</button>
                         <button class="px-3 py-2 rounded-xl text-xs font-bold bg-red-500/20 text-red-500 hover:bg-red-500/30 transition" onclick="deleteCategory('${libKey}', '${catKey}')">DEL</button>
                     ` : ''}
-                    <div class="category-menu-wrapper">
-                        <button class="category-menu-btn" onclick="event.stopPropagation(); toggleCategoryMenu('${catKey}')" title="Opciones">⋮</button>
-                        <div class="category-menu-dropdown hidden" id="category-menu-${catKey}">
-                            <button onclick="shareCategoryQuick('${libKey}', '${catKey}')"><span>📤</span><span>Compartir</span></button>
-                            <button onclick="closeCategoryMenus(); toggleOrganizeMode('${libKey}', '${catKey}')"><span>⚙️</span><span>Gestionar</span></button>
-                            <button onclick="exportCategory('${libKey}', '${catKey}')"><span>💾</span><span>Exportar</span></button>
-                        </div>
+                    <div class="category-actions">
+                        <button class="category-action-btn" onclick="shareCategoryQuick('${libKey}', '${catKey}')" title="Compartir esta categoria">📤 <span class="btn-text">Compartir</span></button>
+                        <button class="category-action-btn" onclick="openImportExportModal('${libKey}', '${catKey}')" title="Importar o exportar links">📦 <span class="btn-text">I/E</span></button>
+                        <button class="category-action-btn" onclick="toggleOrganizeMode('${libKey}', '${catKey}')" title="Gestionar links">⚙️ <span class="btn-text">Gestionar</span></button>
                     </div>
                 </div>
             </div>
