@@ -68,10 +68,6 @@ async function openSharePreview(shareId) {
     const toggleBtn = document.getElementById('import-toggle-all-btn');
     if (toggleBtn) toggleBtn.textContent = 'Deseleccionar Todo';
 
-    // Hide import choice if open
-    const choicePopover = document.getElementById('import-choice-popover');
-    if (choicePopover) choicePopover.classList.add('hidden');
-
     // Show overlay
     const overlay = document.getElementById('share-preview-overlay');
     if (overlay) overlay.classList.add('active');
@@ -231,36 +227,7 @@ function updateImportToggleAllBtnText() {
 
 // ===== IMPORT =====
 
-function showImportOptions() {
-    // Validate at least one item selected
-    const checkedLinks = document.querySelectorAll('.import-link-cb:checked');
-    if (checkedLinks.length === 0) {
-        showToast('Selecciona al menos un item para importar', true);
-        return;
-    }
-
-    const popover = document.getElementById('import-choice-popover');
-    if (popover) {
-        popover.classList.toggle('hidden');
-    }
-}
-
-function hideImportOptions() {
-    const popover = document.getElementById('import-choice-popover');
-    if (popover) popover.classList.add('hidden');
-}
-
-async function importAsNewLibrary() {
-    hideImportOptions();
-    await doImport('new');
-}
-
-async function importIntoCurrentLibrary() {
-    hideImportOptions();
-    await doImport('current');
-}
-
-async function doImport(mode) {
+async function doImport() {
     if (!sharePreviewShare) return;
 
     const libraryData = sharePreviewShare.library_data;
@@ -283,7 +250,6 @@ async function doImport(mode) {
             const link = (cat.links || [])[linkIdx];
             if (!link) return;
 
-            // Migrate to full DATA format
             links.push({
                 url: link.url || '',
                 title: link.title || 'Sin titulo',
@@ -311,32 +277,28 @@ async function doImport(mode) {
     });
 
     if (Object.keys(importedCategories).length === 0) {
-        showToast('No hay items seleccionados para importar', true);
+        showToast('Selecciona al menos un item para importar', true);
         return;
     }
 
     ensureDataStructure();
 
-    if (mode === 'new') {
-        // Create new library
-        const libKey = 'lib_' + Date.now();
-        DATA.libraries[libKey] = {
-            name: (sharePreviewShare.library_name || 'Compartido') + ' (compartido)',
-            icon: sharePreviewShare.library_icon || '📁',
-            categories: importedCategories
+    // Find or create "📥 Recibidas" library
+    let recibidasKey = Object.keys(DATA.libraries).find(k =>
+        DATA.libraries[k].name === '📥 Recibidas'
+    );
+
+    if (!recibidasKey) {
+        recibidasKey = 'lib_' + Date.now();
+        DATA.libraries[recibidasKey] = {
+            name: '📥 Recibidas',
+            icon: '📥',
+            categories: {}
         };
-        DATA.currentLibrary = libKey;
-    } else {
-        // Merge into current library
-        const currentLib = getCurrentLibrary();
-        if (!currentLib) {
-            showToast('No hay libreria seleccionada', true);
-            return;
-        }
-        Object.keys(importedCategories).forEach(catKey => {
-            currentLib.categories[catKey] = importedCategories[catKey];
-        });
     }
+
+    // Add imported categories to Recibidas
+    Object.assign(DATA.libraries[recibidasKey].categories, importedCategories);
 
     save();
     render();
@@ -359,7 +321,7 @@ async function doImport(mode) {
     closeSharePreview();
 
     const catCount = Object.keys(importedCategories).length;
-    showToast(`Importado: ${catCount} categoria${catCount !== 1 ? 's' : ''}, ${importedCount} link${importedCount !== 1 ? 's' : ''}`);
+    showToast(`Imported to 📥 Recibidas: ${catCount} categor${catCount !== 1 ? 'ies' : 'y'}, ${importedCount} link${importedCount !== 1 ? 's' : ''}`);
 }
 
 // ===== DISMISS FROM PREVIEW =====

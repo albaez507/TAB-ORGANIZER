@@ -606,23 +606,10 @@
         </div>
     </div>
 
-    <!-- Import choice popover -->
-    <div id="import-choice-popover" class="import-choice-popover hidden">
-        <p class="import-choice-title">Importar a:</p>
-        <button onclick="importAsNewLibrary()" class="import-choice-btn import-choice-new">
-            <span>📚</span> Nueva libreria
-        </button>
-        <button onclick="importIntoCurrentLibrary()" class="import-choice-btn import-choice-current">
-            <span>📂</span> Libreria actual
-        </button>
-        <button onclick="hideImportOptions()" class="import-choice-cancel">Cancelar</button>
-    </div>
-
     <!-- Action buttons (sticky bottom) -->
     <div class="share-preview-actions">
-        <button onclick="showImportOptions()" class="share-preview-import-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            Importar Seleccionados
+        <button onclick="doImport()" class="share-preview-import-btn">
+            📥 Import
         </button>
         <button onclick="dismissFromPreview()" class="share-preview-dismiss-btn">Descartar</button>
         <button onclick="closeSharePreview()" class="share-preview-close-btn">Cerrar</button>

@@ -5,6 +5,7 @@
 // ========================================
 
 let notificationSubscription = null;
+let senderNotificationSubscription = null;
 let pendingShares = [];
 let notificationPanelOpen = false;
 
@@ -15,6 +16,7 @@ async function initNotifications() {
 
     await fetchPendingShares();
     subscribeToNotifications();
+    subscribeToSenderNotifications();
     updateNotificationBellVisibility();
 }
 
@@ -22,6 +24,10 @@ function cleanupNotifications() {
     if (notificationSubscription) {
         _supabase.removeChannel(notificationSubscription);
         notificationSubscription = null;
+    }
+    if (senderNotificationSubscription) {
+        _supabase.removeChannel(senderNotificationSubscription);
+        senderNotificationSubscription = null;
     }
     pendingShares = [];
     notificationPanelOpen = false;
@@ -82,6 +88,36 @@ function handleNotificationChange(payload) {
     updateNotificationBadge();
     if (notificationPanelOpen) {
         renderNotificationList();
+    }
+}
+
+// ===== SENDER NOTIFICATIONS =====
+
+function subscribeToSenderNotifications() {
+    if (!currentUser || isGuest) return;
+
+    if (senderNotificationSubscription) {
+        _supabase.removeChannel(senderNotificationSubscription);
+    }
+
+    senderNotificationSubscription = _supabase
+        .channel('shared-libraries-sender')
+        .on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'shared_libraries',
+            filter: `sender_id=eq.${currentUser.id}`
+        }, (payload) => {
+            handleSenderNotification(payload);
+        })
+        .subscribe();
+}
+
+function handleSenderNotification(payload) {
+    const { new: newRow } = payload;
+
+    if (newRow && newRow.status === 'accepted') {
+        showToast(`${newRow.recipient_email} accepted "${newRow.library_name}"`);
     }
 }
 
