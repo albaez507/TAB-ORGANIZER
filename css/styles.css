@@ -4334,7 +4334,6 @@ button[onclick*="togglePreview"]:hover {
     transition: opacity 200ms ease, max-height 200ms ease, padding 200ms ease;
 }
 
-.category-note-compact:hover .note-toolbar-compact,
 .category-note-compact:focus-within .note-toolbar-compact {
     opacity: 1;
     max-height: 36px;
@@ -6087,6 +6086,12 @@ button[onclick*="togglePreview"]:hover {
     display: flex;
     align-items: center;
     gap: 6px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.category-header:hover .category-actions {
+    opacity: 1;
 }
 
 .category-action-btn {
@@ -6109,6 +6114,12 @@ button[onclick*="togglePreview"]:hover {
     background: rgba(59, 130, 246, 0.15);
     border-color: rgba(59, 130, 246, 0.3);
     color: white;
+}
+
+.category-action-btn.icon-only {
+    padding: 6px;
+    min-width: 32px;
+    justify-content: center;
 }
 
 @media (max-width: 768px) {

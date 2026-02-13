@@ -2114,9 +2114,9 @@ function renderCategories() {
                         <button class="px-3 py-2 rounded-xl text-xs font-bold bg-red-500/20 text-red-500 hover:bg-red-500/30 transition" onclick="deleteCategory('${libKey}', '${catKey}')">DEL</button>
                     ` : ''}
                     <div class="category-actions">
-                        <button class="category-action-btn" onclick="shareCategoryQuick('${libKey}', '${catKey}')" title="Compartir esta categoria">📤 <span class="btn-text">Compartir</span></button>
-                        <button class="category-action-btn" onclick="openImportExportModal('${libKey}', '${catKey}')" title="Importar o exportar links">📦 <span class="btn-text">I/E</span></button>
-                        <button class="category-action-btn" onclick="toggleOrganizeMode('${libKey}', '${catKey}')" title="Gestionar links">⚙️ <span class="btn-text">Gestionar</span></button>
+                        <button class="category-action-btn" onclick="shareCategoryQuick('${libKey}', '${catKey}')" title="Share this category">📤 <span class="btn-text">Share</span></button>
+                        <button class="category-action-btn icon-only" onclick="openImportExportModal('${libKey}', '${catKey}')" title="Import/Export">📦</button>
+                        <button class="category-action-btn icon-only" onclick="openCategoryModal('${libKey}', '${catKey}')" title="Edit category">⚙️</button>
                     </div>
                 </div>
             </div>
