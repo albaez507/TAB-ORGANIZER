@@ -843,6 +843,98 @@ function saveOrganizeOrder(libKey, catKey) {
 }
 
 // ========================================
+// CATEGORY CONTEXT MENU (three-dot menu)
+// ========================================
+
+function toggleCategoryMenu(catKey) {
+    const menu = document.getElementById(`category-menu-${catKey}`);
+    if (!menu) return;
+
+    // Close all other menus first
+    document.querySelectorAll('.category-menu-dropdown').forEach(m => {
+        if (m.id !== `category-menu-${catKey}`) {
+            m.classList.add('hidden');
+        }
+    });
+
+    menu.classList.toggle('hidden');
+}
+
+function closeCategoryMenus() {
+    document.querySelectorAll('.category-menu-dropdown').forEach(m => {
+        m.classList.add('hidden');
+    });
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.category-menu-btn') && !e.target.closest('.category-menu-dropdown')) {
+        document.querySelectorAll('.category-menu-dropdown').forEach(m => {
+            m.classList.add('hidden');
+        });
+    }
+});
+
+function shareCategoryQuick(libKey, catKey) {
+    // Close menu
+    document.getElementById(`category-menu-${catKey}`)?.classList.add('hidden');
+
+    // Open share modal
+    if (typeof openShareModal === 'function') {
+        openShareModal();
+
+        // Pre-select only this category
+        setTimeout(() => {
+            // Uncheck all first
+            document.querySelectorAll('.share-cat-cb').forEach(cb => {
+                cb.checked = false;
+                toggleShareCategory(cb.dataset.catKey, false);
+            });
+
+            // Check only this category
+            const targetCb = document.querySelector(`.share-cat-cb[data-cat-key="${catKey}"]`);
+            if (targetCb) {
+                targetCb.checked = true;
+                toggleShareCategory(catKey, true);
+            }
+
+            updateToggleAllBtnText();
+        }, 100);
+    } else {
+        showToast('Compartir no disponible', true);
+    }
+}
+
+function exportCategory(libKey, catKey) {
+    // Close menu
+    document.getElementById(`category-menu-${catKey}`)?.classList.add('hidden');
+
+    const lib = DATA.libraries[libKey];
+    if (!lib || !lib.categories || !lib.categories[catKey]) return;
+
+    const category = lib.categories[catKey];
+
+    const exportData = {
+        name: category.name || 'Categoria',
+        icon: category.icon || '📁',
+        links: category.links || [],
+        notes: category.task || '',
+        exported_at: new Date().toISOString(),
+        exported_from: 'Tab Organizer'
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${category.name || 'category'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    showToast(`Categoria "${category.name}" exportada`);
+}
+
+// ========================================
 // DRAG & DROP - STAIR STEP IMPLEMENTATION
 // Items swap positions with visible 400ms animations
 // NO opacity changes - items always 100% solid
@@ -1947,6 +2039,14 @@ function renderCategories() {
                         <button class="px-3 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 transition" onclick="openCategoryModal('${libKey}', '${catKey}')">EDIT</button>
                         <button class="px-3 py-2 rounded-xl text-xs font-bold bg-red-500/20 text-red-500 hover:bg-red-500/30 transition" onclick="deleteCategory('${libKey}', '${catKey}')">DEL</button>
                     ` : ''}
+                    <div class="category-menu-wrapper">
+                        <button class="category-menu-btn" onclick="event.stopPropagation(); toggleCategoryMenu('${catKey}')" title="Opciones">⋮</button>
+                        <div class="category-menu-dropdown hidden" id="category-menu-${catKey}">
+                            <button onclick="shareCategoryQuick('${libKey}', '${catKey}')"><span>📤</span><span>Compartir</span></button>
+                            <button onclick="closeCategoryMenus(); toggleOrganizeMode('${libKey}', '${catKey}')"><span>⚙️</span><span>Gestionar</span></button>
+                            <button onclick="exportCategory('${libKey}', '${catKey}')"><span>💾</span><span>Exportar</span></button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
